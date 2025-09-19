@@ -1,88 +1,116 @@
+import Layout from '@/components/shared/Layout';
+
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <header className="border-b border-foreground/10">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <nav className="flex items-center justify-between">
-            <div className="font-bold text-2xl font-mono">TAKOPI</div>
-            <div className="flex items-center gap-6">
-              <a href="#features" className="hover:text-foreground/70 transition-colors">
-                Features
-              </a>
-              <a href="#about" className="hover:text-foreground/70 transition-colors">
-                About
-              </a>
-              <a href="#contact" className="hover:text-foreground/70 transition-colors">
-                Contact
-              </a>
-            </div>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <main className="max-w-6xl mx-auto px-4 py-20">
-        <div className="text-center space-y-8">
-          <h1 className="text-6xl sm:text-8xl font-bold font-mono tracking-tight">
-            TAKOPI
+    <Layout>
+      <div className="max-w-7xl mx-auto px-4 py-20">
+        {/* Hero Section */}
+        <div className="text-center space-y-8 relative">
+          <h1 className="text-6xl sm:text-8xl font-bold tracking-tight animate-float">
+            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent animate-gradient bg-[length:200%_200%]">
+              TAKOPI
+            </span>
           </h1>
-          <p className="text-xl sm:text-2xl text-foreground/80 max-w-2xl mx-auto">
-            Una aplicación moderna construida con Next.js 15, React 19 y TailwindCSS v4
+          <p className="text-xl sm:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            El futuro del comercio digital creativo. Donde la innovación se encuentra con la comunidad,
+            y la tecnología transforma la creatividad.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
-            <button className="bg-foreground text-background px-8 py-3 rounded-lg font-medium hover:bg-foreground/90 transition-colors">
-              Comenzar
-            </button>
-            <button className="border border-foreground/20 px-8 py-3 rounded-lg font-medium hover:bg-foreground/5 transition-colors">
-              Saber más
-            </button>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-12">
+            <a
+              href="/feed"
+              className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25 animate-glow"
+            >
+              Explorar Feed
+            </a>
+            <a
+              href="/auth/register"
+              className="px-8 py-4 border-2 border-purple-400 text-purple-400 rounded-xl font-semibold hover:bg-purple-400 hover:text-white transition-all duration-300 transform hover:scale-105"
+            >
+              Unirse a la Comunidad
+            </a>
           </div>
         </div>
 
         {/* Features Section */}
-        <section id="features" className="py-20">
+        <section className="py-32">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">
+              <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                Características Revolucionarias
+              </span>
+            </h2>
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+              Descubre las herramientas que están remodelando la creatividad digital
+            </p>
+          </div>
+
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-6 border border-foreground/10 rounded-lg">
-              <h3 className="font-bold text-xl mb-4">⚡ Rápido</h3>
-              <p className="text-foreground/70">
-                Construido con Next.js 15 y React 19 para máximo rendimiento
+            <div className="p-8 border border-purple-500/20 rounded-2xl bg-gradient-to-br from-purple-900/20 to-blue-900/20 backdrop-blur-sm hover:border-purple-400/40 transition-all duration-300 transform hover:scale-105">
+              <div className="text-4xl mb-4">🎨</div>
+              <h3 className="font-bold text-xl mb-4 text-white">Mercado Creativo</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Descubre y compra modelos 3D únicos creados por artistas talentosos de nuestra comunidad global
               </p>
             </div>
-            <div className="p-6 border border-foreground/10 rounded-lg">
-              <h3 className="font-bold text-xl mb-4">🎨 Moderno</h3>
-              <p className="text-foreground/70">
-                Diseño elegante con TailwindCSS v4 y fuentes Geist
+
+            <div className="p-8 border border-purple-500/20 rounded-2xl bg-gradient-to-br from-purple-900/20 to-blue-900/20 backdrop-blur-sm hover:border-purple-400/40 transition-all duration-300 transform hover:scale-105">
+              <div className="text-4xl mb-4">🗺️</div>
+              <h3 className="font-bold text-xl mb-4 text-white">Mapeo Cultural</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Explora tribus urbanas, eventos y microculturas en tu ciudad a través de nuestro mapa interactivo de la comunidad
               </p>
             </div>
-            <div className="p-6 border border-foreground/10 rounded-lg">
-              <h3 className="font-bold text-xl mb-4">🔧 TypeScript</h3>
-              <p className="text-foreground/70">
-                Totalmente tipado para un desarrollo más seguro
+
+            <div className="p-8 border border-purple-500/20 rounded-2xl bg-gradient-to-br from-purple-900/20 to-blue-900/20 backdrop-blur-sm hover:border-purple-400/40 transition-all duration-300 transform hover:scale-105">
+              <div className="text-4xl mb-4">🤖</div>
+              <h3 className="font-bold text-xl mb-4 text-white">Asistente IA</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Obtén ayuda instantánea con consultas de productos, licencias y seguimiento de pedidos a través de nuestro chatbot inteligente
               </p>
             </div>
           </div>
         </section>
 
-        {/* About Section */}
-        <section id="about" className="py-20 text-center">
-          <h2 className="text-4xl font-bold mb-8">Sobre Takopi</h2>
-          <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
-            Takopi es un proyecto de demostración que muestra las mejores prácticas
-            de desarrollo web moderno con tecnologías de vanguardia.
-          </p>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-foreground/10 mt-20">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="text-center text-foreground/60">
-            <p>&copy; 2025 Takopi. Construido con Next.js y ❤️</p>
+        {/* Stats Section */}
+        <section className="py-32">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">
+              <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                Nuestra Comunidad en Crecimiento
+              </span>
+            </h2>
+            <p className="text-xl text-gray-300">Únete a miles de creadores y exploradores en todo el mundo</p>
           </div>
-        </div>
-      </footer>
-    </div>
+
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-5xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                1,200+
+              </div>
+              <div className="text-gray-300 font-medium">Modelos 3D</div>
+            </div>
+            <div className="text-center">
+              <div className="text-5xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                500+
+              </div>
+              <div className="text-gray-300 font-medium">Artistas</div>
+            </div>
+            <div className="text-center">
+              <div className="text-5xl font-bold mb-2 bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                50+
+              </div>
+              <div className="text-gray-300 font-medium">Ciudades</div>
+            </div>
+            <div className="text-center">
+              <div className="text-5xl font-bold mb-2 bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
+                2,500+
+              </div>
+              <div className="text-gray-300 font-medium">Usuarios</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </Layout>
   );
 }
