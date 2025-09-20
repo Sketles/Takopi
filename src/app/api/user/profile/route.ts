@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
+import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config/env';
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    await connectDB();
+    await connectToDatabase();
     const user = await User.findById(decoded.userId).select('-password');
 
     if (!user) {
@@ -76,7 +76,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    await connectDB();
+    await connectToDatabase();
 
     // Verificar si el username ya existe solo si se está actualizando el username
     if (username !== undefined) {

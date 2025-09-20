@@ -1,35 +1,31 @@
 import mongoose from 'mongoose';
-import { config } from '@/config/env';
+import { getDatabaseConfig, getAutoDatabaseConfig } from '@/config/database';
 
-const MONGODB_URI = config.mongodb.uri;
-
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
-}
-
-/**
- * Global is used here to maintain a cached connection across hot reloads
- * in development. This prevents connections growing exponentially
- * during API Route usage.
- */
-let cached = (global as any).mongoose;
+// Cache para la conexión
+let cached = global.mongoose;
 
 if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null };
+  cached = global.mongoose = { conn: null, promise: null };
 }
 
-async function connectDB() {
+// Función principal de conexión
+async function connectToDatabase() {
   if (cached.conn) {
     return cached.conn;
   }
 
   if (!cached.promise) {
-    const opts = {
-      bufferCommands: false,
-    };
+    const config = getDatabaseConfig();
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    console.log(`🔗 Conectando a MongoDB (modo: ${config.mode})`);
+    console.log(`📍 URI: ${config.uri.replace(/\/\/.*@/, '//***:***@')}`); // Ocultar credenciales
+
+    cached.promise = mongoose.connect(config.uri, config.options).then((mongoose) => {
+      console.log(`✅ MongoDB conectado exitosamente (modo: ${config.mode})`);
       return mongoose;
+    }).catch((error) => {
+      console.error('❌ Error conectando a MongoDB:', error.message);
+      throw error;
     });
   }
 
@@ -43,4 +39,59 @@ async function connectDB() {
   return cached.conn;
 }
 
-export default connectDB;
+// Función para conexión automática (detecta el mejor modo)
+async function connectToDatabaseAuto() {
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    const config = await getAutoDatabaseConfig();
+
+    console.log(`🔗 Conectando a MongoDB (modo automático: ${config.mode})`);
+    console.log(`📍 URI: ${config.uri.replace(/\/\/.*@/, '//***:***@')}`); // Ocultar credenciales
+
+    cached.promise = mongoose.connect(config.uri, config.options).then((mongoose) => {
+      console.log(`✅ MongoDB conectado exitosamente (modo automático: ${config.mode})`);
+      return mongoose;
+    }).catch((error) => {
+      console.error('❌ Error conectando a MongoDB:', error.message);
+      throw error;
+    });
+  }
+
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    throw e;
+  }
+
+  return cached.conn;
+}
+
+// Función para desconectar
+async function disconnectFromDatabase() {
+  if (cached.conn) {
+    await mongoose.disconnect();
+    cached.conn = null;
+    cached.promise = null;
+    console.log('🔌 Desconectado de MongoDB');
+  }
+}
+
+// Función para limpiar cache (útil para testing)
+function clearConnectionCache() {
+  cached.conn = null;
+  cached.promise = null;
+}
+
+export {
+  connectToDatabase,
+  connectToDatabaseAuto,
+  disconnectFromDatabase,
+  clearConnectionCache
+};
+
+// Exportar la función por defecto (mantener compatibilidad)
+export default connectToDatabase;

@@ -32,7 +32,7 @@ export default function RegisterPage() {
     try {
       const success = await register(formData.username, formData.email, formData.password, formData.role);
       if (success) {
-        router.push('/feed');
+        router.push('/explore');
       } else {
         setError('Error al crear la cuenta');
       }

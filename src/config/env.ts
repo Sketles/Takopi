@@ -1,6 +1,6 @@
 // Configuración de variables de entorno
 export const config = {
-  // MongoDB
+  // MongoDB - Ahora usa el sistema dual
   mongodb: {
     uri: process.env.MONGODB_URI || 'mongodb+srv://takopi_app:Suicidesurrender603@cluster99.uzpzzow.mongodb.net/Takopi_BaseDatos?retryWrites=true&w=majority&appName=Cluster99',
   },

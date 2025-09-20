@@ -1,0 +1,87 @@
+
+
+# 🅲 Opción Híbrida — Estructura
+
+## 1. **Tarjeta de producto (explorar)**
+
+* Miniatura (ícono, preview o portada).
+* Título corto.
+* Precio.
+* Autor.
+* Badge de licencia (ej: personal/commercial).
+* Botón “Comprar” directo.
+* **Acción principal:** clic en la tarjeta → abre **modal expandible**.
+
+---
+
+## 2. **Modal Expandible (Quick View)**
+
+**Vista inicial (compacta):**
+
+* **Izquierda:** preview del contenido.
+
+  * 3D → mini visor con rotación.
+  * Música → reproductor con waveform o lista simple.
+  * Imagen → preview ampliada.
+  * OBS widget → mock frame 16:9.
+* **Derecha:**
+
+  * Título grande.
+  * Autor (clickeable → perfil).
+  * Tipo + categoría.
+  * Licencia.
+  * Precio + botón **Comprar Ahora** (destacado).
+
+**Vista expandida (con botón “Ver más detalles ↓”):**
+
+* Se despliega hacia abajo dentro del mismo modal:
+
+  * Descripción extendida.
+  * Hashtags clickeables (#3d, #vtuber, #obs).
+  * Links externos (ej: demo, GitHub, YouTube).
+  * Notas personales del creador.
+  * Stats básicos (likes ❤️, descargas ⬇️, vistas 👁️).
+* Abajo del todo → botón **“Ir a página del producto →”**.
+
+---
+
+## 3. **Página dedicada (detalle completo)**
+
+URL única: `/p/[slug]`
+**Estructura recomendada:**
+
+* **Hero (arriba):**
+
+  * Izquierda: preview grande (visor 3D / galería / reproductor).
+  * Derecha: título, autor (avatar + link a perfil), precio, licencia, botón comprar grande.
+* **Sección media:**
+
+  * Descripción extendida.
+  * Hashtags.
+  * Archivos extra o imágenes secundarias.
+  * Links externos.
+* **Sección inferior:**
+
+  * Comentarios/reseñas (si lo habilitas).
+  * “Otros productos de este creador” (recomendación automática).
+
+---
+
+# 🎨 Principios de UI
+
+* **Consistencia visual:** modal y página deben compartir estilo, pero el modal es “resumido” y la página es “extendida”.
+* **Jerarquía clara:** precio + comprar siempre arriba y visible.
+* **Animaciones suaves:** expandir con transición y fade, no brusco.
+* **Acción clara:** en el modal → “Ver más detalles” para invitar a la página.
+
+---
+
+# 🚀 Beneficios de la híbrida
+
+* El usuario explorando no se interrumpe → ve rápido en el **modal**.
+* El interesado en detalle tiene una **página dedicada** que puedes compartir o indexar en Google.
+* Te permite empezar solo con el modal, e ir construyendo las páginas dedicadas después.
+
+---
+
+👉 Te puedo armar ahora un **wireframe textual de cada vista (modal compacto, modal expandido, página dedicada)** con los bloques ordenados, para que tu dev lo copie como blueprint. ¿Quieres que lo haga?

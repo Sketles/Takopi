@@ -47,15 +47,6 @@ export default function Header() {
               Inicio
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-blue-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            {user && (
-              <Link
-                href="/feed"
-                className="text-gray-300 hover:text-purple-400 transition-all duration-300 relative group"
-              >
-                Feed
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-blue-400 transition-all duration-300 group-hover:w-full"></span>
-              </Link>
-            )}
             <Link
               href="/explore"
               className="text-gray-300 hover:text-purple-400 transition-all duration-300 relative group"
@@ -81,6 +72,19 @@ export default function Header() {
 
           {/* User Actions */}
           <div className="hidden md:flex items-center gap-4">
+            {/* Botón Subir - Solo para usuarios autenticados */}
+            {user && (
+              <Link
+                href="/upload"
+                className="group px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-medium hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-green-500/25 flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Subir Creación
+                <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
+              </Link>
+            )}
             {user ? (
               <div className="relative" ref={profileRef}>
                 {/* User Profile Dropdown Trigger */}
@@ -186,15 +190,6 @@ export default function Header() {
               >
                 Inicio
               </Link>
-              {user && (
-                <Link
-                  href="/feed"
-                  className="text-gray-300 hover:text-purple-400 transition-colors py-2 px-4 rounded-lg hover:bg-purple-500/10"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Feed
-                </Link>
-              )}
               <Link
                 href="/explore"
                 className="text-gray-300 hover:text-purple-400 transition-colors py-2 px-4 rounded-lg hover:bg-purple-500/10"
@@ -219,6 +214,17 @@ export default function Header() {
               <div className="flex flex-col gap-2 pt-2 border-t border-purple-500/20">
                 {user ? (
                   <>
+                    {/* Botón Subir en Mobile */}
+                    <Link
+                      href="/upload"
+                      className="text-gray-300 hover:text-green-400 transition-colors py-2 px-4 rounded-lg hover:bg-green-500/10 flex items-center gap-3"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Subir Creación
+                    </Link>
                     <div className="px-4 py-2 text-gray-300 text-sm flex items-center gap-3">
                       <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
                         {user.avatar ? (
