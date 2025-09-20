@@ -1,12 +1,28 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user, logout } = useAuth();
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  // Cerrar dropdown cuando se hace clic fuera
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <header className="border-b border-purple-500/20 bg-black/40 backdrop-blur-md sticky top-0 z-50">
@@ -25,45 +41,108 @@ export default function Header() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             <Link
-              href="/feed"
-              className="text-gray-300 hover:text-purple-400 transition-colors"
+              href="/"
+              className="text-gray-300 hover:text-purple-400 transition-all duration-300 relative group"
             >
-              Feed
+              Inicio
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-blue-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
+            {user && (
+              <Link
+                href="/feed"
+                className="text-gray-300 hover:text-purple-400 transition-all duration-300 relative group"
+              >
+                Feed
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-blue-400 transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+            )}
             <Link
               href="/explore"
-              className="text-gray-300 hover:text-purple-400 transition-colors"
+              className="text-gray-300 hover:text-purple-400 transition-all duration-300 relative group"
             >
               Explorar
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-blue-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
             <Link
               href="/cultural-map"
-              className="text-gray-300 hover:text-purple-400 transition-colors"
+              className="text-gray-300 hover:text-purple-400 transition-all duration-300 relative group"
             >
               Mapa Cultural
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-blue-400 transition-all duration-300 group-hover:w-full"></span>
+            </Link>
+            <Link
+              href="/image-generator"
+              className="text-gray-300 hover:text-purple-400 transition-all duration-300 relative group"
+            >
+              Generador Imágenes
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-blue-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
           </div>
 
           {/* User Actions */}
           <div className="hidden md:flex items-center gap-4">
             {user ? (
-              <>
-                <span className="text-gray-300 text-sm">
-                  Hola, <span className="text-purple-400 font-medium">{user.username}</span>
-                </span>
-                <Link
-                  href="/feed"
-                  className="text-gray-300 hover:text-purple-400 transition-colors px-4 py-2 rounded-lg hover:bg-purple-500/20"
-                >
-                  Mi Feed
-                </Link>
+              <div className="relative" ref={profileRef}>
+                {/* User Profile Dropdown Trigger */}
                 <button
-                  onClick={logout}
-                  className="text-gray-300 hover:text-red-400 transition-colors px-4 py-2 rounded-lg hover:bg-red-500/20"
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-purple-500/20"
                 >
-                  Cerrar Sesión
+                  {/* Avatar */}
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.username}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white text-sm font-bold">
+                        {user.username.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  {/* Username */}
+                  <span className="font-medium">{user.username}</span>
+                  {/* Dropdown Arrow */}
+                  <svg
+                    className={`w-4 h-4 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
-              </>
+
+                {/* Dropdown Menu */}
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-black/90 backdrop-blur-md border border-purple-500/20 rounded-xl shadow-2xl py-2 z-50 animate-in slide-in-from-top duration-200">
+                    <Link
+                      href="/profile"
+                      className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-purple-500/20 transition-colors"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Perfil
+                    </Link>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsProfileOpen(false);
+                      }}
+                      className="flex items-center gap-3 w-full px-4 py-3 text-gray-300 hover:text-red-400 hover:bg-red-500/20 transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      Cerrar Sesión
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <Link
@@ -101,12 +180,21 @@ export default function Header() {
           <div className="md:hidden mt-4 pb-4 border-t border-purple-500/20 pt-4">
             <div className="flex flex-col gap-4">
               <Link
-                href="/feed"
+                href="/"
                 className="text-gray-300 hover:text-purple-400 transition-colors py-2 px-4 rounded-lg hover:bg-purple-500/10"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Feed
+                Inicio
               </Link>
+              {user && (
+                <Link
+                  href="/feed"
+                  className="text-gray-300 hover:text-purple-400 transition-colors py-2 px-4 rounded-lg hover:bg-purple-500/10"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Feed
+                </Link>
+              )}
               <Link
                 href="/explore"
                 className="text-gray-300 hover:text-purple-400 transition-colors py-2 px-4 rounded-lg hover:bg-purple-500/10"
@@ -121,26 +209,52 @@ export default function Header() {
               >
                 Mapa Cultural
               </Link>
+              <Link
+                href="/image-generator"
+                className="text-gray-300 hover:text-purple-400 transition-colors py-2 px-4 rounded-lg hover:bg-purple-500/10"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Generador Imágenes
+              </Link>
               <div className="flex flex-col gap-2 pt-2 border-t border-purple-500/20">
                 {user ? (
                   <>
-                    <div className="px-4 py-2 text-gray-300 text-sm">
-                      Hola, <span className="text-purple-400 font-medium">{user.username}</span>
+                    <div className="px-4 py-2 text-gray-300 text-sm flex items-center gap-3">
+                      <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                        {user.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt={user.username}
+                            className="w-6 h-6 rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-white text-xs font-bold">
+                            {user.username.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-purple-400 font-medium">{user.username}</span>
                     </div>
                     <Link
-                      href="/feed"
-                      className="text-gray-300 hover:text-purple-400 transition-colors py-2 px-4 rounded-lg hover:bg-purple-500/10"
+                      href="/profile"
+                      className="text-gray-300 hover:text-purple-400 transition-colors py-2 px-4 rounded-lg hover:bg-purple-500/10 flex items-center gap-3"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      Mi Feed
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Perfil
                     </Link>
                     <button
                       onClick={() => {
                         logout();
                         setIsMenuOpen(false);
                       }}
-                      className="text-gray-300 hover:text-red-400 transition-colors py-2 px-4 rounded-lg hover:bg-red-500/10 text-left"
+                      className="text-gray-300 hover:text-red-400 transition-colors py-2 px-4 rounded-lg hover:bg-red-500/10 text-left flex items-center gap-3"
                     >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
                       Cerrar Sesión
                     </button>
                   </>

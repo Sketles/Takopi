@@ -54,11 +54,13 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
-          <h2 className="text-4xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-              TAKOPI
-            </span>
-          </h2>
+          <Link href="/">
+            <h2 className="text-4xl font-bold mb-2 hover:scale-105 transition-transform duration-300 cursor-pointer">
+              <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                TAKOPI
+              </span>
+            </h2>
+          </Link>
           <h3 className="text-2xl font-bold text-white mb-2">Únete a la Revolución</h3>
           <p className="text-sm text-gray-300">
             Crea tu cuenta y comienza tu viaje creativo

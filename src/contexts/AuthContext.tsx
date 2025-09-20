@@ -3,10 +3,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface User {
-  id: string;
+  _id: string;
   username: string;
   email: string;
   role: string;
+  avatar?: string;
+  bio?: string;
 }
 
 interface AuthContextType {
@@ -33,42 +35,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Simular autenticación (en producción sería una llamada a API)
-    if (email && password) {
-      const mockUser: User = {
-        id: '1',
-        username: email.split('@')[0],
-        email: email,
-        role: 'Explorer'
-      };
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-      setUser(mockUser);
-      localStorage.setItem('takopi_user', JSON.stringify(mockUser));
-      return true;
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData.user);
+        localStorage.setItem('takopi_user', JSON.stringify(userData.user));
+        localStorage.setItem('takopi_token', userData.token);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   };
 
   const register = async (username: string, email: string, password: string, role: string): Promise<boolean> => {
-    // Simular registro (en producción sería una llamada a API)
-    if (username && email && password) {
-      const mockUser: User = {
-        id: '1',
-        username: username,
-        email: email,
-        role: role
-      };
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, email, password, role }),
+      });
 
-      setUser(mockUser);
-      localStorage.setItem('takopi_user', JSON.stringify(mockUser));
-      return true;
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData.user);
+        localStorage.setItem('takopi_user', JSON.stringify(userData.user));
+        localStorage.setItem('takopi_token', userData.token);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Register error:', error);
+      return false;
     }
-    return false;
   };
 
   const logout = () => {
+    // Limpiar estado del usuario
     setUser(null);
+
+    // Limpiar localStorage completamente (más seguridad)
     localStorage.removeItem('takopi_user');
+    localStorage.removeItem('takopi_token');
+    localStorage.removeItem('takopi_debug_logs'); // Limpiar logs de debug también
+
+    // Redirigir a la página principal
+    window.location.href = '/';
   };
 
   return (

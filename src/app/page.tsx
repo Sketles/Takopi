@@ -18,10 +18,10 @@ export default function HomePage() {
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-12">
             <a
-              href="/feed"
+              href="/explore"
               className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25 animate-glow"
             >
-              Explorar Feed
+              Explorar Marketplace
             </a>
             <a
               href="/auth/register"
