@@ -5,11 +5,11 @@ import dynamic from 'next/dynamic';
 
 // Componente wrapper para el web component model-viewer
 const ModelViewerWrapper = dynamic(
-  () => Promise.resolve(function ModelViewerWrapper({ children, ...props }: any) {
+  () => Promise.resolve(function ModelViewerWrapper({ children, onLoad, onError, ...rest }: any) {
     const modelViewerRef = useRef<any>(null);
 
+    // Cargar el web component dinámicamente
     useEffect(() => {
-      // Cargar el web component dinámicamente
       const loadModelViewer = async () => {
         try {
           await import('@google/model-viewer');
@@ -17,13 +17,34 @@ const ModelViewerWrapper = dynamic(
           console.error('Error loading model-viewer:', error);
         }
       };
-
       loadModelViewer();
     }, []);
 
+    // Adjuntar listeners a eventos del web component
+    useEffect(() => {
+      const el = modelViewerRef.current;
+      if (!el) return;
+
+      const handleLoad = () => {
+        try { console.log('🟢 model-viewer event: load'); } catch { }
+        onLoad?.();
+      };
+      const handleError = (e: CustomEvent) => {
+        try { console.log('🔴 model-viewer event: error', e?.detail); } catch { }
+        onError?.(e);
+      };
+
+      el.addEventListener('load', handleLoad as any);
+      el.addEventListener('error', handleError as any);
+      return () => {
+        el.removeEventListener('load', handleLoad as any);
+        el.removeEventListener('error', handleError as any);
+      };
+    }, [onLoad, onError]);
+
     return React.createElement('model-viewer', {
       ref: modelViewerRef,
-      ...props
+      ...rest
     }, children);
   }),
   {
@@ -79,7 +100,7 @@ export default function ModelViewer3D({
   autoRotate = true,
   cameraControls = true,
   className = '',
-  fallbackImage = '/placeholder-3d.jpg',
+  fallbackImage = '/placeholders/placeholder-3d.jpg',
   onLoad,
   onError
 }: ModelViewer3DProps) {
@@ -105,11 +126,12 @@ export default function ModelViewer3D({
   const handleLoad = () => {
     setIsLoading(false);
     setHasError(false);
+    try { console.log('✅ model-viewer cargado:', { src }); } catch { }
     onLoad?.();
   };
 
   const handleError = (event: CustomEvent) => {
-    console.error('Error cargando modelo 3D:', event.detail);
+    console.error('❌ Error cargando modelo 3D:', { src, detail: event.detail });
     setIsLoading(false);
     setHasError(true);
     onError?.(event.detail?.message || 'Error cargando modelo 3D');
@@ -119,22 +141,18 @@ export default function ModelViewer3D({
   if (!isWebGLSupported || hasError) {
     return (
       <div
-        className={`flex items-center justify-center bg-gray-800/50 rounded-lg border border-gray-600 ${className}`}
+        className={`relative flex items-center justify-center bg-gray-900/70 rounded-lg border border-gray-600 ${className}`}
         style={{ width, height }}
       >
-        <div className="text-center">
-          <img
-            src={fallbackImage}
-            alt={alt}
-            className="w-full h-full object-cover rounded-lg opacity-50"
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-black/70 px-4 py-2 rounded-lg">
-              <p className="text-sm text-gray-300">
-                {!isWebGLSupported ? 'WebGL no soportado' : 'Error cargando modelo'}
-              </p>
-            </div>
-          </div>
+        <img
+          src={fallbackImage}
+          alt={alt}
+          className="absolute inset-0 w-full h-full object-cover rounded-lg opacity-30"
+        />
+        <div className="relative z-10 text-center">
+          <p className="text-sm text-gray-300">
+            {!isWebGLSupported ? 'WebGL no soportado' : 'No se pudo visualizar el modelo'}
+          </p>
         </div>
       </div>
     );
@@ -159,29 +177,23 @@ export default function ModelViewer3D({
         style={{
           width: '100%',
           height: '100%',
-          backgroundColor: '#1f2937'
+          backgroundColor: 'transparent'
         }}
         auto-rotate={autoRotate}
         camera-controls={cameraControls}
         loading="eager"
         reveal="auto"
-        shadow-intensity={1}
-        exposure={1}
+        shadow-intensity={0}
+        exposure={1.2}
         environment-image="/models/environment.hdr"
-        skybox-image="/models/skybox.hdr"
-        poster={fallbackImage}
+        camera-target="auto"
+        camera-orbit="auto"
+        autoplay
+        poster="none"
         onLoad={handleLoad}
         onError={handleError}
       >
-        {/* Slot para contenido de fallback */}
-        <div slot="poster" className="w-full h-full flex items-center justify-center bg-gray-800/50 rounded-lg">
-          <div className="text-center">
-            <div className="animate-pulse">
-              <div className="w-16 h-16 bg-purple-500/20 rounded-lg mx-auto mb-2"></div>
-              <p className="text-sm text-gray-400">Preparando modelo 3D...</p>
-            </div>
-          </div>
-        </div>
+        {/* Sin poster para evitar superposición negra */}
       </ModelViewerWrapper>
     </div>
   );
@@ -203,15 +215,29 @@ export function ModelViewerPreview({ src, alt = 'Vista previa 3D' }: { src: stri
 }
 
 // Componente específico para modal
-export function ModelViewerModal({ src, alt = 'Modelo 3D completo' }: { src: string; alt?: string }) {
+export function ModelViewerModal({
+  src,
+  alt = 'Modelo 3D completo',
+  width = "100%",
+  height = "520px",
+  autoRotate = true,
+  cameraControls = true
+}: {
+  src: string;
+  alt?: string;
+  width?: string;
+  height?: string;
+  autoRotate?: boolean;
+  cameraControls?: boolean;
+}) {
   return (
     <ModelViewer3D
       src={src}
       alt={alt}
-      width="100%"
-      height="500px"
-      autoRotate={true}
-      cameraControls={true}
+      width={width}
+      height={height}
+      autoRotate={autoRotate}
+      cameraControls={cameraControls}
       className="rounded-xl overflow-hidden"
     />
   );

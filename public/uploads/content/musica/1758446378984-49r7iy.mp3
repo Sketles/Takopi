@@ -1,0 +1,4 @@
+# Mock MP3 file for testing - Music
+# This is a lightweight mock file for testing purposes
+# Real MP3 files would be binary, but this serves for testing the upload system
+MOCK_MP3_FILE_FOR_MUSIC_TESTING

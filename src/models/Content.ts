@@ -10,12 +10,6 @@ export interface IContentFile {
   previewUrl?: string; // URL de preview (para imágenes/videos)
 }
 
-// Interfaz para los enlaces externos
-export interface IExternalLink {
-  title: string;
-  url: string;
-  description?: string;
-}
 
 // Interfaz principal del contenido
 export interface IContent extends Document {
@@ -53,9 +47,6 @@ export interface IContent extends Document {
   allowTips: boolean;
   allowCommissions: boolean;
 
-  // Enlaces externos
-  externalLinks: IExternalLink[];
-  notes?: string; // Notas adicionales del creador
 
   // Información del autor
   author: mongoose.Types.ObjectId; // Referencia al usuario
@@ -92,12 +83,6 @@ const ContentFileSchema = new Schema<IContentFile>({
   previewUrl: { type: String }
 }, { _id: false });
 
-// Esquema de enlaces externos
-const ExternalLinkSchema = new Schema<IExternalLink>({
-  title: { type: String, required: true },
-  url: { type: String, required: true },
-  description: { type: String }
-}, { _id: false });
 
 // Esquema principal
 const ContentSchema = new Schema<IContent>({
@@ -207,13 +192,6 @@ const ContentSchema = new Schema<IContent>({
     default: false
   },
 
-  // Enlaces externos
-  externalLinks: [ExternalLinkSchema],
-  notes: {
-    type: String,
-    trim: true,
-    maxlength: 1000
-  },
 
   // Autor
   author: {

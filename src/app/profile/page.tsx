@@ -7,6 +7,8 @@ import ProfileEditor from '@/components/profile/ProfileEditor';
 import InlineEditor from '@/components/profile/InlineEditor';
 import RoleSelector from '@/components/profile/RoleSelector';
 import DefaultCover from '@/components/shared/DefaultCover';
+import ProductDetailProfile from '@/components/ProductDetailProfile';
+import ProductEditor from '@/components/ProductEditor';
 import Link from 'next/link';
 
 // Datos de ejemplo para el perfil (solo para estadísticas por defecto)
@@ -38,6 +40,10 @@ export default function ProfilePage() {
   const [realStats, setRealStats] = useState<any>(null);
   const [userCreations, setUserCreations] = useState<any[]>([]);
   const [loadingCreations, setLoadingCreations] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isProductEditorOpen, setIsProductEditorOpen] = useState(false);
+  const [productToEdit, setProductToEdit] = useState<any>(null);
   const { user } = useAuth();
 
   const isOwnProfile = user?.username === currentProfile.username;
@@ -273,6 +279,95 @@ export default function ProfilePage() {
       console.error('Error al actualizar rol:', error);
       alert('Error al actualizar el rol');
     }
+  };
+
+  // Función para abrir el modal del producto
+  const handleProductClick = (product: any) => {
+    setSelectedProduct(product);
+    setIsProductModalOpen(true);
+  };
+
+  // Función para cerrar el modal del producto
+  const handleCloseProductModal = () => {
+    setIsProductModalOpen(false);
+    setSelectedProduct(null);
+  };
+
+  // Función para editar producto
+  const handleEditProduct = (product: any) => {
+    setProductToEdit(product);
+    setIsProductEditorOpen(true);
+    setIsProductModalOpen(false);
+  };
+
+  // Función para eliminar producto
+  const handleDeleteProduct = async (product: any) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar "${product.title}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('takopi_token');
+      const response = await fetch(`/api/content/${product.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        // Remover el producto de la lista de creaciones
+        setUserCreations(prev =>
+          prev.filter(creation => creation.id !== product.id)
+        );
+        alert('Producto eliminado exitosamente');
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error('Error al eliminar producto:', error);
+      alert('Error al eliminar el producto');
+    }
+  };
+
+  // Función para guardar cambios del producto
+  const handleSaveProduct = async (updatedProduct: any) => {
+    try {
+      const token = localStorage.getItem('takopi_token');
+      const response = await fetch(`/api/content/${updatedProduct.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedProduct),
+      });
+
+      if (response.ok) {
+        // Actualizar la lista de creaciones
+        setUserCreations(prev =>
+          prev.map(creation =>
+            creation.id === updatedProduct.id ? updatedProduct : creation
+          )
+        );
+        setIsProductEditorOpen(false);
+        setProductToEdit(null);
+        alert('Producto actualizado exitosamente');
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error('Error al actualizar producto:', error);
+      alert('Error al actualizar el producto');
+    }
+  };
+
+  // Función para cancelar edición
+  const handleCancelEdit = () => {
+    setIsProductEditorOpen(false);
+    setProductToEdit(null);
   };
 
   return (
@@ -613,7 +708,8 @@ export default function ProfilePage() {
                           return (
                             <div
                               key={creation.id}
-                              className="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 hover:border-green-500/50 transition-all duration-300 overflow-hidden hover:shadow-xl hover:shadow-green-500/10"
+                              onClick={() => handleProductClick(creation)}
+                              className="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 overflow-hidden hover:shadow-xl hover:shadow-purple-500/10 cursor-pointer"
                             >
                               {/* Imagen de la creación */}
                               <div className="aspect-square relative overflow-hidden">
@@ -739,6 +835,23 @@ export default function ProfilePage() {
         onSave={handleBannerUpdate}
         onCancel={() => setEditingType(null)}
         isOpen={editingType === 'banner'}
+      />
+
+      {/* Product Detail Modal */}
+      <ProductDetailProfile
+        product={selectedProduct}
+        isOpen={isProductModalOpen}
+        onClose={handleCloseProductModal}
+        onEdit={handleEditProduct}
+        onDelete={handleDeleteProduct}
+      />
+
+      {/* Product Editor Modal */}
+      <ProductEditor
+        product={productToEdit}
+        isOpen={isProductEditorOpen}
+        onSave={handleSaveProduct}
+        onCancel={handleCancelEdit}
       />
 
     </Layout>

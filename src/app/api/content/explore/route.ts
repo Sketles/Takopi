@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import Content from '@/models/Content';
+// Importar el modelo User para registrar el esquema en Mongoose
+import '@/models/User';
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,6 +42,9 @@ export async function GET(request: NextRequest) {
       type: getContentTypeDisplay(item.contentType),
       category: getCategoryDisplay(item.category),
       image: getContentImage(item),
+      // Incluir archivos y cover para que el modal pueda decidir el preview correcto
+      files: item.files || [],
+      coverImage: item.coverImage || null,
       likes: item.likes || 0,
       price: formatPrice(item.price, item.isFree),
       license: item.license || 'Personal',
@@ -158,38 +163,38 @@ function generateDefaultCover(contentType: string): string {
     'avatares': {
       gradient: 'from-green-500 to-teal-500',
       icon: '👤',
-      placeholder: '/placeholder-avatar.jpg'
+      placeholder: '/placeholders/placeholder-avatar.jpg'
     },
     'modelos3d': {
       gradient: 'from-blue-500 to-cyan-500',
       icon: '🧩',
-      placeholder: '/placeholder-3d.jpg'
+      placeholder: '/placeholders/placeholder-3d.jpg'
     },
     'musica': {
       gradient: 'from-purple-500 to-pink-500',
       icon: '🎵',
-      placeholder: '/placeholder-music.jpg'
+      placeholder: '/placeholders/placeholder-music.jpg'
     },
     'texturas': {
       gradient: 'from-indigo-500 to-purple-500',
       icon: '🖼️',
-      placeholder: '/placeholder-texture.jpg'
+      placeholder: '/placeholders/placeholder-texture.jpg'
     },
     'animaciones': {
       gradient: 'from-orange-500 to-red-500',
       icon: '🎬',
-      placeholder: '/placeholder-animation.jpg'
+      placeholder: '/placeholders/placeholder-animation.jpg'
     },
     'OBS': {
       gradient: 'from-gray-500 to-blue-500',
       icon: '📺',
-      placeholder: '/placeholder-widget.jpg',
+      placeholder: '/placeholders/placeholder-widget.jpg',
       customLogo: '/logos/OBS_Studio_logo.png'
     },
     'colecciones': {
       gradient: 'from-yellow-500 to-orange-500',
       icon: '📦',
-      placeholder: '/placeholder-collection.jpg'
+      placeholder: '/placeholders/placeholder-collection.jpg'
     }
   };
 

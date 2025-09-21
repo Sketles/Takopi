@@ -1,0 +1,4 @@
+# Mock ZIP file for testing - Collection
+# This is a lightweight mock file for testing purposes
+# Real ZIP files would be binary, but this serves for testing the upload system
+MOCK_ZIP_FILE_FOR_COLLECTION_TESTING

@@ -4,6 +4,7 @@ import Layout from '@/components/shared/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import CardPreview from '@/components/CardPreview';
 
 // Tipos de contenido con iconos y metáforas visuales - Categorías finales
 const contentTypes = [
@@ -14,7 +15,8 @@ const contentTypes = [
     icon: '👤',
     metaphor: '👤',
     color: 'from-green-500 to-teal-500',
-    fileTypes: ['.fbx', '.vrm', '.glb', '.obj'],
+    // Aceptamos formatos del visor: priorizar .glb/.gltf; .vrm permitido para avatares
+    fileTypes: ['.glb', '.gltf', '.vrm'],
     maxSize: 50,
     previewComponent: 'model-viewer'
   },
@@ -25,7 +27,8 @@ const contentTypes = [
     icon: '🧩',
     metaphor: '🧩',
     color: 'from-blue-500 to-cyan-500',
-    fileTypes: ['.fbx', '.obj', '.blend', '.stl'],
+    // Solo formatos soportados por el visor directamente
+    fileTypes: ['.glb', '.gltf'],
     maxSize: 100,
     previewComponent: 'model-viewer'
   },
@@ -207,7 +210,6 @@ export default function UploadPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
-  console.log('🎭 UploadPage renderizado - user:', user?.username, 'isLoading:', isLoading);
 
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -222,11 +224,10 @@ export default function UploadPage() {
     suggestedTags: [] as string[],
     tags: [] as string[],
     customTags: [] as string[],
+    currentTagInput: '',
     coverImage: null as File | null,
     coverImageFile: null as File | null,
     additionalImages: [] as File[],
-    notes: '',
-    externalLinks: '',
     price: '0',
     isFree: true,
     license: 'personal',
@@ -242,10 +243,6 @@ export default function UploadPage() {
   const [editingFile, setEditingFile] = useState<number | null>(null);
   const [projectId] = useState(Math.floor(Math.random() * 1000));
 
-  // Debug: Log formData changes
-  useEffect(() => {
-    console.log('🔄 formData actualizado:', formData);
-  }, [formData]);
 
   // Redirigir si no está autenticado
   if (!isLoading && !user) {
@@ -425,35 +422,13 @@ export default function UploadPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log('🚀 Iniciando envío del formulario...');
-    console.log('📊 Estado completo de formData:', formData);
-
-    // Verificar que tenemos los datos mínimos requeridos
-    console.log('🔍 Validando datos del formulario:', {
-      provisionalName: formData.provisionalName,
-      description: formData.description,
-      contentType: formData.contentType,
-      category: formData.category,
-      files: formData.files.length,
-      subcategory: formData.subcategory
-    });
-
     // Verificar que estamos en el paso correcto
     if (currentStep !== 7) {
-      console.error('❌ No estás en el paso final:', currentStep);
       alert('Por favor completa todos los pasos del formulario');
       return;
     }
 
     if (!formData.provisionalName || !formData.description || !formData.contentType || !formData.category || formData.files.length === 0) {
-      console.error('❌ Faltan datos requeridos:', {
-        provisionalName: formData.provisionalName,
-        description: formData.description,
-        contentType: formData.contentType,
-        category: formData.category,
-        files: formData.files.length,
-        currentStep: currentStep
-      });
       alert('Por favor completa todos los campos requeridos');
       setUploading(false);
       return;
@@ -469,63 +444,43 @@ export default function UploadPage() {
         return;
       }
 
+
+      // PASO 1: Subir archivos reales al servidor usando la nueva API
+      const uploadFormData = new FormData();
+
+      // Agregar archivos principales
+      formData.files.forEach((file, index) => {
+        uploadFormData.append('files', file);
+      });
+
+      // Agregar imagen de portada si existe
+      if (formData.coverImageFile) {
+        uploadFormData.append('coverImage', formData.coverImageFile);
+      }
+
+      // Agregar metadata
+      uploadFormData.append('contentType', formData.contentType);
+
       console.log('📤 Subiendo archivos...');
 
-      // Subir archivos reales al servidor
-      const uploadedFiles = [];
-      for (const file of formData.files) {
-        const formDataToUpload = new FormData();
-        formDataToUpload.append('file', file);
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: uploadFormData
+      });
 
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: formDataToUpload
-        });
+      const uploadResult = await uploadResponse.json();
 
-        if (!uploadResponse.ok) {
-          throw new Error(`Error al subir archivo: ${file.name}`);
-        }
-
-        const uploadResult = await uploadResponse.json();
-        uploadedFiles.push({
-          name: uploadResult.data.fileName,
-          originalName: uploadResult.data.originalName,
-          size: uploadResult.data.size,
-          type: uploadResult.data.type,
-          url: uploadResult.data.url
-        });
-
-        console.log(`✅ Archivo subido: ${file.name} -> ${uploadResult.data.fileName}`);
+      if (!uploadResponse.ok) {
+        throw new Error(uploadResult.error || 'Error al subir archivos');
       }
 
-      console.log('📁 Todos los archivos subidos exitosamente');
+      console.log('✅ Archivos subidos:', uploadResult.data);
 
-      // Subir imagen de portada si existe
-      let coverImageUrl = '';
-      if (formData.coverImageFile) {
-        console.log('🖼️ Subiendo imagen de portada...');
-        const coverFormData = new FormData();
-        coverFormData.append('file', formData.coverImageFile);
-
-        const coverResponse = await fetch('/api/upload', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: coverFormData
-        });
-
-        if (coverResponse.ok) {
-          const coverResult = await coverResponse.json();
-          coverImageUrl = coverResult.data.url;
-          console.log(`✅ Portada subida: ${coverResult.data.fileName}`);
-        } else {
-          console.warn('⚠️ Error al subir portada, continuando sin ella');
-        }
-      }
+      const uploadedFiles = uploadResult.data.files;
+      const coverImageUrl = uploadResult.data.coverImage;
 
       // Preparar datos para la API
       const submitData = {
@@ -547,13 +502,9 @@ export default function UploadPage() {
         customTags: formData.customTags,
         visibility: formData.visibility,
         allowTips: formData.allowTips,
-        allowCommissions: formData.allowCommissions,
-        externalLinks: formData.externalLinks,
-        notes: formData.notes
+        allowCommissions: formData.allowCommissions
       };
 
-      console.log('📤 Enviando datos:', submitData);
-      console.log('🔑 Token:', token ? 'Presente' : 'Ausente');
 
       const response = await fetch('/api/content', {
         method: 'POST',
@@ -565,22 +516,35 @@ export default function UploadPage() {
       });
 
       const result = await response.json();
-      console.log('📥 Respuesta del servidor:', result);
-      console.log('📊 Status:', response.status);
 
       if (!response.ok) {
         throw new Error(result.error || 'Error al subir la creación');
       }
 
-      alert('🎉 ¡Listo, tu creación ya está en Takopi!');
+      // Redirigir directamente sin popup
       router.push('/explore');
 
     } catch (error) {
       console.error('Error al subir la creación:', error);
-      alert(`Error al subir la creación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      // Solo log del error, no popup para las pruebas
+      console.log(`Error al subir la creación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     } finally {
       setUploading(false);
     }
+  };
+
+  // Función para obtener el placeholder del nombre según la categoría
+  const getPlaceholderForCategory = (contentType: string) => {
+    const placeholders = {
+      'avatares': 'Ej: Mi Avatar Kawaii 2024',
+      'modelos3d': 'Ej: Casa Moderna Minimalista',
+      'musica': 'Ej: Loops Relajantes para Stream',
+      'texturas': 'Ej: Pack Texturas Realistas',
+      'animaciones': 'Ej: Bailes de TikTok 2024',
+      'OBS': 'Ej: Overlay Gaming Neon',
+      'colecciones': 'Ej: Pack Completo Anime'
+    };
+    return placeholders[contentType as keyof typeof placeholders] || 'Ej: Mi Creación Única';
   };
 
   const getStepTitle = () => {
@@ -1058,7 +1022,7 @@ export default function UploadPage() {
                     }
                   }}
                   className="w-full px-4 py-4 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-green-400 focus:outline-none text-lg"
-                  placeholder="Ej: Proyecto sin título #123"
+                  placeholder={getPlaceholderForCategory(formData.contentType)}
                   required
                 />
                 <p className="text-gray-400 text-sm mt-2">
@@ -1128,53 +1092,107 @@ export default function UploadPage() {
                 </div>
 
                 <div>
-                  <label className="block text-white font-medium mb-3">Hashtags sugeridos</label>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {formData.suggestedTags.map((tag, index) => {
-                      const isSelected = formData.customTags.includes(tag);
-                      return (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => {
-                            if (isSelected) {
-                              // Remover tag si ya está seleccionado
-                              setFormData({
-                                ...formData,
-                                customTags: formData.customTags.filter(t => t !== tag)
-                              });
-                            } else {
-                              // Agregar tag si no está seleccionado
-                              setFormData({
-                                ...formData,
-                                customTags: [...formData.customTags, tag]
-                              });
-                            }
-                          }}
-                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 transform hover:scale-105 ${isSelected
-                            ? 'bg-green-500/20 text-green-300 border border-green-500/50 shadow-lg shadow-green-500/25'
-                            : 'bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 hover:border-purple-400/50'
-                            }`}
-                        >
-                          #{tag}
-                        </button>
-                      );
-                    })}
+                  <label className="block text-white font-medium mb-3">Etiquetas y hashtags</label>
+
+                  {/* Input principal para escribir hashtags */}
+                  <div className="relative mb-4">
+                    <input
+                      type="text"
+                      onChange={(e) => {
+                        const inputValue = e.target.value;
+                        // No hacer nada mientras escribes, solo guardar el valor
+                        setFormData({ ...formData, currentTagInput: inputValue });
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ',') {
+                          e.preventDefault();
+                          const input = e.target as HTMLInputElement;
+                          const newTag = input.value.trim().replace('#', '');
+                          if (newTag && !formData.customTags.includes(newTag) && formData.customTags.length < 10) {
+                            setFormData({
+                              ...formData,
+                              customTags: [...formData.customTags, newTag],
+                              currentTagInput: ''
+                            });
+                            // Limpiar el input
+                            input.value = '';
+                          }
+                        }
+                      }}
+                      className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-green-400 focus:outline-none"
+                      placeholder="Escribe hashtags separados por espacios o comas... (ej: gaming texture seamless)"
+                    />
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <span className="text-gray-500 text-sm">#{formData.customTags.length}/10</span>
+                    </div>
                   </div>
-                  <input
-                    type="text"
-                    value={formData.customTags.join(', ')}
-                    onChange={(e) => {
-                      const tagsArray = e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag);
-                      setFormData({ ...formData, customTags: tagsArray });
-                    }}
-                    onKeyDown={preventFormSubmit}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-green-400 focus:outline-none"
-                    placeholder="Agrega más hashtags separados por comas..."
-                  />
-                  <p className="text-gray-400 text-sm mt-2">
-                    💡 Haz clic en los hashtags sugeridos para agregarlos automáticamente
-                  </p>
+
+                  {/* Hashtags seleccionados */}
+                  {formData.customTags.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-gray-400 text-sm mb-2">Etiquetas seleccionadas:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.customTags.map((tag, index) => (
+                          <div
+                            key={index}
+                            className="group flex items-center gap-1 px-3 py-1.5 bg-green-500/20 text-green-300 border border-green-500/50 rounded-full text-sm font-medium"
+                          >
+                            <span>#{tag}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData({
+                                  ...formData,
+                                  customTags: formData.customTags.filter((_, i) => i !== index)
+                                });
+                              }}
+                              className="ml-1 text-green-400 hover:text-red-400 transition-colors"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Hashtags sugeridos */}
+                  {formData.suggestedTags.length > 0 && (
+                    <div>
+                      <p className="text-gray-400 text-sm mb-2">Sugerencias populares:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.suggestedTags
+                          .filter(tag => !formData.customTags.includes(tag))
+                          .slice(0, 8)
+                          .map((tag, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() => {
+                                if (!formData.customTags.includes(tag) && formData.customTags.length < 10) {
+                                  setFormData({
+                                    ...formData,
+                                    customTags: [...formData.customTags, tag]
+                                  });
+                                }
+                              }}
+                              className="px-3 py-1.5 bg-gray-700/50 text-gray-300 border border-gray-600 rounded-full text-sm font-medium hover:bg-gray-600/50 hover:border-gray-500 transition-all duration-200"
+                            >
+                              + #{tag}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between mt-3">
+                    <p className="text-gray-400 text-xs">
+                      💡 Usa hashtags relevantes para mejorar la visibilidad de tu contenido
+                    </p>
+                    <p className="text-gray-500 text-xs">
+                      {formData.customTags.length}/10 etiquetas
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -1198,96 +1216,114 @@ export default function UploadPage() {
             </div>
           )}
 
-          {/* Step 5: Extras opcionales (adornar) */}
+          {/* Step 5: Personalizar tarjeta */}
           {currentStep === 5 && (
             <div className="bg-black/40 backdrop-blur-md rounded-2xl border border-purple-500/20 p-8">
               <h2 className="text-3xl font-bold text-white mb-2 text-center">
-                {getStepTitle()}
+                Adorna tu producto
               </h2>
               <p className="text-gray-300 text-center mb-8">
-                {getStepMotivation()}
+                ¡Excelente! Tu producto se ve profesional 💅
               </p>
 
-              <div className="max-w-2xl mx-auto space-y-6">
-                {/* Campo de portada */}
-                <div>
-                  <label className="block text-white font-medium mb-3">
-                    Imagen de portada <span className="text-gray-400">(opcional)</span>
-                  </label>
-                  <p className="text-gray-400 text-sm mb-4">
-                    Sube una imagen que represente tu creación. Si no subes nada, se usará un fondo con gradiente e icono automático.
-                  </p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Columna izquierda - Formulario */}
+                <div className="space-y-6">
+                  {/* Campo de portada */}
+                  <div>
+                    <label className="block text-white font-medium mb-3">
+                      Imagen de portada <span className="text-gray-400">(opcional)</span>
+                    </label>
+                    <p className="text-gray-400 text-sm mb-4">
+                      Sube una imagen que represente tu creación. Si no subes nada, se usará un fondo con gradiente e icono automático.
+                    </p>
 
-                  {formData.coverImageFile ? (
-                    <div className="relative">
-                      <img
-                        src={URL.createObjectURL(formData.coverImageFile)}
-                        alt="Portada"
-                        className="w-full h-48 object-cover rounded-xl border border-gray-600"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, coverImageFile: null })}
-                        className="absolute top-2 right-2 w-8 h-8 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="border-2 border-dashed border-gray-600 rounded-xl p-8 text-center hover:border-green-400 transition-colors">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            setFormData({ ...formData, coverImageFile: file });
-                          }
-                        }}
-                        className="hidden"
-                        id="cover-upload"
-                      />
-                      <label
-                        htmlFor="cover-upload"
-                        className="cursor-pointer flex flex-col items-center space-y-3"
-                      >
-                        <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center">
-                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                          </svg>
+                    {formData.coverImageFile ? (
+                      <div className="flex justify-center">
+                        <div className="relative w-48 h-48">
+                          <img
+                            src={URL.createObjectURL(formData.coverImageFile)}
+                            alt="Portada"
+                            className="w-full h-full object-cover rounded-xl border border-gray-600 shadow-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, coverImageFile: null })}
+                            className="absolute top-3 right-3 w-8 h-8 bg-red-600/90 hover:bg-red-700 rounded-full flex items-center justify-center text-white transition-all duration-200 shadow-lg backdrop-blur-sm"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                          <div className="absolute bottom-3 left-3 bg-black/70 text-white px-2 py-1 rounded text-xs backdrop-blur-sm">
+                            Vista previa
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-white font-medium">Subir imagen de portada</p>
-                          <p className="text-gray-400 text-sm">PNG, JPG, GIF hasta 10MB</p>
+                      </div>
+                    ) : (
+                      <div className="flex justify-center">
+                        <div className="w-48 h-48 border-2 border-dashed border-gray-600 rounded-xl hover:border-green-400 transition-all duration-300 group">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setFormData({ ...formData, coverImageFile: file });
+                              }
+                            }}
+                            className="hidden"
+                            id="cover-upload"
+                          />
+                          <label
+                            htmlFor="cover-upload"
+                            className="w-full h-full cursor-pointer flex flex-col items-center justify-center space-y-3 p-4"
+                          >
+                            <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-600 rounded-xl flex items-center justify-center group-hover:from-green-600 group-hover:to-emerald-600 transition-all duration-300 shadow-lg">
+                              <svg className="w-6 h-6 text-gray-300 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-white font-medium group-hover:text-green-300 transition-colors text-sm">Subir imagen de portada</p>
+                              <p className="text-gray-400 text-xs mt-1">PNG, JPG, GIF hasta 10MB</p>
+                              <p className="text-gray-500 text-xs mt-1">Imagen cuadrada recomendada</p>
+                            </div>
+                          </label>
                         </div>
-                      </label>
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Descripción breve */}
+                  <div>
+                    <label className="block text-white font-medium mb-3">Descripción breve</label>
+                    <textarea
+                      value={formData.shortDescription || ''}
+                      onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+                      onKeyDown={preventFormSubmitExceptShift}
+                      className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-green-400 focus:outline-none h-24 resize-none"
+                      placeholder="Descripción corta para vista previa..."
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-white font-medium mb-3">Notas personales</label>
-                  <textarea
-                    value={formData.notes || ''}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    onKeyDown={preventFormSubmitExceptShift}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-green-400 focus:outline-none h-20 resize-none"
-                    placeholder="Notas internas, instrucciones especiales, etc... (opcional)"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-white font-medium mb-3">Links externos</label>
-                  <input
-                    type="text"
-                    value={formData.externalLinks || ''}
-                    onChange={(e) => setFormData({ ...formData, externalLinks: e.target.value })}
-                    onKeyDown={preventFormSubmit}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-green-400 focus:outline-none"
-                    placeholder="YouTube, Instagram, Twitter... (opcional)"
-                  />
+                {/* Columna derecha - Vista previa */}
+                <div className="flex flex-col items-center">
+                  <h3 className="text-white font-medium mb-4">Vista previa de tu tarjeta</h3>
+                  <div className="w-full max-w-xs">
+                    <CardPreview
+                      title={formData.provisionalName || 'Sin título'}
+                      description={formData.description}
+                      shortDescription={formData.shortDescription}
+                      contentType={formData.contentType}
+                      category={formData.category}
+                      price={formData.price}
+                      isFree={formData.isFree}
+                      coverImage={formData.coverImageFile}
+                      tags={formData.tags}
+                    />
+                  </div>
                 </div>
               </div>
 

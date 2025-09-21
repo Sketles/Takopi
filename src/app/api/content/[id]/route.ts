@@ -116,7 +116,6 @@ export async function PUT(
     if (body.customTags !== undefined) {
       updateData.customTags = body.customTags.map((tag: string) => tag.trim().toLowerCase());
     }
-    if (body.notes !== undefined) updateData.notes = body.notes?.trim();
 
     // Actualizar estado si es necesario
     if (body.visibility === 'draft') {
@@ -168,19 +167,21 @@ export async function DELETE(
       );
     }
 
-    // Soft delete - cambiar status a archived
-    const content = await Content.findByIdAndUpdate(
-      id,
-      { status: 'archived' },
-      { new: true }
-    );
-
+    // Buscar el contenido antes de eliminar
+    const content = await Content.findById(id);
     if (!content) {
       return NextResponse.json(
         { success: false, error: 'Publicación no encontrada' },
         { status: 404 }
       );
     }
+
+    // TODO: Eliminar archivos físicos del servidor
+    // Por ahora solo eliminamos de la base de datos
+    // En el futuro se puede agregar lógica para eliminar archivos de public/uploads
+
+    // Eliminar completamente de la base de datos
+    await Content.findByIdAndDelete(id);
 
     return NextResponse.json({
       success: true,

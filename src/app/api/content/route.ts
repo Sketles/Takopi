@@ -165,29 +165,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Procesar archivos (por ahora simulamos URLs)
+    // Procesar archivos - ahora con URLs reales
     const processedFiles = body.files.map((file: any) => ({
       name: file.name,
       originalName: file.originalName || file.name,
       size: file.size,
       type: file.type,
-      url: `/uploads/${file.name}`, // TODO: Implementar subida real de archivos
-      previewUrl: file.type.startsWith('image/') ? `/uploads/${file.name}` : undefined
+      url: file.url, // URL real del archivo subido
+      previewUrl: file.previewUrl || (file.type.startsWith('image/') ? file.url : undefined)
     }));
 
     console.log('📁 Archivos procesados:', JSON.stringify(processedFiles, null, 2));
 
-    // Procesar enlaces externos
-    const externalLinks = [];
-    if (body.externalLinks) {
-      const linksArray = body.externalLinks.split('\n').filter((link: string) => link.trim());
-      for (const link of linksArray) {
-        const [title, url] = link.split('|').map((s: string) => s.trim());
-        if (title && url) {
-          externalLinks.push({ title, url });
-        }
-      }
-    }
 
     // Crear la publicación
     const contentData = {
@@ -215,8 +204,6 @@ export async function POST(request: NextRequest) {
       visibility: body.visibility || 'public',
       allowTips: body.allowTips || false,
       allowCommissions: body.allowCommissions || false,
-      externalLinks,
-      notes: body.notes?.trim(),
       author: decoded.userId,
       authorUsername: user.username,
       status: body.visibility === 'draft' ? 'draft' : 'published'

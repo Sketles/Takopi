@@ -4,18 +4,21 @@ import { useState, useEffect, useRef } from 'react';
 import { ModelViewerModal } from './ModelViewer3D';
 import DefaultCover from './shared/DefaultCover';
 
-interface ProductDetailModalProps {
+interface ProductDetailProfileProps {
   product: any;
   isOpen: boolean;
   onClose: () => void;
+  onEdit?: (product: any) => void;
+  onDelete?: (product: any) => void;
 }
 
-export default function ProductDetailModal({ product, isOpen, onClose }: ProductDetailModalProps) {
+export default function ProductDetailProfile({ product, isOpen, onClose, onEdit, onDelete }: ProductDetailProfileProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [likes, setLikes] = useState(product?.likes || 0);
   const [newComment, setNewComment] = useState('');
   const [imageError, setImageError] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [comments, setComments] = useState([
     {
       id: 1,
@@ -80,6 +83,29 @@ export default function ProductDetailModal({ product, isOpen, onClose }: Product
     }
   };
 
+  // Función para editar producto
+  const handleEdit = () => {
+    onEdit?.(product);
+    onClose();
+  };
+
+  // Función para confirmar eliminación
+  const handleDeleteConfirm = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  // Función para cancelar eliminación
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+  };
+
+  // Función para eliminar producto
+  const handleDelete = () => {
+    onDelete?.(product);
+    setShowDeleteConfirm(false);
+    onClose();
+  };
+
   // Utilidad: detectar si una URL apunta probablemente a una imagen
   const isLikelyImageUrl = (url?: string): boolean => {
     if (!url) return false;
@@ -97,7 +123,7 @@ export default function ProductDetailModal({ product, isOpen, onClose }: Product
   // Buscar un archivo 3D válido dentro de los files
   const getModelUrl = (): string | null => {
     const files = product?.files || [];
-    console.log('🧩 Archivos recibidos para el modal:', files);
+    console.log('🧩 Archivos recibidos para el modal de perfil:', files);
     console.log('🧩 Product completo:', product);
 
     const model = files.find((f: any) => {
@@ -151,14 +177,35 @@ export default function ProductDetailModal({ product, isOpen, onClose }: Product
           {/* Header con botón cerrar */}
           <div className="flex items-center justify-between p-6 border-b border-purple-500/20">
             <h1 className="text-2xl font-bold text-white">{product.title}</h1>
-            <button
-              onClick={onClose}
-              className="w-10 h-10 bg-red-500/20 hover:bg-red-500/30 rounded-full flex items-center justify-center text-red-400 hover:text-red-300 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-3">
+              {onEdit && (
+                <button
+                  onClick={handleEdit}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
+                >
+                  Editar Producto
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Eliminar
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="w-10 h-10 bg-gray-500/20 hover:bg-gray-500/30 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-300 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Contenido scrolleable */}
@@ -228,15 +275,23 @@ export default function ProductDetailModal({ product, isOpen, onClose }: Product
                   </div>
                 </div>
 
-                {/* Precio y botón comprar */}
+                {/* Precio y botón de gestión */}
                 <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-sm rounded-2xl p-6 border border-green-500/20">
                   <div className="text-center">
                     <div className="text-4xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent mb-4">
                       {product.isFree ? 'GRATIS' : (product.price || '0')}
                     </div>
-                    <button className="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-green-500/25">
-                      {product.isFree ? 'Descargar Gratis' : 'Comprar Ahora'}
-                    </button>
+                    <div className="space-y-3">
+                      <button
+                        onClick={handleEdit}
+                        className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-bold text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25"
+                      >
+                        Editar Producto
+                      </button>
+                      <button className="w-full py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-medium hover:from-gray-700 hover:to-gray-800 transition-all duration-300">
+                        Ver Estadísticas
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -279,13 +334,28 @@ export default function ProductDetailModal({ product, isOpen, onClose }: Product
                   </button>
                 </div>
 
-                {/* Botón secundario */}
-                <a
-                  href={`/product/${product.id}`}
-                  className="block text-center w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25"
-                >
-                  Ir a página del producto →
-                </a>
+                {/* Información adicional */}
+                <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm rounded-2xl p-4 border border-blue-500/20">
+                  <h4 className="font-bold text-white mb-3">Información del Producto</h4>
+                  <div className="space-y-2 text-sm text-gray-300">
+                    <div className="flex justify-between">
+                      <span>Estado:</span>
+                      <span className="text-green-400">Publicado</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Creado:</span>
+                      <span>{new Date(product.createdAt).toLocaleDateString('es-CL')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Última actualización:</span>
+                      <span>{new Date(product.updatedAt || product.createdAt).toLocaleDateString('es-CL')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>ID del producto:</span>
+                      <span className="text-xs text-gray-400">{product.id}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -299,11 +369,11 @@ export default function ProductDetailModal({ product, isOpen, onClose }: Product
                     <p className="text-gray-300 leading-relaxed">
                       {product.description || 'No hay descripción disponible para este producto.'}
                     </p>
-                    <p className="text-gray-300 leading-relaxed">
-                      Este es un contenido de alta calidad que ha sido cuidadosamente creado y revisado.
-                      Perfecto para proyectos profesionales y uso personal. Incluye todos los archivos
-                      necesarios y documentación completa.
-                    </p>
+                    {product.shortDescription && (
+                      <p className="text-gray-300 leading-relaxed">
+                        <strong>Descripción breve:</strong> {product.shortDescription}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -435,6 +505,50 @@ export default function ProductDetailModal({ product, isOpen, onClose }: Product
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmación de eliminación */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-gradient-to-br from-gray-900/95 to-red-900/95 backdrop-blur-xl rounded-2xl border border-red-500/30 shadow-2xl">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Eliminar Producto</h3>
+                  <p className="text-sm text-gray-400">Esta acción no se puede deshacer</p>
+                </div>
+              </div>
+
+              <p className="text-gray-300 mb-6">
+                ¿Estás seguro de que quieres eliminar <strong className="text-white">"{product.title}"</strong>?
+                Esta acción eliminará permanentemente el producto y todos sus archivos asociados.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleDeleteCancel}
+                  className="flex-1 py-3 bg-gray-600 text-white rounded-xl font-medium hover:bg-gray-700 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
