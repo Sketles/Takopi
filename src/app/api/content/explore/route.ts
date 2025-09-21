@@ -17,25 +17,9 @@ export async function GET(request: NextRequest) {
     let filter: any = { status: 'published' };
 
     if (category !== 'all') {
-      // Mapear categorías de la UI a categorías de la BD
-      const categoryMap: { [key: string]: string } = {
-        'Todo': '',
-        'Juegos': 'games',
-        'Modelos 3D': 'models',
-        'Texturas': 'textures',
-        'Colecciones': 'collections',
-        'Vehículos': 'vehicles',
-        'Arquitectura': 'architecture',
-        'Personajes': 'characters'
-      };
-
-      if (categoryMap[category]) {
-        if (categoryMap[category] === '') {
-          // Si es "Todo", no agregar filtro de categoría
-        } else {
-          filter.contentType = categoryMap[category];
-        }
-      }
+      // El parámetro category ya viene mapeado desde el frontend
+      // Solo necesitamos usarlo directamente como contentType
+      filter.contentType = category;
     }
 
     // Obtener contenido con paginación
@@ -91,14 +75,13 @@ export async function GET(request: NextRequest) {
 // Función para obtener el tipo de contenido para mostrar
 function getContentTypeDisplay(contentType: string): string {
   const typeMap: { [key: string]: string } = {
-    'models': '3D Model',
-    'textures': 'Texture Pack',
-    'music': 'Music',
-    'avatars': 'Avatar',
-    'animations': 'Animation',
-    'obs': 'OBS Widget',
-    'collections': 'Collection',
-    'games': 'Game'
+    'avatares': 'Avatar',
+    'modelos3d': '3D Model',
+    'musica': 'Music',
+    'texturas': 'Texture Pack',
+    'animaciones': 'Animation',
+    'OBS': 'OBS Widget',
+    'colecciones': 'Collection'
   };
   return typeMap[contentType] || 'Content';
 }
@@ -165,8 +148,56 @@ function getContentImage(content: any): string {
     return content.additionalImages[0];
   }
 
-  // Imagen por defecto basada en el tipo de contenido
-  return '/placeholder-3d.jpg';
+  // Generar portada por defecto con gradiente e icono
+  return generateDefaultCover(content.contentType);
+}
+
+// Función para generar portada por defecto con gradiente e icono
+function generateDefaultCover(contentType: string): string {
+  const coverConfig = {
+    'avatares': {
+      gradient: 'from-green-500 to-teal-500',
+      icon: '👤',
+      placeholder: '/placeholder-avatar.jpg'
+    },
+    'modelos3d': {
+      gradient: 'from-blue-500 to-cyan-500',
+      icon: '🧩',
+      placeholder: '/placeholder-3d.jpg'
+    },
+    'musica': {
+      gradient: 'from-purple-500 to-pink-500',
+      icon: '🎵',
+      placeholder: '/placeholder-music.jpg'
+    },
+    'texturas': {
+      gradient: 'from-indigo-500 to-purple-500',
+      icon: '🖼️',
+      placeholder: '/placeholder-texture.jpg'
+    },
+    'animaciones': {
+      gradient: 'from-orange-500 to-red-500',
+      icon: '🎬',
+      placeholder: '/placeholder-animation.jpg'
+    },
+    'OBS': {
+      gradient: 'from-gray-500 to-blue-500',
+      icon: '📺',
+      placeholder: '/placeholder-widget.jpg',
+      customLogo: '/logos/OBS_Studio_logo.png'
+    },
+    'colecciones': {
+      gradient: 'from-yellow-500 to-orange-500',
+      icon: '📦',
+      placeholder: '/placeholder-collection.jpg'
+    }
+  };
+
+  const config = coverConfig[contentType as keyof typeof coverConfig] || coverConfig['modelos3d'];
+
+  // Por ahora retornamos el placeholder, pero en el futuro se podría generar
+  // una imagen SVG dinámica con gradiente e icono
+  return config.placeholder;
 }
 
 // Función para formatear el precio

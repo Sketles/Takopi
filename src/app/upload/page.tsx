@@ -5,10 +5,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Tipos de contenido con iconos y metáforas visuales
+// Tipos de contenido con iconos y metáforas visuales - Categorías finales
 const contentTypes = [
   {
-    id: 'models',
+    id: 'avatares',
+    name: 'Avatares',
+    description: 'Para VTubers, VRChat o Roblox',
+    icon: '👤',
+    metaphor: '👤',
+    color: 'from-green-500 to-teal-500',
+    fileTypes: ['.fbx', '.vrm', '.glb', '.obj'],
+    maxSize: 50,
+    previewComponent: 'model-viewer'
+  },
+  {
+    id: 'modelos3d',
     name: 'Modelos 3D',
     description: 'Objetos, props, escenarios y decoraciones',
     icon: '🧩',
@@ -19,7 +30,18 @@ const contentTypes = [
     previewComponent: 'model-viewer'
   },
   {
-    id: 'textures',
+    id: 'musica',
+    name: 'Música',
+    description: 'Loops, FX, ambientes y soundtracks',
+    icon: '🎵',
+    metaphor: '🎵',
+    color: 'from-purple-500 to-pink-500',
+    fileTypes: ['.mp3', '.wav', '.ogg', '.flac'],
+    maxSize: 25,
+    previewComponent: 'audio-player'
+  },
+  {
+    id: 'texturas',
     name: 'Texturas',
     description: 'Imágenes 4K, sprites, ilustraciones',
     icon: '🖼️',
@@ -30,29 +52,7 @@ const contentTypes = [
     previewComponent: 'image-gallery'
   },
   {
-    id: 'music',
-    name: 'Música',
-    description: 'Loops, FX, ambientes y soundtracks',
-    icon: '🎶',
-    metaphor: '💿',
-    color: 'from-green-500 to-emerald-500',
-    fileTypes: ['.mp3', '.wav', '.ogg', '.flac'],
-    maxSize: 25,
-    previewComponent: 'audio-player'
-  },
-  {
-    id: 'avatars',
-    name: 'Avatares',
-    description: 'Para VTubers, VRChat o Roblox',
-    icon: '🎭',
-    metaphor: '💿',
-    color: 'from-purple-500 to-pink-500',
-    fileTypes: ['.fbx', '.vrm', '.glb', '.obj'],
-    maxSize: 50,
-    previewComponent: 'model-viewer'
-  },
-  {
-    id: 'animations',
+    id: 'animaciones',
     name: 'Animaciones',
     description: 'Bailes, poses, motion graphics',
     icon: '🎬',
@@ -63,23 +63,23 @@ const contentTypes = [
     previewComponent: 'video-player'
   },
   {
-    id: 'obs',
-    name: 'OBS Widgets',
+    id: 'OBS',
+    name: 'OBS',
     description: 'Overlays, alertas y temas para streaming',
-    icon: '🎛️',
-    metaphor: '🖼️',
-    color: 'from-yellow-500 to-orange-500',
+    icon: '📺',
+    metaphor: '📺',
+    color: 'from-gray-500 to-blue-500',
     fileTypes: ['.html', '.css', '.js', '.zip'],
     maxSize: 15,
     previewComponent: 'obs-frame'
   },
   {
-    id: 'collections',
+    id: 'colecciones',
     name: 'Colecciones',
     description: 'Packs temáticos, bundles, ediciones especiales',
     icon: '📦',
     metaphor: '📦',
-    color: 'from-pink-500 to-rose-500',
+    color: 'from-yellow-500 to-orange-500',
     fileTypes: ['.zip', '.rar', '.7z'],
     maxSize: 500,
     previewComponent: 'collection-preview'
@@ -89,47 +89,47 @@ const contentTypes = [
 // Hashtags sugeridos automáticamente
 const getSuggestedTags = (contentType: string, fileName: string) => {
   const baseTags = {
-    avatars: [
+    avatares: [
       'vtuber', 'avatar', '3D', 'personaje', 'anime', 'chibi', 'cute', 'kawaii',
       'live2d', 'vtubing', 'streaming', 'twitch', 'youtube', 'persona', 'oc',
       'original', 'character', 'anime-style', 'manga', 'japanese', 'kawaii-style',
       'cute-avatar', 'anime-avatar', 'vtuber-model', 'live2d-model', 'rigging'
     ],
-    music: [
+    musica: [
       'música', 'audio', 'loop', 'fx', 'sound', 'beat', 'instrumental', 'ambient',
       'electronic', 'chill', 'lofi', 'hip-hop', 'pop', 'rock', 'jazz', 'classical',
       'royalty-free', 'background-music', 'intro-music', 'outro-music', 'transition',
       'sound-effect', 'sfx', 'audio-fx', 'music-loop', 'beats', 'melody', 'harmony'
     ],
-    obs: [
+    OBS: [
       'obs', 'streaming', 'overlay', 'widget', 'stream', 'twitch', 'youtube', 'live',
       'broadcast', 'streaming-tools', 'streaming-overlay', 'streaming-widgets',
       'alerts', 'donations', 'followers', 'subscribers', 'chat', 'browser-source',
       'streaming-setup', 'streaming-design', 'streaming-graphics', 'streaming-elements',
       'streaming-layout', 'streaming-scenes', 'streaming-transitions', 'streaming-effects'
     ],
-    models: [
+    modelos3d: [
       '3D', 'modelo', 'prop', 'escenario', 'asset', 'blender', 'maya', '3dsmax',
       'unity', 'unreal', 'game-asset', 'low-poly', 'high-poly', 'pbr', 'textured',
       'rigged', 'animated', 'game-ready', 'realistic', 'stylized', 'cartoon',
       'environment', 'character', 'vehicle', 'weapon', 'furniture', 'architecture',
       'nature', 'fantasy', 'sci-fi', 'medieval', 'modern', 'industrial', 'organic'
     ],
-    animations: [
+    animaciones: [
       'animación', 'video', 'motion', 'baila', 'animation', 'motion-graphics',
       'after-effects', 'premiere', 'davinci', 'video-editing', 'motion-design',
       'kinetic-typography', 'logo-animation', 'intro-animation', 'outro-animation',
       'transition', 'effect', 'visual-effects', 'vfx', 'compositing', 'rotoscoping',
       '2d-animation', '3d-animation', 'stop-motion', 'motion-capture', 'keyframe'
     ],
-    textures: [
+    texturas: [
       'textura', 'imagen', 'sprite', 'arte', 'texture', 'material', 'seamless',
       'tileable', 'diffuse', 'normal', 'specular', 'roughness', 'metallic',
       'albedo', 'heightmap', 'bump', 'displacement', 'occlusion', 'emission',
       'wallpaper', 'background', 'pattern', 'design', 'graphic', 'illustration',
       'digital-art', 'concept-art', 'game-art', 'ui-design', 'icon', 'logo'
     ],
-    collections: [
+    colecciones: [
       'pack', 'colección', 'bundle', 'temático', 'collection', 'asset-pack',
       'game-assets', 'ui-pack', 'icon-pack', 'texture-pack', 'model-pack',
       'animation-pack', 'sound-pack', 'music-pack', 'theme', 'style', 'complete',
@@ -207,6 +207,8 @@ export default function UploadPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
+  console.log('🎭 UploadPage renderizado - user:', user?.username, 'isLoading:', isLoading);
+
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     contentType: '',
@@ -221,6 +223,7 @@ export default function UploadPage() {
     tags: [] as string[],
     customTags: [] as string[],
     coverImage: null as File | null,
+    coverImageFile: null as File | null,
     additionalImages: [] as File[],
     notes: '',
     externalLinks: '',
@@ -238,6 +241,11 @@ export default function UploadPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [editingFile, setEditingFile] = useState<number | null>(null);
   const [projectId] = useState(Math.floor(Math.random() * 1000));
+
+  // Debug: Log formData changes
+  useEffect(() => {
+    console.log('🔄 formData actualizado:', formData);
+  }, [formData]);
 
   // Redirigir si no está autenticado
   if (!isLoading && !user) {
@@ -257,13 +265,13 @@ export default function UploadPage() {
   // Función para obtener la categoría por defecto basada en el tipo de contenido
   const getDefaultCategory = (contentType: string): string => {
     const categoryMap: { [key: string]: string } = {
-      'models': 'characters',
-      'textures': 'materials',
-      'music': 'ambient',
-      'avatars': 'anime',
-      'animations': 'character',
-      'obs': 'overlays',
-      'collections': 'mixed'
+      'avatares': 'anime',
+      'modelos3d': 'characters',
+      'musica': 'ambient',
+      'texturas': 'materials',
+      'animaciones': 'character',
+      'OBS': 'overlays',
+      'colecciones': 'mixed'
     };
     return categoryMap[contentType] || '';
   };
@@ -418,15 +426,33 @@ export default function UploadPage() {
     e.preventDefault();
 
     console.log('🚀 Iniciando envío del formulario...');
+    console.log('📊 Estado completo de formData:', formData);
 
     // Verificar que tenemos los datos mínimos requeridos
+    console.log('🔍 Validando datos del formulario:', {
+      provisionalName: formData.provisionalName,
+      description: formData.description,
+      contentType: formData.contentType,
+      category: formData.category,
+      files: formData.files.length,
+      subcategory: formData.subcategory
+    });
+
+    // Verificar que estamos en el paso correcto
+    if (currentStep !== 7) {
+      console.error('❌ No estás en el paso final:', currentStep);
+      alert('Por favor completa todos los pasos del formulario');
+      return;
+    }
+
     if (!formData.provisionalName || !formData.description || !formData.contentType || !formData.category || formData.files.length === 0) {
       console.error('❌ Faltan datos requeridos:', {
         provisionalName: formData.provisionalName,
         description: formData.description,
         contentType: formData.contentType,
         category: formData.category,
-        files: formData.files.length
+        files: formData.files.length,
+        currentStep: currentStep
       });
       alert('Por favor completa todos los campos requeridos');
       setUploading(false);
@@ -477,6 +503,30 @@ export default function UploadPage() {
 
       console.log('📁 Todos los archivos subidos exitosamente');
 
+      // Subir imagen de portada si existe
+      let coverImageUrl = '';
+      if (formData.coverImageFile) {
+        console.log('🖼️ Subiendo imagen de portada...');
+        const coverFormData = new FormData();
+        coverFormData.append('file', formData.coverImageFile);
+
+        const coverResponse = await fetch('/api/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: coverFormData
+        });
+
+        if (coverResponse.ok) {
+          const coverResult = await coverResponse.json();
+          coverImageUrl = coverResult.data.url;
+          console.log(`✅ Portada subida: ${coverResult.data.fileName}`);
+        } else {
+          console.warn('⚠️ Error al subir portada, continuando sin ella');
+        }
+      }
+
       // Preparar datos para la API
       const submitData = {
         title: formData.provisionalName, // Usar provisionalName como título
@@ -487,7 +537,7 @@ export default function UploadPage() {
         category: formData.category,
         subcategory: formData.subcategory,
         files: uploadedFiles, // Usar los archivos subidos reales
-        coverImage: formData.coverImage,
+        coverImage: coverImageUrl,
         additionalImages: formData.additionalImages,
         price: formData.price,
         isFree: formData.isFree,
@@ -1048,7 +1098,7 @@ export default function UploadPage() {
 
               <div className="max-w-2xl mx-auto space-y-6">
                 <div>
-                  <label className="block text-white font-medium mb-3">Descripción breve *</label>
+                  <label className="block text-white font-medium mb-3">Descripción *</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => {
@@ -1056,14 +1106,24 @@ export default function UploadPage() {
                       handleTextareaResize(e);
                     }}
                     onInput={handleTextareaResize}
-                    onKeyDown={preventFormSubmitExceptShift}
-                    className="w-full px-4 py-4 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-green-400 focus:outline-none min-h-[6rem] max-h-[20rem] overflow-y-auto resize-none"
-                    placeholder="Describe qué incluye tu creación en 1-3 frases..."
+                    onKeyDown={(e) => {
+                      // Permitir Enter para saltos de línea en el textarea de descripción
+                      if (e.key === 'Enter') {
+                        // No hacer nada, dejar que Enter funcione normalmente para saltos de línea
+                        return;
+                      }
+                      // Para otros casos, prevenir envío del formulario
+                      if (e.key === 'Enter' && e.ctrlKey) {
+                        e.preventDefault();
+                      }
+                    }}
+                    className="w-full px-4 py-4 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-green-400 focus:outline-none min-h-[8rem] max-h-[30rem] overflow-y-auto resize-none leading-relaxed"
+                    placeholder="Describe detalladamente tu creación. Puedes incluir características, usos, compatibilidad, etc. Presiona Enter para nuevos párrafos..."
                     style={{ height: 'auto' }}
                     required
                   />
                   <p className="text-gray-400 text-sm mt-2">
-                    Ejemplo: "Avatar kawaii con 3 expresiones para VRChat. Incluye texturas HD y archivos de configuración."
+                    💡 Puedes pegar texto desde cualquier fuente. Usa Enter para saltos de línea y párrafos.
                   </p>
                 </div>
 
@@ -1149,6 +1209,64 @@ export default function UploadPage() {
               </p>
 
               <div className="max-w-2xl mx-auto space-y-6">
+                {/* Campo de portada */}
+                <div>
+                  <label className="block text-white font-medium mb-3">
+                    Imagen de portada <span className="text-gray-400">(opcional)</span>
+                  </label>
+                  <p className="text-gray-400 text-sm mb-4">
+                    Sube una imagen que represente tu creación. Si no subes nada, se usará un fondo con gradiente e icono automático.
+                  </p>
+
+                  {formData.coverImageFile ? (
+                    <div className="relative">
+                      <img
+                        src={URL.createObjectURL(formData.coverImageFile)}
+                        alt="Portada"
+                        className="w-full h-48 object-cover rounded-xl border border-gray-600"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, coverImageFile: null })}
+                        className="absolute top-2 right-2 w-8 h-8 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-600 rounded-xl p-8 text-center hover:border-green-400 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setFormData({ ...formData, coverImageFile: file });
+                          }
+                        }}
+                        className="hidden"
+                        id="cover-upload"
+                      />
+                      <label
+                        htmlFor="cover-upload"
+                        className="cursor-pointer flex flex-col items-center space-y-3"
+                      >
+                        <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center">
+                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">Subir imagen de portada</p>
+                          <p className="text-gray-400 text-sm">PNG, JPG, GIF hasta 10MB</p>
+                        </div>
+                      </label>
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label className="block text-white font-medium mb-3">Notas personales</label>
                   <textarea

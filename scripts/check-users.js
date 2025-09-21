@@ -1,79 +1,55 @@
 const mongoose = require('mongoose');
+require('dotenv').config({ path: '.env.local' });
 
-// Conectar a MongoDB local
-async function connectDB() {
+// Configurar conexión a MongoDB
+const connectDB = async () => {
   try {
-    await mongoose.connect('mongodb://localhost:27017/takopi_dev');
-    console.log('✅ Conectado a MongoDB local');
+    const mongoUri = process.env.DB_MODE === 'local'
+      ? process.env.MONGODB_URI_LOCAL
+      : process.env.MONGODB_URI;
+
+    await mongoose.connect(mongoUri);
+    console.log('✅ MongoDB conectado');
   } catch (error) {
     console.error('❌ Error conectando a MongoDB:', error);
     process.exit(1);
   }
-}
+};
 
-// Definir esquema de usuario
+// Schema temporal para User
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ['user', 'creator', 'admin'], default: 'user' },
+  role: { type: String, default: 'User' },
   avatar: { type: String },
   banner: { type: String },
-  bio: { type: String }
-}, { timestamps: true });
+  bio: { type: String },
+  location: { type: String },
+  joinedDate: { type: Date, default: Date.now }
+});
 
 const User = mongoose.model('User', UserSchema);
 
 async function checkUsers() {
   try {
-    console.log('🔍 Verificando usuarios en la base de datos...\n');
+    await connectDB();
 
-    const users = await User.find({});
+    console.log('🔍 Buscando todos los usuarios...');
+    const users = await User.find({}).select('username email role');
 
-    if (users.length === 0) {
-      console.log('❌ No hay usuarios en la base de datos');
-      console.log('💡 Ejecuta: npm run seed:local');
-      return;
-    }
+    console.log(`📊 Total de usuarios: ${users.length}`);
 
-    console.log(`📊 Total de usuarios encontrados: ${users.length}\n`);
-
-    users.forEach((user, index) => {
-      console.log(`${index + 1}. Usuario:`);
-      console.log(`   📧 Email: ${user.email}`);
-      console.log(`   👤 Username: ${user.username}`);
-      console.log(`   🔑 Role: ${user.role}`);
-      console.log(`   📅 Creado: ${user.createdAt.toLocaleString('es-CL')}`);
-      console.log('');
+    users.forEach(user => {
+      console.log(`  - ${user.username} (${user.email}) - ${user.role}`);
     });
 
-    // Buscar específicamente el usuario que está intentando usar
-    const targetUser = await User.findOne({ email: 'sushipan@takopi.cl' });
-
-    if (targetUser) {
-      console.log('✅ Usuario sushipan@takopi.cl encontrado:');
-      console.log(`   👤 Username: ${targetUser.username}`);
-      console.log(`   🔑 Role: ${targetUser.role}`);
-    } else {
-      console.log('❌ Usuario sushipan@takopi.cl NO encontrado');
-      console.log('\n💡 Credenciales de prueba disponibles:');
-      console.log('   📧 testuser: test@takopi.com');
-      console.log('   📧 creator: creator@takopi.com');
-      console.log('   📧 admin: admin@takopi.com');
-      console.log('   🔑 Password para todos: password123');
-    }
-
   } catch (error) {
-    console.error('❌ Error verificando usuarios:', error);
+    console.error('❌ Error:', error);
   } finally {
     await mongoose.disconnect();
-    console.log('\n🔌 Desconectado de MongoDB');
+    console.log('🔌 Desconectado de MongoDB');
   }
 }
 
-// Ejecutar si se llama directamente
-if (require.main === module) {
-  connectDB().then(checkUsers);
-}
-
-module.exports = { checkUsers };
+checkUsers();

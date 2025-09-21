@@ -26,7 +26,7 @@ export interface IContent extends Document {
   shortDescription?: string;
 
   // Metadatos
-  contentType: 'models' | 'textures' | 'music' | 'avatars' | 'animations' | 'obs' | 'collections';
+  contentType: 'avatares' | 'modelos3d' | 'musica' | 'texturas' | 'animaciones' | 'OBS' | 'colecciones';
   category: string;
   subcategory?: string;
 
@@ -128,7 +128,7 @@ const ContentSchema = new Schema<IContent>({
   contentType: {
     type: String,
     required: true,
-    enum: ['models', 'textures', 'music', 'avatars', 'animations', 'obs', 'collections']
+    enum: ['avatares', 'modelos3d', 'musica', 'texturas', 'animaciones', 'OBS', 'colecciones']
   },
   category: {
     type: String,

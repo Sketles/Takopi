@@ -6,47 +6,91 @@ import { useAuth } from '@/contexts/AuthContext';
 import ProfileEditor from '@/components/profile/ProfileEditor';
 import InlineEditor from '@/components/profile/InlineEditor';
 import RoleSelector from '@/components/profile/RoleSelector';
+import DefaultCover from '@/components/shared/DefaultCover';
+import Link from 'next/link';
 
-// Datos de ejemplo para el perfil
-const userProfile = {
-  username: "Sushipan",
-  email: "sushipan@takopi.com",
-  role: "Artist",
-  avatar: null,
-  banner: null,
-  bio: "Artista digital especializado en modelos 3D futuristas, música experimental y diseño industrial. Explorando los límites de la creatividad digital.",
-  location: "Santiago, Chile",
-  joinedDate: "Enero 2024",
-  stats: {
-    followers: 2847,
-    following: 156,
-    modelsPublished: 24,
-    totalSales: 156,
-    heartsReceived: 342,
-    pinsCreated: 8
-  },
-  collections: [
-    { id: 1, title: "Colección", type: "collection", size: "large" },
-    { id: 2, title: "Música", type: "music", size: "medium" },
-    { id: 3, title: "Modelos 3D", type: "3d", size: "large" },
-    { id: 4, title: "Imágenes", type: "images", size: "small" },
-    { id: 5, title: "Texturas", type: "textures", size: "medium" },
-    { id: 6, title: "Animaciones", type: "animations", size: "small" },
-    { id: 7, title: "Efectos", type: "effects", size: "large" },
-    { id: 8, title: "Scripts", type: "scripts", size: "small" },
-  ]
+// Datos de ejemplo para el perfil (solo para estadísticas por defecto)
+const defaultStats = {
+  followers: 2847,
+  following: 156,
+  modelsPublished: 24,
+  totalSales: 156,
+  heartsReceived: 342,
+  pinsCreated: 8
 };
 
 export default function ProfilePage() {
-  const [activeTab, setActiveTab] = useState('all');
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentProfile, setCurrentProfile] = useState(userProfile);
+  const [currentProfile, setCurrentProfile] = useState({
+    username: "Sushipan",
+    email: "sushipan@takopi.com",
+    role: "Artist",
+    avatar: null,
+    banner: null,
+    bio: "Artista digital especializado en modelos 3D futuristas, música experimental y diseño industrial. Explorando los límites de la creatividad digital.",
+    location: "Santiago, Chile",
+    joinedDate: "Enero 2024",
+    stats: defaultStats
+  });
   const [editingType, setEditingType] = useState<'avatar' | 'banner' | null>(null);
   const [isRoleSelectorOpen, setIsRoleSelectorOpen] = useState(false);
+  const [realStats, setRealStats] = useState<any>(null);
+  const [userCreations, setUserCreations] = useState<any[]>([]);
+  const [loadingCreations, setLoadingCreations] = useState(false);
   const { user } = useAuth();
 
   const isOwnProfile = user?.username === currentProfile.username;
+
+  // Función para cargar las estadísticas reales del usuario
+  const loadUserStats = async () => {
+    if (!user) return;
+
+    try {
+      const token = localStorage.getItem('takopi_token');
+      if (!token) return;
+
+      const response = await fetch('/api/user/stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setRealStats(result.data);
+        console.log('✅ Estadísticas cargadas:', result.data);
+      }
+    } catch (error) {
+      console.error('❌ Error cargando estadísticas:', error);
+    }
+  };
+
+  const loadUserCreations = async () => {
+    if (!user) return;
+
+    setLoadingCreations(true);
+    try {
+      const token = localStorage.getItem('takopi_token');
+      if (!token) return;
+
+      const response = await fetch('/api/user/creations', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setUserCreations(result.data.creations);
+        console.log('✅ Creaciones cargadas:', result.data.creations.length);
+      }
+    } catch (error) {
+      console.error('❌ Error cargando creaciones:', error);
+    } finally {
+      setLoadingCreations(false);
+    }
+  };
 
   // Función para cargar el perfil del usuario
   const loadUserProfile = async () => {
@@ -65,8 +109,7 @@ export default function ProfilePage() {
         setCurrentProfile(prev => ({
           ...prev,
           ...data.user,
-          stats: prev.stats, // Mantener las stats de ejemplo por ahora
-          collections: prev.collections, // Mantener las colecciones de ejemplo por ahora
+          stats: prev.stats, // Mantener las stats por defecto
         }));
       }
     } catch (error) {
@@ -94,7 +137,6 @@ export default function ProfilePage() {
           ...prev,
           ...data.user,
           stats: prev.stats,
-          collections: prev.collections,
         }));
         setIsEditing(false);
 
@@ -124,6 +166,8 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       loadUserProfile();
+      loadUserStats();
+      loadUserCreations();
     }
   }, [user]);
 
@@ -408,21 +452,21 @@ export default function ProfilePage() {
                 </div>
                 <div className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Siguiendo</div>
               </div>
-              <div className="group cursor-pointer">
+              <div className="group">
                 <div className="text-3xl font-bold text-white mb-1 group-hover:text-green-400 transition-colors">
-                  {currentProfile.stats.modelsPublished}
+                  {realStats ? realStats.totalCreations : currentProfile.stats.modelsPublished}
                 </div>
-                <div className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Modelos</div>
+                <div className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Creaciones</div>
               </div>
               <div className="group cursor-pointer">
                 <div className="text-3xl font-bold text-white mb-1 group-hover:text-yellow-400 transition-colors">
-                  {currentProfile.stats.totalSales}
+                  {realStats ? realStats.totalSales : currentProfile.stats.totalSales}
                 </div>
                 <div className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Ventas</div>
               </div>
               <div className="group cursor-pointer">
                 <div className="text-3xl font-bold text-white mb-1 group-hover:text-red-400 transition-colors">
-                  {currentProfile.stats.heartsReceived}
+                  {realStats ? realStats.heartsReceived : currentProfile.stats.heartsReceived}
                 </div>
                 <div className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Corazones</div>
               </div>
@@ -436,116 +480,239 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Content Section */}
-        <div className="max-w-6xl mx-auto px-8 py-8">
-          {/* Navigation Tabs */}
-          <div className="flex flex-wrap gap-2 mb-8">
-            {[
-              { id: 'all', label: 'Todo', icon: '🎨' },
-              { id: 'collections', label: 'Colecciones', icon: '📦' },
-              { id: 'music', label: 'Música', icon: '🎵' },
-              { id: 'models', label: 'Modelos 3D', icon: '🎯' },
-              { id: 'images', label: 'Imágenes', icon: '🖼️' },
-              { id: 'textures', label: 'Texturas', icon: '✨' },
-              { id: 'animations', label: 'Animaciones', icon: '🎬' },
-              { id: 'effects', label: 'Efectos', icon: '⚡' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${activeTab === tab.id
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                  : 'bg-black/40 border border-purple-500/20 text-gray-300 hover:bg-purple-500/20 hover:text-white'
-                  }`}
-              >
-                <span className="mr-2">{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Content Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {currentProfile.collections.map((item, index) => (
-              <div
-                key={item.id}
-                className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-900/30 to-blue-900/30 border border-purple-500/20 hover:border-purple-400/40 transition-all duration-300 cursor-pointer ${item.size === 'large' ? 'md:col-span-2 md:row-span-2' :
-                  item.size === 'medium' ? 'md:col-span-1 md:row-span-2' :
-                    'md:col-span-1 md:row-span-1'
-                  }`}
-                style={{
-                  animationDelay: `${index * 100}ms`,
-                  aspectRatio: item.size === 'large' ? '2/1' : item.size === 'medium' ? '1/1.5' : '1/1'
-                }}
-              >
-                {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-20">
-                  <div className="absolute top-4 left-4 w-8 h-8 border border-purple-400/30 rounded-full"></div>
-                  <div className="absolute bottom-4 right-4 w-6 h-6 border border-blue-400/30 rounded-full"></div>
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 border border-pink-400/20 rounded-full"></div>
-                </div>
-
-                {/* Content */}
-                <div className="absolute inset-0 flex flex-col justify-between p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500/30 to-blue-500/30 rounded-xl flex items-center justify-center backdrop-blur-sm border border-purple-500/30">
-                      {item.type === 'collection' && <span className="text-2xl">📦</span>}
-                      {item.type === 'music' && <span className="text-2xl">🎵</span>}
-                      {item.type === '3d' && <span className="text-2xl">🎯</span>}
-                      {item.type === 'images' && <span className="text-2xl">🖼️</span>}
-                      {item.type === 'textures' && <span className="text-2xl">✨</span>}
-                      {item.type === 'animations' && <span className="text-2xl">🎬</span>}
-                      {item.type === 'effects' && <span className="text-2xl">⚡</span>}
-                      {item.type === 'scripts' && <span className="text-2xl">💻</span>}
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <button className="w-8 h-8 bg-black/40 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-colors">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="text-white">
-                    <h3 className="text-xl font-bold mb-2 group-hover:text-purple-300 transition-colors">
-                      {item.title}
-                    </h3>
-                    <p className="text-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      {item.type === 'collection' && 'Colección de contenido creativo'}
-                      {item.type === 'music' && 'Pistas y composiciones musicales'}
-                      {item.type === '3d' && 'Modelos 3D y assets'}
-                      {item.type === 'images' && 'Galería de imágenes'}
-                      {item.type === 'textures' && 'Texturas y materiales'}
-                      {item.type === 'animations' && 'Animaciones y motion graphics'}
-                      {item.type === 'effects' && 'Efectos visuales y shaders'}
-                      {item.type === 'scripts' && 'Scripts y herramientas'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Hover Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        {/* Sección de Mis Creaciones por Categorías */}
+        {isOwnProfile && (
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            {/* Header de Mis Creaciones */}
+            <div className="mb-8">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2">Mis Creaciones</h2>
+                <p className="text-gray-400">
+                  {userCreations.length > 0
+                    ? `${userCreations.length} ${userCreations.length === 1 ? 'creación' : 'creaciones'} publicadas`
+                    : 'Aún no tienes creaciones publicadas'
+                  }
+                </p>
               </div>
-            ))}
-          </div>
-
-          {/* Empty State */}
-          {currentProfile.collections.length === 0 && (
-            <div className="text-center py-16">
-              <div className="w-24 h-24 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-full mx-auto mb-6 flex items-center justify-center">
-                <span className="text-4xl">🎨</span>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-4">Tu espacio creativo está vacío</h3>
-              <p className="text-gray-400 mb-8 max-w-md mx-auto">
-                Comienza a crear y compartir tu arte. Sube tus primeros modelos, música o imágenes.
-              </p>
-              <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25">
-                Crear Contenido
-              </button>
             </div>
-          )}
-        </div>
+
+            {loadingCreations ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400"></div>
+                <span className="ml-3 text-gray-300">Cargando creaciones...</span>
+              </div>
+            ) : (() => {
+              // Agrupar creaciones por tipo de contenido
+              const groupedCreations = userCreations.reduce((acc, creation) => {
+                const type = creation.contentType;
+                if (!acc[type]) {
+                  acc[type] = [];
+                }
+                acc[type].push(creation);
+                return acc;
+              }, {});
+
+              // Mapeo de tipos de contenido a configuración de categorías - Categorías finales
+              const categoryConfig = {
+                'avatares': { title: 'Avatares', icon: '👤', description: 'Avatares y personajes' },
+                'modelos3d': { title: 'Modelos 3D', icon: '🧩', description: 'Modelos 3D y assets' },
+                'musica': { title: 'Música', icon: '🎵', description: 'Pistas y composiciones musicales' },
+                'texturas': { title: 'Texturas', icon: '✨', description: 'Texturas y materiales' },
+                'animaciones': { title: 'Animaciones', icon: '🎬', description: 'Animaciones y motion graphics' },
+                'OBS': { title: 'OBS', icon: '📺', description: 'Widgets para streaming' },
+                'colecciones': { title: 'Colecciones', icon: '📦', description: 'Colección de contenido creativo' }
+              };
+
+              // Obtener solo las categorías que tienen contenido
+              const categoriesWithContent = Object.keys(groupedCreations).map(type => ({
+                type,
+                ...categoryConfig[type as keyof typeof categoryConfig],
+                creations: groupedCreations[type],
+                count: groupedCreations[type].length
+              }));
+
+              return categoriesWithContent.length > 0 ? (
+                <div className="space-y-12">
+                  {categoriesWithContent.map((category) => (
+                    <div key={category.type} className="bg-gradient-to-br from-gray-800/30 to-gray-900/30 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-8">
+                      {/* Header de la categoría */}
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 bg-gradient-to-br from-purple-500/30 to-blue-500/30 rounded-xl flex items-center justify-center backdrop-blur-sm border border-purple-500/30">
+                            {category.type === 'obs-widgets' || category.type === 'obs' || category.type === 'obs-widget' ? (
+                              <img
+                                src="/logos/OBS_Studio_logo.png"
+                                alt="OBS"
+                                className="w-10 h-10 object-contain filter brightness-0 invert"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                }}
+                              />
+                            ) : (
+                              <span className="text-3xl">{category.icon}</span>
+                            )}
+                            {/* Fallback emoji para OBS si falla la imagen */}
+                            {category.type === 'obs-widgets' || category.type === 'obs' || category.type === 'obs-widget' ? (
+                              <span className="text-3xl hidden">📺</span>
+                            ) : null}
+                          </div>
+                          <div>
+                            <h3 className="text-2xl font-bold text-white">{category.title}</h3>
+                            <p className="text-gray-400">{category.description}</p>
+                          </div>
+                        </div>
+                        <div className="bg-black/40 rounded-lg px-3 py-1 backdrop-blur-sm border border-white/20">
+                          <span className="text-white text-sm font-medium">{category.count} {category.count === 1 ? 'creación' : 'creaciones'}</span>
+                        </div>
+                      </div>
+
+                      {/* Grid de tarjetas de creaciones */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {category.creations.map((creation) => {
+                          const getContentTypeIcon = (type: string) => {
+                            // Para OBS, mostrar logo personalizado
+                            if (type === 'OBS') {
+                              return (
+                                <img
+                                  src="/logos/OBS_Studio_logo.png"
+                                  alt="OBS"
+                                  className="w-4 h-4 object-contain filter brightness-0 invert"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                />
+                              );
+                            }
+
+                            const icons: { [key: string]: string } = {
+                              'avatares': '👤',
+                              'modelos3d': '🧩',
+                              'musica': '🎵',
+                              'texturas': '🖼️',
+                              'animaciones': '🎬',
+                              'colecciones': '📦'
+                            };
+                            return icons[type] || '📁';
+                          };
+
+                          const getContentTypeName = (type: string) => {
+                            const names: { [key: string]: string } = {
+                              'avatares': 'Avatar',
+                              'modelos3d': 'Modelo 3D',
+                              'musica': 'Música',
+                              'texturas': 'Textura',
+                              'animaciones': 'Animación',
+                              'OBS': 'OBS Widget',
+                              'colecciones': 'Colección'
+                            };
+                            return names[type] || type;
+                          };
+
+                          return (
+                            <div
+                              key={creation.id}
+                              className="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 hover:border-green-500/50 transition-all duration-300 overflow-hidden hover:shadow-xl hover:shadow-green-500/10"
+                            >
+                              {/* Imagen de la creación */}
+                              <div className="aspect-square relative overflow-hidden">
+                                {creation.image && !creation.image.includes('/placeholder-') ? (
+                                  <img
+                                    src={creation.image}
+                                    alt={creation.title}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.style.display = 'none';
+                                      target.nextElementSibling?.classList.remove('hidden');
+                                    }}
+                                  />
+                                ) : (
+                                  <DefaultCover
+                                    contentType={creation.contentType || 'models'}
+                                    className="w-full h-full group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                )}
+
+                                {/* Debug info */}
+                                {process.env.NODE_ENV === 'development' && (
+                                  <div className="absolute bottom-2 left-2 bg-black/80 text-white text-xs p-1 rounded">
+                                    Type: {creation.contentType || 'undefined'}
+                                  </div>
+                                )}
+
+                                {/* Overlay con tipo de contenido */}
+                                <div className="absolute top-3 left-3 px-2 py-1 bg-black/70 backdrop-blur-sm rounded-lg text-white text-xs font-medium flex items-center gap-1">
+                                  <span>{getContentTypeIcon(creation.contentType)}</span>
+                                  <span>{getContentTypeName(creation.contentType)}</span>
+                                </div>
+
+                                {/* Precio */}
+                                <div className="absolute top-3 right-3 px-2 py-1 bg-gradient-to-r from-green-600/90 to-emerald-600/90 backdrop-blur-sm rounded-lg text-white text-xs font-bold">
+                                  {creation.isFree ? 'GRATIS' : `$${creation.price.toLocaleString('es-CL')}`}
+                                </div>
+
+                                {/* Stats overlay */}
+                                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
+                                  <div className="flex items-center gap-3 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1">
+                                    <div className="flex items-center gap-1">
+                                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
+                                      </svg>
+                                      <span>{creation.likes}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                      </svg>
+                                      <span>{creation.views}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Información de la creación */}
+                              <div className="p-4">
+                                <h3 className="text-white font-semibold text-lg mb-2 line-clamp-2 group-hover:text-green-400 transition-colors">
+                                  {creation.title}
+                                </h3>
+
+                                {creation.description && (
+                                  <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+                                    {creation.description}
+                                  </p>
+                                )}
+
+                                <div className="flex items-center justify-between text-xs text-gray-500">
+                                  <span>
+                                    {new Date(creation.createdAt).toLocaleDateString('es-CL', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric'
+                                    })}
+                                  </span>
+                                  <span className="capitalize">{creation.category}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">🎨</div>
+                  <h3 className="text-xl font-semibold text-white mb-2">Aún no tienes creaciones</h3>
+                  <p className="text-gray-400">Comienza compartiendo tu primera creación con la comunidad</p>
+                </div>
+              );
+            })()}
+          </div>
+        )}
       </div>
 
       {/* Profile Editor Modal */}
@@ -573,6 +740,7 @@ export default function ProfilePage() {
         onCancel={() => setEditingType(null)}
         isOpen={editingType === 'banner'}
       />
+
     </Layout>
   );
 }
