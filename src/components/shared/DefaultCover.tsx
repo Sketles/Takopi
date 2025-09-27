@@ -16,37 +16,37 @@ const DefaultCover: React.FC<DefaultCoverProps> = ({ contentType, className = ""
       'avatares': {
         gradient: 'from-green-500 to-teal-500',
         icon: '👤',
-        placeholder: '/placeholders/placeholder-avatar.jpg'
+        placeholder: '/placeholders/placeholder-avatar.svg'
       },
       'modelos3d': {
         gradient: 'from-blue-500 to-cyan-500',
         icon: '🧩',
-        placeholder: '/placeholders/placeholder-3d.jpg'
+        placeholder: '/placeholders/placeholder-3d.svg'
       },
       'musica': {
         gradient: 'from-purple-500 to-pink-500',
         icon: '🎵',
-        placeholder: '/placeholders/placeholder-music.jpg'
+        placeholder: '/placeholders/placeholder-music.svg'
       },
       'texturas': {
         gradient: 'from-indigo-500 to-purple-500',
         icon: '🖼️',
-        placeholder: '/placeholders/placeholder-texture.jpg'
+        placeholder: '/placeholders/placeholder-texture.svg'
       },
       'animaciones': {
         gradient: 'from-orange-500 to-red-500',
         icon: '🎬',
-        placeholder: '/placeholders/placeholder-animation.jpg'
+        placeholder: '/placeholders/placeholder-animation.svg'
       },
       'OBS': {
         gradient: 'from-gray-500 to-blue-500',
         icon: '📺',
-        placeholder: '/placeholders/placeholder-widget.jpg'
+        placeholder: '/placeholders/placeholder-widget.svg'
       },
       'colecciones': {
         gradient: 'from-yellow-500 to-orange-500',
         icon: '📦',
-        placeholder: '/placeholders/placeholder-collection.jpg'
+        placeholder: '/placeholders/placeholder-collection.svg'
       }
     };
     return configs[type] || configs['modelos3d'];

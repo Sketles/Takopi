@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import '../styles/model-viewer.css';
 
 // Componente wrapper para el web component model-viewer
 const ModelViewerWrapper = dynamic(
@@ -100,13 +101,22 @@ export default function ModelViewer3D({
   autoRotate = true,
   cameraControls = true,
   className = '',
-  fallbackImage = '/placeholders/placeholder-3d.jpg',
+  fallbackImage = '/placeholders/placeholder-3d.svg',
   onLoad,
   onError
 }: ModelViewer3DProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isWebGLSupported, setIsWebGLSupported] = useState(true);
+  const [showControls, setShowControls] = useState(false);
+  const [currentRotation, setCurrentRotation] = useState(autoRotate);
+  const [currentShadows, setCurrentShadows] = useState(1.5);
+  const [currentExposure, setCurrentExposure] = useState(1.5);
+
+  // Log inicial para debug
+  useEffect(() => {
+    console.log('🧩 ModelViewer3D inicializado:', { src, alt, width, height });
+  }, [src, alt, width, height]);
 
   // Verificar soporte de WebGL
   useEffect(() => {
@@ -131,7 +141,13 @@ export default function ModelViewer3D({
   };
 
   const handleError = (event: CustomEvent) => {
-    console.error('❌ Error cargando modelo 3D:', { src, detail: event.detail });
+    console.error('❌ Error cargando modelo 3D:', { 
+      src, 
+      detail: event.detail,
+      event: event,
+      type: event.type,
+      target: event.target
+    });
     setIsLoading(false);
     setHasError(true);
     onError?.(event.detail?.message || 'Error cargando modelo 3D');
@@ -160,6 +176,85 @@ export default function ModelViewer3D({
 
   return (
     <div className={`relative ${className}`} style={{ width, height }}>
+      {/* Controls Toggle Button */}
+      <button
+        onClick={() => setShowControls(!showControls)}
+        className="absolute top-4 right-4 z-20 p-2 bg-purple-600/80 hover:bg-purple-600 rounded-lg text-white transition-colors controls-toggle"
+        title="Controles del visor 3D"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+        </svg>
+      </button>
+
+      {/* Controls Panel */}
+      {showControls && (
+        <div className="absolute top-16 right-4 z-20 bg-gray-900/95 backdrop-blur-sm rounded-lg p-4 border border-gray-600 min-w-[200px] controls-panel">
+          <h3 className="text-white text-sm font-semibold mb-3">Controles 3D</h3>
+          
+          {/* Auto Rotate Toggle */}
+          <div className="mb-3">
+            <label className="flex items-center justify-between text-gray-300 text-xs">
+              <span>Rotación automática</span>
+              <button
+                onClick={() => setCurrentRotation(!currentRotation)}
+                className={`w-8 h-4 rounded-full transition-colors ${
+                  currentRotation ? 'bg-purple-500' : 'bg-gray-600'
+                }`}
+              >
+                <div className={`w-3 h-3 bg-white rounded-full transition-transform ${
+                  currentRotation ? 'translate-x-4' : 'translate-x-0.5'
+                }`} />
+              </button>
+            </label>
+          </div>
+
+          {/* Shadow Intensity */}
+          <div className="mb-3">
+            <label className="text-gray-300 text-xs block mb-1">
+              Intensidad de sombras: {currentShadows.toFixed(1)}
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="3"
+              step="0.1"
+              value={currentShadows}
+              onChange={(e) => setCurrentShadows(parseFloat(e.target.value))}
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+            />
+          </div>
+
+          {/* Exposure */}
+          <div className="mb-3">
+            <label className="text-gray-300 text-xs block mb-1">
+              Exposición: {currentExposure.toFixed(1)}
+            </label>
+            <input
+              type="range"
+              min="0.5"
+              max="3"
+              step="0.1"
+              value={currentExposure}
+              onChange={(e) => setCurrentExposure(parseFloat(e.target.value))}
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+            />
+          </div>
+
+          {/* Reset Button */}
+          <button
+            onClick={() => {
+              setCurrentRotation(autoRotate);
+              setCurrentShadows(1.5);
+              setCurrentExposure(1.5);
+            }}
+            className="w-full px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded transition-colors"
+          >
+            Resetear
+          </button>
+        </div>
+      )}
+
       {/* Loading indicator */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-800/50 rounded-lg border border-gray-600 z-10">
@@ -179,17 +274,20 @@ export default function ModelViewer3D({
           height: '100%',
           backgroundColor: 'transparent'
         }}
-        auto-rotate={autoRotate}
+        auto-rotate={currentRotation}
         camera-controls={cameraControls}
         loading="eager"
         reveal="auto"
-        shadow-intensity={0}
-        exposure={1.2}
-        environment-image="/models/environment.hdr"
-        camera-target="auto"
-        camera-orbit="auto"
-        autoplay
-        poster="none"
+        shadow-intensity={currentShadows}
+        exposure={currentExposure}
+        tone-mapping="aces"
+        interaction-prompt="auto"
+        interaction-prompt-style="basic"
+        interaction-prompt-threshold={1500}
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        ar-scale="auto"
+        ar-placement="floor"
         onLoad={handleLoad}
         onError={handleError}
       >

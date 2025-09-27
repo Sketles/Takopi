@@ -4,8 +4,8 @@ import Layout from '@/components/shared/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { ModelViewerModal, ModelViewerPreview } from '@/components/ModelViewer3D';
-import DefaultCover from '@/components/shared/DefaultCover';
-import ProductDetailModal from '@/components/ProductDetailModal';
+import ContentCard, { useContentCard } from '@/components/shared/ContentCard';
+import ProductModal from '@/components/product/ProductModal';
 
 // Interfaces para los datos
 interface ContentItem {
@@ -27,6 +27,14 @@ interface ContentItem {
   currency: string;
   description?: string;
   shortDescription?: string;
+  files?: Array<{
+    name: string;
+    type: string;
+    size: number;
+    url: string;
+    previewUrl?: string;
+  }>;
+  coverImage?: string;
 }
 
 // Datos de ejemplo para explorar - Solo usuarios reales
@@ -48,7 +56,8 @@ export default function ExplorePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { createCardProps } = useContentCard();
 
   // Función para mapear categorías del frontend a tipos de contenido del backend
   const mapCategoryToContentType = (category: string): string => {
@@ -79,8 +88,11 @@ export default function ExplorePage() {
       }
 
       const result = await response.json();
+      console.log('🔍 fetchContent - Respuesta de API:', result);
 
       if (result.success) {
+        console.log('🔍 fetchContent - Datos recibidos:', result.data);
+        console.log('🔍 fetchContent - Primer item files:', result.data[0]?.files);
         setContent(result.data);
       } else {
         throw new Error(result.error || 'Error al cargar contenido');
@@ -102,19 +114,6 @@ export default function ExplorePage() {
     }
   }, [selectedCategory, isLoading]);
 
-  // Cerrar modal con tecla Escape
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        closeModal();
-      }
-    };
-
-    if (showModal) {
-      document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
-    }
-  }, [showModal]);
 
 
   // Filtrar por categoría (ahora se hace en el servidor)
@@ -123,7 +122,50 @@ export default function ExplorePage() {
   // Función para abrir el modal con los detalles
   const openItemModal = (item: ContentItem) => {
     setSelectedItem(item);
-    setShowModal(true);
+    setIsModalOpen(true);
+  };
+
+  // Función para cerrar el modal
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedItem(null);
+  };
+
+  // Función para transformar ContentItem a formato de ProductModal
+  const transformContentItem = (item: ContentItem) => {
+    console.log('🔍 transformContentItem - Item recibido:', item);
+    console.log('🔍 transformContentItem - Item.files:', (item as any).files);
+    
+    const transformed = {
+      id: item.id,
+      title: item.title,
+      description: item.description || '',
+      shortDescription: item.shortDescription,
+      contentType: item.contentType,
+      category: item.category,
+      price: typeof item.price === 'string' ? parseFloat(item.price) || 0 : item.price,
+      currency: item.currency || 'CLP',
+      isFree: item.isFree,
+      license: item.license || 'personal',
+      customLicense: undefined,
+      visibility: 'public',
+      status: 'published',
+      author: item.author,
+      authorAvatar: undefined,
+      authorId: undefined,
+      likes: item.likes,
+      views: item.views,
+      files: (item as any).files || [], // Usar los archivos reales de la API
+      coverImage: item.image,
+      additionalImages: [],
+      tags: item.tags || [],
+      customTags: [],
+      createdAt: item.createdAt,
+      updatedAt: item.createdAt
+    };
+    
+    console.log('🔍 transformContentItem - Resultado transformado:', transformed);
+    return transformed;
   };
 
   // Función para obtener el icono del tipo de contenido
@@ -167,11 +209,6 @@ export default function ExplorePage() {
     return names[type] || type;
   };
 
-  // Función para cerrar el modal
-  const closeModal = () => {
-    setShowModal(false);
-    setSelectedItem(null);
-  };
 
   const categories = ['Todo', 'Avatares', 'Modelos 3D', 'Música', 'Texturas', 'Animaciones', 'OBS', 'Colecciones'];
 
@@ -214,57 +251,22 @@ export default function ExplorePage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {content.slice(0, 3).map((item, index) => (
-                <div
-                  key={`personalized-${item.id}`}
-                  className="group bg-gradient-to-br from-purple-900/20 to-blue-900/20 backdrop-blur-md rounded-2xl border border-purple-500/30 overflow-hidden hover:border-purple-400/50 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20"
-                >
-                  <div className="aspect-video bg-gradient-to-br from-purple-500/10 to-blue-500/10 flex items-center justify-center relative">
-                    {item.image && !item.image.includes('/placeholder-') && !item.image.includes('http') && item.image.trim() !== '' ? (
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                        }}
-                      />
-                    ) : null}
-                    {/* DefaultCover - siempre presente como fallback */}
-                    <div className={item.image && !item.image.includes('/placeholder-') && !item.image.includes('http') && item.image.trim() !== '' ? 'hidden w-full h-full' : 'w-full h-full'}>
-                      <DefaultCover
-                        contentType={item.contentType || 'models'}
-                        className="w-full h-full"
-                      />
-                    </div>
-                    <div className="absolute top-3 left-3">
-                      <span className="px-2 py-1 bg-purple-500/30 text-purple-300 text-xs rounded-full border border-purple-500/50">
+                <div key={`personalized-${item.id}`} className="relative">
+                  <ContentCard
+                    {...createCardProps(item, {
+                      onClick: () => openItemModal(item),
+                      variant: 'featured',
+                      showPrice: true,
+                      showStats: true,
+                      showTags: false,
+                      showAuthor: false,
+                      showDescription: true
+                    })}
+                  />
+                  <div className="absolute top-3 right-3 z-10">
+                    <span className="px-3 py-1.5 bg-gradient-to-r from-purple-600/90 to-blue-600/90 backdrop-blur-sm text-white text-xs font-medium rounded-full border border-purple-400/50 shadow-lg">
                         Recomendado
                       </span>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-white mb-1">{item.title}</h3>
-                    <p className="text-sm text-gray-400 mb-2">por {item.author}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                        {item.isFree ? 'GRATIS' : (item.price || '$0')}
-                      </span>
-                      <div className="flex items-center gap-4 text-sm text-gray-400">
-                        <div className="flex items-center">
-                          <svg className="w-4 h-4 mr-1 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                          </svg>
-                          <span>{item.likes || 0}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <svg className="w-4 h-4 mr-1 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                          <span>{item.downloads || 0}</span>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </div>
               ))}
@@ -333,122 +335,19 @@ export default function ExplorePage() {
         {!loading && !error && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredItems.map((item, index) => (
-              <div
-                key={item.id}
-                className="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 overflow-hidden hover:shadow-xl hover:shadow-purple-500/10 cursor-pointer flex flex-col h-[420px]"
-                style={{ animationDelay: `${index * 100}ms` }}
-                onClick={() => openItemModal(item)}
-              >
-                {/* Imagen de la creación */}
-                <div className="aspect-square relative overflow-hidden">
-                  {item.image && !item.image.includes('/placeholder-') && !item.image.includes('http') && item.image.trim() !== '' ? (
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-300"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                  ) : (
-                    <DefaultCover
-                      contentType={item.contentType || 'modelos3d'}
-                      className="w-full h-full"
-                    />
-                  )}
-
-                  {/* Overlay con tipo de contenido */}
-                  <div className="absolute top-3 left-3 px-2 py-1 bg-black/70 backdrop-blur-sm rounded-lg text-white text-xs font-medium flex items-center gap-1">
-                    <span>{getContentTypeIcon(item.contentType)}</span>
-                    <span>{getContentTypeName(item.contentType)}</span>
-                  </div>
-
-
-                  {/* Stats overlay */}
-                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
-                    <div className="flex items-center gap-3 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1">
-                      <div className="flex items-center gap-1">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
-                        </svg>
-                        <span>{item.likes || 0}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        <span>{item.views || 0}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        <span>0</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Información de la creación */}
-                <div className="p-4 flex flex-col flex-1">
-                  <h3 className="text-white font-semibold text-lg mb-2 line-clamp-2">
-                    {item.title || 'Sin título'}
-                  </h3>
-
-                  {/* Contenido flexible */}
-                  <div className="flex-1">
-                    {/* Mostrar descripción breve si existe, sino descripción normal */}
-                    {(item.shortDescription || item.description) && (
-                      <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                        {item.shortDescription || item.description}
-                      </p>
-                    )}
-
-                    {/* Tags */}
-                    {item.tags && item.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {item.tags.slice(0, 3).map((tag: string, tagIndex: number) => (
-                          <span
-                            key={tagIndex}
-                            className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs border border-purple-500/30"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                        {item.tags.length > 3 && (
-                          <span className="px-2 py-1 bg-gray-500/20 text-gray-400 rounded-full text-xs">
-                            +{item.tags.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                      <span>
-                        {new Date(item.createdAt).toLocaleDateString('es-CL', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric'
-                        })}
-                      </span>
-                      <span className="capitalize">{item.category}</span>
-                    </div>
-                  </div>
-
-                  {/* Precio elegante y profesional - siempre al final */}
-                  <div className="mt-auto flex justify-end">
-                    <div className="px-4 py-2 rounded-xl border-2 border-purple-500/60 group/price-hover transition-all duration-300 hover:border-purple-400/80 hover:shadow-lg hover:shadow-purple-500/20">
-                      <span className="bg-gradient-to-r from-purple-400 via-purple-300 to-blue-400 bg-clip-text text-transparent font-bold text-base tracking-wide drop-shadow-lg group-hover/price-hover:from-purple-300 group-hover/price-hover:via-blue-300 group-hover/price-hover:to-cyan-400 transition-all duration-500">
-                        {item.price}
-                      </span>
-
-                      {/* Efecto de resplandor sutil */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 via-purple-300/10 to-blue-400/10 rounded-xl opacity-0 group-hover/price-hover:opacity-100 transition-opacity duration-500 blur-sm"></div>
-                    </div>
-                  </div>
-                </div>
+              <div key={item.id} style={{ animationDelay: `${index * 100}ms` }}>
+                <ContentCard
+                  {...createCardProps(item, {
+                    onClick: () => openItemModal(item),
+                    variant: 'default',
+                    showPrice: true,
+                    showStats: true,
+                    showTags: false,
+                    showAuthor: false,
+                    showDescription: true
+                  })}
+                  className="flex flex-col h-[420px]"
+                />
               </div>
             ))}
           </div>
@@ -522,12 +421,22 @@ export default function ExplorePage() {
         </div>
       </div>
 
-      {/* Nuevo Modal de Detalle de Producto */}
-      <ProductDetailModal
-        product={selectedItem}
-        isOpen={showModal}
-        onClose={closeModal}
-      />
+      {/* Modal de producto */}
+      {selectedItem && (
+        <ProductModal
+          product={transformContentItem(selectedItem)}
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          isOwner={user?.username === selectedItem.author}
+          onEdit={(product) => console.log('Edit product:', product)}
+          onDelete={(product) => console.log('Delete product:', product)}
+          onBuy={(product) => console.log('Buy product:', product)}
+          onAddToBox={(product) => console.log('Add to box:', product)}
+          onLike={(product) => console.log('Like product:', product)}
+          onSave={(product) => console.log('Save product:', product)}
+          onShare={(product) => console.log('Share product:', product)}
+        />
+      )}
     </Layout>
   );
 }

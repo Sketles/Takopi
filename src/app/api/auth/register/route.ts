@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     const token = jwt.sign(
       { userId: newUser._id, email: newUser.email },
       config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
+      { expiresIn: '7d' }
     );
 
     // Respuesta sin password

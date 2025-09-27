@@ -23,6 +23,7 @@ export default function ProfileEditor({ userProfile, onSave, onCancel, isOpen }:
     role: userProfile.role || 'Explorer',
     avatar: userProfile.avatar || '',
     banner: userProfile.banner || '',
+    location: userProfile.location || '',
   });
 
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
@@ -40,6 +41,7 @@ export default function ProfileEditor({ userProfile, onSave, onCancel, isOpen }:
         role: userProfile.role || 'Explorer',
         avatar: userProfile.avatar || '',
         banner: userProfile.banner || '',
+        location: userProfile.location || '',
       });
       setAvatarPreview(userProfile.avatar || '');
       setBannerPreview(userProfile.banner || '');
@@ -93,6 +95,7 @@ export default function ProfileEditor({ userProfile, onSave, onCancel, isOpen }:
   };
 
   const handleSave = () => {
+    console.log('🔍 ProfileEditor - Datos a enviar:', formData);
     onSave(formData);
   };
 
@@ -270,6 +273,23 @@ export default function ProfileEditor({ userProfile, onSave, onCancel, isOpen }:
               placeholder="Cuéntanos sobre ti, tu arte y tu pasión creativa..."
             />
             <p className="text-xs text-gray-500 mt-2">{formData.bio.length}/500 caracteres</p>
+          </div>
+
+          {/* Location */}
+          <div>
+            <label htmlFor="location" className="block text-sm font-medium text-gray-300 mb-2">
+              Ubicación
+            </label>
+            <input
+              type="text"
+              id="location"
+              name="location"
+              value={formData.location}
+              onChange={handleInputChange}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+              placeholder="Ciudad, País (ej: Madrid, España)"
+            />
+            <p className="text-xs text-gray-500 mt-2">{formData.location.length}/100 caracteres</p>
           </div>
         </div>
 

@@ -34,28 +34,32 @@ export async function GET(request: NextRequest) {
     // Obtener total para paginación
     const total = await Content.countDocuments(filter);
 
-    // Transformar datos para la UI
-    const transformedContent = content.map(item => ({
-      id: item._id.toString(),
-      title: item.title || item.provisionalName,
-      author: item.authorUsername || item.author?.username || 'Anónimo',
-      type: getContentTypeDisplay(item.contentType),
-      category: getCategoryDisplay(item.category),
-      image: getContentImage(item),
-      // Incluir archivos y cover para que el modal pueda decidir el preview correcto
-      files: item.files || [],
-      coverImage: item.coverImage || null,
-      likes: item.likes || 0,
-      price: formatPrice(item.price, item.isFree),
-      license: item.license || 'Personal',
-      downloads: item.downloads || 0,
-      tags: [...(item.tags || []), ...(item.customTags || [])],
-      views: item.views || 0,
-      createdAt: item.createdAt,
-      contentType: item.contentType,
-      isFree: item.isFree,
-      currency: item.currency
-    }));
+        // Transformar datos para la UI
+        const transformedContent = content.map(item => ({
+          id: item._id.toString(),
+          title: item.title || item.provisionalName,
+          description: item.description,
+          shortDescription: item.shortDescription,
+          author: item.authorUsername || item.author?.username || 'Anónimo',
+          authorAvatar: item.author?.avatar || null,
+          authorId: item.author?._id?.toString() || null,
+          type: getContentTypeDisplay(item.contentType),
+          category: getCategoryDisplay(item.category),
+          image: getContentImage(item),
+          // Incluir archivos y cover para que el modal pueda decidir el preview correcto
+          files: item.files || [],
+          coverImage: item.coverImage || null,
+          likes: item.likes || 0,
+          price: Number(item.price) || 0, // Enviar número raw como el endpoint del perfil
+          license: item.license || 'Personal',
+          downloads: item.downloads || 0,
+          tags: [...(item.tags || []), ...(item.customTags || [])],
+          views: item.views || 0,
+          createdAt: item.createdAt,
+          contentType: item.contentType,
+          isFree: item.isFree,
+          currency: item.currency
+        }));
 
     return NextResponse.json({
       success: true,
@@ -163,38 +167,38 @@ function generateDefaultCover(contentType: string): string {
     'avatares': {
       gradient: 'from-green-500 to-teal-500',
       icon: '👤',
-      placeholder: '/placeholders/placeholder-avatar.jpg'
+      placeholder: '/placeholders/placeholder-avatar.svg'
     },
     'modelos3d': {
       gradient: 'from-blue-500 to-cyan-500',
       icon: '🧩',
-      placeholder: '/placeholders/placeholder-3d.jpg'
+      placeholder: '/placeholders/placeholder-3d.svg'
     },
     'musica': {
       gradient: 'from-purple-500 to-pink-500',
       icon: '🎵',
-      placeholder: '/placeholders/placeholder-music.jpg'
+      placeholder: '/placeholders/placeholder-music.svg'
     },
     'texturas': {
       gradient: 'from-indigo-500 to-purple-500',
       icon: '🖼️',
-      placeholder: '/placeholders/placeholder-texture.jpg'
+      placeholder: '/placeholders/placeholder-texture.svg'
     },
     'animaciones': {
       gradient: 'from-orange-500 to-red-500',
       icon: '🎬',
-      placeholder: '/placeholders/placeholder-animation.jpg'
+      placeholder: '/placeholders/placeholder-animation.svg'
     },
     'OBS': {
       gradient: 'from-gray-500 to-blue-500',
       icon: '📺',
-      placeholder: '/placeholders/placeholder-widget.jpg',
+      placeholder: '/placeholders/placeholder-widget.svg',
       customLogo: '/logos/OBS_Studio_logo.png'
     },
     'colecciones': {
       gradient: 'from-yellow-500 to-orange-500',
       icon: '📦',
-      placeholder: '/placeholders/placeholder-collection.jpg'
+      placeholder: '/placeholders/placeholder-collection.svg'
     }
   };
 

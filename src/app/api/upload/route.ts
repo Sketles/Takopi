@@ -31,12 +31,12 @@ const upload = multer({
     const contentType = (req as any).body?.contentType;
 
     const allowedTypes: { [key: string]: string[] } = {
-      'musica': ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/ogg', 'audio/m4a'],
-      'modelos3d': ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream', 'model/obj'],
-      'texturas': ['image/jpeg', 'image/png', 'image/webp', 'image/tiff'],
-      'avatares': ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-      'animaciones': ['video/mp4', 'video/webm', 'video/ogg', 'image/gif'],
-      'OBS': ['text/html', 'text/css', 'application/javascript', 'application/json'],
+      'musica': ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/ogg', 'audio/m4a', 'application/zip'],
+      'modelos3d': ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream', 'model/obj', 'application/zip'],
+      'texturas': ['image/jpeg', 'image/png', 'image/webp', 'image/tiff', 'application/zip'],
+      'avatares': ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream', 'model/obj', 'application/zip'],
+      'animaciones': ['video/mp4', 'video/webm', 'video/ogg', 'image/gif', 'application/zip'],
+      'OBS': ['text/html', 'text/css', 'application/javascript', 'application/json', 'application/zip'],
       'colecciones': ['application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed']
     };
 

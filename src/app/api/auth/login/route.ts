@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
+      { expiresIn: '7d' }
     );
 
     // Remover password del objeto de respuesta

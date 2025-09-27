@@ -72,6 +72,47 @@ export default function Header() {
 
           {/* User Actions */}
           <div className="hidden md:flex items-center gap-4">
+            {/* Botón Box (Carrito) - Solo para usuarios autenticados */}
+            {user && (
+              <Link
+                href="/box"
+                className="group relative px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-pink-600 transition-all duration-500 transform hover:scale-110 hover:rotate-1 shadow-lg hover:shadow-orange-500/30 flex items-center gap-2 overflow-hidden"
+              >
+                {/* Efecto de brillo animado */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                
+                {/* Icono de caja con animación */}
+                <div className="relative z-10 flex items-center gap-2">
+                  <svg 
+                    className="w-5 h-5 transition-all duration-300 group-hover:rotate-12 group-hover:scale-110" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" 
+                    />
+                  </svg>
+                  <span className="font-semibold">Box</span>
+                  
+                  {/* Contador de items (placeholder por ahora) */}
+                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse group-hover:animate-bounce">
+                    0
+                  </div>
+                </div>
+                
+                {/* Efecto de partículas flotantes */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute top-1 left-2 w-1 h-1 bg-white/60 rounded-full animate-ping group-hover:animate-bounce"></div>
+                  <div className="absolute top-3 right-3 w-1 h-1 bg-white/40 rounded-full animate-ping group-hover:animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  <div className="absolute bottom-2 left-4 w-1 h-1 bg-white/50 rounded-full animate-ping group-hover:animate-bounce" style={{animationDelay: '0.4s'}}></div>
+                </div>
+              </Link>
+            )}
+            
             {/* Botón Subir - Solo para usuarios autenticados */}
             {user && (
               <Link
@@ -214,6 +255,38 @@ export default function Header() {
               <div className="flex flex-col gap-2 pt-2 border-t border-purple-500/20">
                 {user ? (
                   <>
+                    {/* Botón Box en Mobile */}
+                    <Link
+                      href="/box"
+                      className="group relative text-gray-300 hover:text-orange-400 transition-all duration-300 py-2 px-4 rounded-lg hover:bg-orange-500/10 flex items-center gap-3 overflow-hidden"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {/* Efecto de brillo animado */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-orange-400/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                      
+                      <div className="relative z-10 flex items-center gap-3">
+                        <svg 
+                          className="w-5 h-5 transition-all duration-300 group-hover:rotate-12 group-hover:scale-110" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" 
+                          />
+                        </svg>
+                        <span className="font-semibold">Box</span>
+                        
+                        {/* Contador de items */}
+                        <div className="bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse group-hover:animate-bounce">
+                          0
+                        </div>
+                      </div>
+                    </Link>
+                    
                     {/* Botón Subir en Mobile */}
                     <Link
                       href="/upload"

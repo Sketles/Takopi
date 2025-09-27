@@ -7,12 +7,12 @@ import mongoose from 'mongoose';
 // GET - Obtener publicación específica
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectToDatabase();
 
-    const { id } = params;
+    const { id } = await params;
 
     // Validar ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -25,7 +25,7 @@ export async function GET(
     // Buscar la publicación
     const content = await Content.findById(id)
       .populate('author', 'username avatar role bio banner')
-      .lean();
+      .lean() as any;
 
     if (!content) {
       return NextResponse.json(
@@ -50,9 +50,17 @@ export async function GET(
     // Incrementar contador de views (asíncrono, no esperamos)
     Content.findByIdAndUpdate(id, { $inc: { views: 1 } }).catch(console.error);
 
+    // Transformar datos para el frontend
+    const transformedContent = {
+      ...content,
+      author: content.author?.username || content.authorUsername || 'Anónimo',
+      authorAvatar: content.author?.avatar || null,
+      authorId: content.author?._id?.toString() || null
+    };
+
     return NextResponse.json({
       success: true,
-      data: content
+      data: transformedContent
     });
 
   } catch (error) {
@@ -67,12 +75,12 @@ export async function GET(
 // PUT - Actualizar publicación
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectToDatabase();
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // TODO: Verificar autenticación y autorización
@@ -149,12 +157,12 @@ export async function PUT(
 // DELETE - Eliminar publicación
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectToDatabase();
 
-    const { id } = params;
+    const { id } = await params;
 
     // TODO: Verificar autenticación y autorización
     // Solo el autor puede eliminar su publicación

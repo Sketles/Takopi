@@ -8,6 +8,7 @@ export interface IUser extends Document {
   avatar?: string;
   banner?: string;
   bio?: string;
+  location?: string;
   createdAt: Date;
   updatedAt: Date;
   purchases: mongoose.Types.ObjectId[];
@@ -57,6 +58,11 @@ const UserSchema = new Schema<IUser>({
     type: String,
     maxlength: [500, 'Bio cannot exceed 500 characters'],
     default: ''
+  },
+  location: {
+    type: String,
+    maxlength: [100, 'Location cannot exceed 100 characters'],
+    default: 'Chile'
   },
   purchases: [{
     type: Schema.Types.ObjectId,

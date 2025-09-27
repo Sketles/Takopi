@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     })
       .sort({ createdAt: -1 }) // Más recientes primero
       .limit(12) // Máximo 12 creaciones
-      .select('title description contentType category price isFree files coverImage likes views downloads createdAt');
+      .select('title description shortDescription contentType category price isFree files coverImage likes views downloads createdAt');
 
     // Procesar las creaciones para incluir la imagen
     const processedCreations = creations.map(creation => {
@@ -80,11 +80,15 @@ export async function GET(request: NextRequest) {
         id: creation._id,
         title: creation.title,
         description: creation.description,
+        shortDescription: creation.shortDescription,
         contentType: creation.contentType,
         category: creation.category,
-        price: creation.price,
-        isFree: creation.isFree,
+        price: Number(creation.price) || 0, // Asegurar que siempre sea un número válido
+        isFree: Boolean(creation.isFree), // Asegurar que siempre sea un booleano
         image: getContentImage(creation),
+        author: user.username, // Incluir nombre de usuario del autor
+        authorAvatar: user.avatar || null, // Incluir avatar del autor
+        authorId: user._id.toString(), // Incluir ID del autor
         likes: creation.likes || 0,
         views: creation.views || 0,
         downloads: creation.downloads || 0,
@@ -117,42 +121,42 @@ function generateDefaultCover(contentType: string): string {
     'avatares': {
       gradient: 'from-green-500 to-teal-500',
       icon: '👤',
-      placeholder: '/placeholders/placeholder-avatar.jpg'
+      placeholder: '/placeholders/placeholder-avatar.svg'
     },
     'modelos3d': {
       gradient: 'from-blue-500 to-cyan-500',
       icon: '🧩',
-      placeholder: '/placeholders/placeholder-3d.jpg'
+      placeholder: '/placeholders/placeholder-3d.svg'
     },
     'musica': {
       gradient: 'from-purple-500 to-pink-500',
       icon: '🎵',
-      placeholder: '/placeholders/placeholder-music.jpg'
+      placeholder: '/placeholders/placeholder-music.svg'
     },
     'texturas': {
       gradient: 'from-indigo-500 to-purple-500',
       icon: '🖼️',
-      placeholder: '/placeholders/placeholder-texture.jpg'
+      placeholder: '/placeholders/placeholder-texture.svg'
     },
     'animaciones': {
       gradient: 'from-orange-500 to-red-500',
       icon: '🎬',
-      placeholder: '/placeholders/placeholder-animation.jpg'
+      placeholder: '/placeholders/placeholder-animation.svg'
     },
     'OBS': {
       gradient: 'from-gray-500 to-blue-500',
       icon: '📺',
-      placeholder: '/placeholders/placeholder-widget.jpg',
+      placeholder: '/placeholders/placeholder-widget.svg',
       customLogo: '/logos/OBS_Studio_logo.png'
     },
     'colecciones': {
       gradient: 'from-yellow-500 to-orange-500',
       icon: '📦',
-      placeholder: '/placeholders/placeholder-collection.jpg'
+      placeholder: '/placeholders/placeholder-collection.svg'
     }
   };
 
-  const config = coverConfig[contentType] || coverConfig['modelos3d'];
+  const config = coverConfig[contentType as keyof typeof coverConfig] || coverConfig['modelos3d'];
 
   // Por ahora retornamos el placeholder, pero en el futuro se podría generar
   // una imagen SVG dinámica con gradiente e icono

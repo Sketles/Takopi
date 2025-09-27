@@ -5,10 +5,11 @@ import fs from 'fs';
 // API route para servir archivos estáticos de manera segura
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
-    const filePath = params.path.join('/');
+    const { path: pathArray } = await params;
+    const filePath = pathArray.join('/');
 
     // Construir ruta completa del archivo
     const fullPath = path.join(process.cwd(), 'public/uploads', filePath);

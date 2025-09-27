@@ -16,7 +16,7 @@ const contentTypes = [
     metaphor: '👤',
     color: 'from-green-500 to-teal-500',
     // Aceptamos formatos del visor: priorizar .glb/.gltf; .vrm permitido para avatares
-    fileTypes: ['.glb', '.gltf', '.vrm'],
+    fileTypes: ['.glb', '.gltf', '.vrm', '.zip'],
     maxSize: 50,
     previewComponent: 'model-viewer'
   },
@@ -28,7 +28,7 @@ const contentTypes = [
     metaphor: '🧩',
     color: 'from-blue-500 to-cyan-500',
     // Solo formatos soportados por el visor directamente
-    fileTypes: ['.glb', '.gltf'],
+    fileTypes: ['.glb', '.gltf', '.zip'],
     maxSize: 100,
     previewComponent: 'model-viewer'
   },
@@ -39,7 +39,7 @@ const contentTypes = [
     icon: '🎵',
     metaphor: '🎵',
     color: 'from-purple-500 to-pink-500',
-    fileTypes: ['.mp3', '.wav', '.ogg', '.flac'],
+    fileTypes: ['.mp3', '.wav', '.ogg', '.flac', '.zip'],
     maxSize: 25,
     previewComponent: 'audio-player'
   },
@@ -50,7 +50,7 @@ const contentTypes = [
     icon: '🖼️',
     metaphor: '🖼️',
     color: 'from-indigo-500 to-purple-500',
-    fileTypes: ['.png', '.jpg', '.psd', '.tiff'],
+    fileTypes: ['.png', '.jpg', '.psd', '.tiff', '.zip'],
     maxSize: 10,
     previewComponent: 'image-gallery'
   },
@@ -61,7 +61,7 @@ const contentTypes = [
     icon: '🎬',
     metaphor: '🎬',
     color: 'from-orange-500 to-red-500',
-    fileTypes: ['.mp4', '.mov', '.gif', '.webm'],
+    fileTypes: ['.mp4', '.mov', '.gif', '.webm', '.zip'],
     maxSize: 200,
     previewComponent: 'video-player'
   },
@@ -408,7 +408,7 @@ export default function UploadPage() {
   };
 
   const nextStep = () => {
-    if (currentStep < 7) {
+    if (currentStep < 6) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -423,7 +423,7 @@ export default function UploadPage() {
     e.preventDefault();
 
     // Verificar que estamos en el paso correcto
-    if (currentStep !== 7) {
+    if (currentStep !== 6) {
       alert('Por favor completa todos los pasos del formulario');
       return;
     }
@@ -550,24 +550,22 @@ export default function UploadPage() {
   const getStepTitle = () => {
     switch (currentStep) {
       case 1: return '¿Qué vas a subir hoy?';
-      case 2: return 'Suelta tu archivo, nosotros te mostramos cómo se ve';
-      case 3: return 'Ponle un nombre, aunque sea temporal';
+      case 2: return 'Adorna tu producto';
+      case 3: return 'Suelta tu archivo, nosotros te mostramos cómo se ve';
       case 4: return 'Cuenta en 2 frases qué incluye tu creación';
-      case 5: return 'Adorna tu producto';
-      case 6: return 'Ahora define tu precio y hazlo público';
-      case 7: return '🎉 ¡Listo para publicar!';
+      case 5: return 'Ahora define tu precio y hazlo público';
+      case 6: return '🎉 ¡Listo para publicar!';
       default: return '';
     }
   };
 
   const getStepMotivation = () => {
     switch (currentStep) {
-      case 2: return '¡Genial! Ya tienes tu contenido base 🚀';
-      case 3: return 'Tu creación empieza a tomar forma ✨';
+      case 2: return '¡Excelente! Tu producto se ve profesional 💅';
+      case 3: return '¡Genial! Ya tienes tu contenido base 🚀';
       case 4: return '¡Perfecto! Ya tienes toda la info básica 📝';
-      case 5: return '¡Excelente! Tu producto se ve profesional 🎨';
-      case 6: return 'Ponle valor a tu trabajo. Puedes empezar gratis y cambiarlo después 💰';
-      case 7: return '¡Todo listo! Tu creación está perfecta para compartir 🎊';
+      case 5: return 'Ponle valor a tu trabajo. Puedes empezar gratis y cambiarlo después 💰';
+      case 6: return '¡Todo listo! Tu creación está perfecta para compartir 🎊';
       default: return '';
     }
   };
@@ -600,7 +598,7 @@ export default function UploadPage() {
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            {[1, 2, 3, 4, 5, 6, 7].map((step) => (
+            {[1, 2, 3, 4, 5, 6].map((step) => (
               <div
                 key={step}
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${step <= currentStep
@@ -615,7 +613,7 @@ export default function UploadPage() {
           <div className="w-full bg-gray-700 rounded-full h-2">
             <div
               className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${(currentStep / 7) * 100}%` }}
+              style={{ width: `${(currentStep / 6) * 100}%` }}
             ></div>
           </div>
         </div>
@@ -680,8 +678,8 @@ export default function UploadPage() {
             </div>
           )}
 
-          {/* Step 2: Subida de archivos con preview */}
-          {currentStep === 2 && selectedContentType && (
+          {/* Step 3: Subida de archivos con preview */}
+          {currentStep === 3 && selectedContentType && (
             <div className="bg-black/40 backdrop-blur-md rounded-2xl border border-purple-500/20 p-8">
               <h2 className="text-3xl font-bold text-white mb-2 text-center">
                 {getStepTitle()}
@@ -997,60 +995,7 @@ export default function UploadPage() {
             </div>
           )}
 
-          {/* Step 3: Nombre provisional */}
-          {currentStep === 3 && (
-            <div className="bg-black/40 backdrop-blur-md rounded-2xl border border-purple-500/20 p-8">
-              <h2 className="text-3xl font-bold text-white mb-2 text-center">
-                {getStepTitle()}
-              </h2>
-              <p className="text-gray-300 text-center mb-8">
-                {getStepMotivation()}
-              </p>
-
-              <div className="max-w-2xl mx-auto">
-                <label className="block text-white font-medium mb-3">Nombre</label>
-                <input
-                  type="text"
-                  value={formData.provisionalName}
-                  onChange={(e) => setFormData({ ...formData, provisionalName: e.target.value })}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (formData.provisionalName.trim()) {
-                        nextStep();
-                      }
-                    }
-                  }}
-                  className="w-full px-4 py-4 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-green-400 focus:outline-none text-lg"
-                  placeholder={getPlaceholderForCategory(formData.contentType)}
-                  required
-                />
-                <p className="text-gray-400 text-sm mt-2">
-                  No te preocupes, puedes cambiarlo después
-                </p>
-              </div>
-
-              <div className="flex justify-between mt-8">
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  className="px-6 py-3 bg-gray-700 text-white rounded-xl font-semibold hover:bg-gray-600 transition-colors"
-                >
-                  ← Volver
-                </button>
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  disabled={!formData.provisionalName}
-                  className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Continuar →
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Detalles básicos */}
+          {/* Step 4: Descripción larga y hashtags */}
           {currentStep === 4 && (
             <div className="bg-black/40 backdrop-blur-md rounded-2xl border border-purple-500/20 p-8">
               <h2 className="text-3xl font-bold text-white mb-2 text-center">
@@ -1062,7 +1007,7 @@ export default function UploadPage() {
 
               <div className="max-w-2xl mx-auto space-y-6">
                 <div>
-                  <label className="block text-white font-medium mb-3">Descripción *</label>
+                   <label className="block text-white font-medium mb-3">Descripción *</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => {
@@ -1073,10 +1018,8 @@ export default function UploadPage() {
                     onKeyDown={(e) => {
                       // Permitir Enter para saltos de línea en el textarea de descripción
                       if (e.key === 'Enter') {
-                        // No hacer nada, dejar que Enter funcione normalmente para saltos de línea
                         return;
                       }
-                      // Para otros casos, prevenir envío del formulario
                       if (e.key === 'Enter' && e.ctrlKey) {
                         e.preventDefault();
                       }
@@ -1093,14 +1036,11 @@ export default function UploadPage() {
 
                 <div>
                   <label className="block text-white font-medium mb-3">Etiquetas y hashtags</label>
-
-                  {/* Input principal para escribir hashtags */}
                   <div className="relative mb-4">
                     <input
                       type="text"
                       onChange={(e) => {
                         const inputValue = e.target.value;
-                        // No hacer nada mientras escribes, solo guardar el valor
                         setFormData({ ...formData, currentTagInput: inputValue });
                       }}
                       onKeyDown={(e) => {
@@ -1114,7 +1054,6 @@ export default function UploadPage() {
                               customTags: [...formData.customTags, newTag],
                               currentTagInput: ''
                             });
-                            // Limpiar el input
                             input.value = '';
                           }
                         }
@@ -1127,7 +1066,6 @@ export default function UploadPage() {
                     </div>
                   </div>
 
-                  {/* Hashtags seleccionados */}
                   {formData.customTags.length > 0 && (
                     <div className="mb-4">
                       <p className="text-gray-400 text-sm mb-2">Etiquetas seleccionadas:</p>
@@ -1156,7 +1094,6 @@ export default function UploadPage() {
                     </div>
                   )}
 
-                  {/* Hashtags sugeridos */}
                   {formData.suggestedTags.length > 0 && (
                     <div>
                       <p className="text-gray-400 text-sm mb-2">Sugerencias populares:</p>
@@ -1216,8 +1153,8 @@ export default function UploadPage() {
             </div>
           )}
 
-          {/* Step 5: Personalizar tarjeta */}
-          {currentStep === 5 && (
+          {/* Step 2: Personalizar tarjeta + título */}
+          {currentStep === 2 && (
             <div className="bg-black/40 backdrop-blur-md rounded-2xl border border-purple-500/20 p-8">
               <h2 className="text-3xl font-bold text-white mb-2 text-center">
                 Adorna tu producto
@@ -1229,6 +1166,18 @@ export default function UploadPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Columna izquierda - Formulario */}
                 <div className="space-y-6">
+                  {/* Título de la creación */}
+                  <div>
+                    <label className="block text-white font-medium mb-3">Título</label>
+                    <input
+                      type="text"
+                      value={formData.provisionalName}
+                      onChange={(e) => setFormData({ ...formData, provisionalName: e.target.value })}
+                      onKeyDown={preventFormSubmit}
+                      className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-green-400 focus:outline-none"
+                      placeholder={getPlaceholderForCategory(formData.contentType)}
+                    />
+                  </div>
                   {/* Campo de portada */}
                   <div>
                     <label className="block text-white font-medium mb-3">
@@ -1346,8 +1295,8 @@ export default function UploadPage() {
             </div>
           )}
 
-          {/* Step 6: Precio y licencia */}
-          {currentStep === 6 && (
+           {/* Step 5: Precio y licencia */}
+           {currentStep === 5 && (
             <div className="bg-black/40 backdrop-blur-md rounded-2xl border border-purple-500/20 p-8">
               <h2 className="text-3xl font-bold text-white mb-2 text-center">
                 {getStepTitle()}
@@ -1470,8 +1419,8 @@ export default function UploadPage() {
             </div>
           )}
 
-          {/* Step 7: Resumen final y publicación */}
-          {currentStep === 7 && (
+           {/* Step 6: Resumen final y publicación */}
+           {currentStep === 6 && (
             <div className="bg-black/40 backdrop-blur-md rounded-2xl border border-purple-500/20 p-8">
               <h2 className="text-3xl font-bold text-white mb-2 text-center">
                 {getStepTitle()}

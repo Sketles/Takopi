@@ -37,30 +37,11 @@ export default function Footer() {
           <div className="space-y-4">
             <h4 className="font-semibold text-white">Tools</h4>
             <div className="flex flex-col gap-2">
-              <Link href="/cultural-map" className="text-gray-300 hover:text-purple-400 transition-colors">
-                Cultural Map
-              </Link>
-              <Link href="/chatbot" className="text-gray-300 hover:text-purple-400 transition-colors">
-                AI Assistant
-              </Link>
               <Link href="/upload" className="text-gray-300 hover:text-purple-400 transition-colors">
                 Upload Content
               </Link>
-            </div>
-          </div>
-
-          {/* Support */}
-          <div className="space-y-4">
-            <h4 className="font-semibold text-white">Support</h4>
-            <div className="flex flex-col gap-2">
-              <Link href="/help" className="text-gray-300 hover:text-purple-400 transition-colors">
-                Help Center
-              </Link>
-              <Link href="/privacy" className="text-gray-300 hover:text-purple-400 transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className="text-gray-300 hover:text-purple-400 transition-colors">
-                Terms of Service
+              <Link href="/box" className="text-gray-300 hover:text-purple-400 transition-colors">
+                Box (Cart)
               </Link>
             </div>
           </div>

@@ -45,13 +45,23 @@ export async function GET(request: NextRequest) {
 
 // PUT - Actualizar perfil del usuario
 export async function PUT(request: NextRequest) {
+  console.error('🚀🚀🚀 API Profile - FUNCIÓN PUT INICIADA 🚀🚀🚀');
+  console.error('🔍 API Profile - Timestamp:', new Date().toISOString());
   try {
+    console.error('🔍 API Profile - Iniciando PUT request');
     const decoded = await verifyToken(request);
     if (!decoded) {
+      console.error('🔍 API Profile - Token inválido');
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    const { username, bio, role, avatar, banner } = await request.json();
+    console.error('🔍 API Profile - Token válido, procesando datos');
+    const requestBody = await request.json();
+    console.error('🔍 API Profile - Datos recibidos:', JSON.stringify(requestBody, null, 2));
+    const { username, bio, role, avatar, banner, location } = requestBody;
+    console.error('🔍 API Profile - Location extraída:', location);
+    console.error('🔍 API Profile - Location type:', typeof location);
+    console.error('🔍 API Profile - Location undefined?', location === undefined);
 
     // Validaciones básicas solo si se está actualizando el username
     if (username !== undefined && (!username || username.length < 3)) {
@@ -64,6 +74,13 @@ export async function PUT(request: NextRequest) {
     if (bio && bio.length > 500) {
       return NextResponse.json(
         { error: 'La descripción no puede exceder 500 caracteres' },
+        { status: 400 }
+      );
+    }
+
+    if (location && location.length > 100) {
+      return NextResponse.json(
+        { error: 'La ubicación no puede exceder 100 caracteres' },
         { status: 400 }
       );
     }
@@ -96,11 +113,35 @@ export async function PUT(request: NextRequest) {
     // Actualizar el usuario
     const updateData: any = {};
 
-    if (username !== undefined) updateData.username = username;
-    if (bio !== undefined) updateData.bio = bio;
-    if (role !== undefined) updateData.role = role;
-    if (avatar !== undefined) updateData.avatar = avatar;
-    if (banner !== undefined) updateData.banner = banner;
+    console.error('🔍 API Profile - Iniciando construcción de updateData');
+    if (username !== undefined) {
+      updateData.username = username;
+      console.error('🔍 API Profile - Username agregado:', username);
+    }
+    if (bio !== undefined) {
+      updateData.bio = bio;
+      console.error('🔍 API Profile - Bio agregado:', bio);
+    }
+    if (role !== undefined) {
+      updateData.role = role;
+      console.error('🔍 API Profile - Role agregado:', role);
+    }
+    if (avatar !== undefined) {
+      updateData.avatar = avatar;
+      console.error('🔍 API Profile - Avatar agregado');
+    }
+    if (banner !== undefined) {
+      updateData.banner = banner;
+      console.error('🔍 API Profile - Banner agregado');
+    }
+    if (location !== undefined) {
+      updateData.location = location;
+      console.error('🔍 API Profile - Location agregado:', location);
+    } else {
+      console.error('🔍 API Profile - Location es undefined, no se agrega');
+    }
+
+    console.error('🔍 API Profile - Datos a actualizar en BD:', updateData);
 
     const updatedUser = await User.findByIdAndUpdate(
       decoded.userId,
@@ -112,13 +153,15 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
     }
 
+    console.error('🔍 API Profile - Usuario actualizado:', updatedUser);
+    console.error('✅ API Profile - RESPONSE ENVIADA');
     return NextResponse.json({
       message: 'Perfil actualizado exitosamente',
       user: updatedUser
     });
 
   } catch (error) {
-    console.error('Error al actualizar perfil:', error);
+    console.error('🔍 API Profile - Error al actualizar perfil:', error);
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

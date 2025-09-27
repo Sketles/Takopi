@@ -6,9 +6,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import ProfileEditor from '@/components/profile/ProfileEditor';
 import InlineEditor from '@/components/profile/InlineEditor';
 import RoleSelector from '@/components/profile/RoleSelector';
-import DefaultCover from '@/components/shared/DefaultCover';
-import ProductDetailProfile from '@/components/ProductDetailProfile';
-import ProductEditor from '@/components/ProductEditor';
+import ContentCard, { useContentCard } from '@/components/shared/ContentCard';
+import ProductModal from '@/components/product/ProductModal';
+import ProductEditModal from '@/components/product/ProductEditModal';
 import Link from 'next/link';
 
 // Datos de ejemplo para el perfil (solo para estadísticas por defecto)
@@ -25,14 +25,14 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentProfile, setCurrentProfile] = useState({
-    username: "Sushipan",
-    email: "sushipan@takopi.com",
-    role: "Artist",
-    avatar: null,
-    banner: null,
-    bio: "Artista digital especializado en modelos 3D futuristas, música experimental y diseño industrial. Explorando los límites de la creatividad digital.",
-    location: "Santiago, Chile",
-    joinedDate: "Enero 2024",
+    username: "Cargando...",
+    email: "",
+    role: "Explorer",
+    avatar: null as string | null,
+    banner: null as string | null,
+    bio: "",
+    location: "",
+    createdAt: "",
     stats: defaultStats
   });
   const [editingType, setEditingType] = useState<'avatar' | 'banner' | null>(null);
@@ -40,11 +40,12 @@ export default function ProfilePage() {
   const [realStats, setRealStats] = useState<any>(null);
   const [userCreations, setUserCreations] = useState<any[]>([]);
   const [loadingCreations, setLoadingCreations] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isProductEditorOpen, setIsProductEditorOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const { user } = useAuth();
+  const { createCardProps } = useContentCard();
 
   const isOwnProfile = user?.username === currentProfile.username;
 
@@ -117,17 +118,22 @@ export default function ProfilePage() {
           ...data.user,
           stats: prev.stats, // Mantener las stats por defecto
         }));
+
+        // Ya no auto-actualizamos la ubicación
       }
     } catch (error) {
       console.error('Error al cargar perfil:', error);
     }
   };
 
+
   // Función para guardar cambios del perfil
   const handleSaveProfile = async (updatedProfile: any) => {
+    console.log('🔍 ProfilePage - Datos recibidos del modal:', updatedProfile);
     setIsLoading(true);
     try {
       const token = localStorage.getItem('takopi_token');
+      console.log('🔍 ProfilePage - Enviando a API:', updatedProfile);
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: {
@@ -139,11 +145,14 @@ export default function ProfilePage() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('🔍 ProfilePage - Respuesta de la API:', data);
+        console.log('🔍 ProfilePage - Location en respuesta:', data.user.location);
         setCurrentProfile(prev => ({
           ...prev,
           ...data.user,
           stats: prev.stats,
         }));
+        console.log('🔍 ProfilePage - Perfil actualizado en estado local');
         setIsEditing(false);
 
         // Actualizar el usuario en el contexto
@@ -154,6 +163,7 @@ export default function ProfilePage() {
             bio: data.user.bio,
             role: data.user.role,
             avatar: data.user.avatar,
+            location: data.user.location,
           };
           localStorage.setItem('takopi_user', JSON.stringify(updatedUser));
         }
@@ -171,6 +181,15 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
+      // Actualizar currentProfile con los datos del usuario
+      setCurrentProfile(prev => ({
+        ...prev,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar || null
+      }));
+      
       loadUserProfile();
       loadUserStats();
       loadUserCreations();
@@ -281,9 +300,40 @@ export default function ProfilePage() {
     }
   };
 
+  // Función para transformar datos de creación a formato de ProductModal
+  const transformCreationToModal = (creation: any) => {
+    return {
+      id: creation.id || creation._id,
+      title: creation.title || creation.provisionalName,
+      description: creation.description || '',
+      shortDescription: creation.shortDescription,
+      contentType: creation.contentType,
+      category: creation.category,
+      price: typeof creation.price === 'string' ? parseFloat(creation.price) || 0 : creation.price,
+      currency: creation.currency || 'CLP',
+      isFree: creation.isFree,
+      license: creation.license || 'personal',
+      customLicense: creation.customLicense,
+      visibility: creation.visibility || 'public',
+      status: creation.status || 'published',
+      author: creation.author || creation.authorUsername || 'Anónimo',
+      authorAvatar: creation.authorAvatar,
+      authorId: creation.authorId,
+      likes: creation.likes || 0,
+      views: creation.views || 0,
+      files: creation.files || [], // Usar los archivos reales
+      coverImage: creation.coverImage || creation.image,
+      additionalImages: creation.additionalImages || [],
+      tags: creation.tags || [],
+      customTags: creation.customTags || [],
+      createdAt: creation.createdAt,
+      updatedAt: creation.updatedAt || creation.createdAt
+    };
+  };
+
   // Función para abrir el modal del producto
   const handleProductClick = (product: any) => {
-    setSelectedProduct(product);
+    setSelectedProduct(transformCreationToModal(product));
     setIsProductModalOpen(true);
   };
 
@@ -293,11 +343,11 @@ export default function ProfilePage() {
     setSelectedProduct(null);
   };
 
+
   // Función para editar producto
   const handleEditProduct = (product: any) => {
     setProductToEdit(product);
     setIsProductEditorOpen(true);
-    setIsProductModalOpen(false);
   };
 
   // Función para eliminar producto
@@ -495,13 +545,13 @@ export default function ProfilePage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      <span>{currentProfile.location}</span>
+                      <span>{currentProfile.location || 'Chile'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      <span>Se unió en {currentProfile.joinedDate}</span>
+                      <span>Se unió en {currentProfile.createdAt ? new Date(currentProfile.createdAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' }) : 'Fecha no disponible'}</span>
                     </div>
                   </div>
                 </div>
@@ -662,139 +712,22 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      {/* Grid de tarjetas de creaciones */}
+                      {/* Grid de tarjetas de creaciones usando ContentCard */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {category.creations.map((creation) => {
-                          const getContentTypeIcon = (type: string) => {
-                            // Para OBS, mostrar logo personalizado
-                            if (type === 'OBS') {
-                              return (
-                                <img
-                                  src="/logos/OBS_Studio_logo.png"
-                                  alt="OBS"
-                                  className="w-4 h-4 object-contain filter brightness-0 invert"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                  }}
-                                />
-                              );
-                            }
-
-                            const icons: { [key: string]: string } = {
-                              'avatares': '👤',
-                              'modelos3d': '🧩',
-                              'musica': '🎵',
-                              'texturas': '🖼️',
-                              'animaciones': '🎬',
-                              'colecciones': '📦'
-                            };
-                            return icons[type] || '📁';
-                          };
-
-                          const getContentTypeName = (type: string) => {
-                            const names: { [key: string]: string } = {
-                              'avatares': 'Avatar',
-                              'modelos3d': 'Modelo 3D',
-                              'musica': 'Música',
-                              'texturas': 'Textura',
-                              'animaciones': 'Animación',
-                              'OBS': 'OBS Widget',
-                              'colecciones': 'Colección'
-                            };
-                            return names[type] || type;
-                          };
-
-                          return (
-                            <div
+                        {category.creations.map((creation: any) => (
+                          <ContentCard
                               key={creation.id}
-                              onClick={() => handleProductClick(creation)}
-                              className="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 overflow-hidden hover:shadow-xl hover:shadow-purple-500/10 cursor-pointer"
-                            >
-                              {/* Imagen de la creación */}
-                              <div className="aspect-square relative overflow-hidden">
-                                {creation.image && !creation.image.includes('/placeholder-') ? (
-                                  <img
-                                    src={creation.image}
-                                    alt={creation.title}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                    onError={(e) => {
-                                      const target = e.target as HTMLImageElement;
-                                      target.style.display = 'none';
-                                      target.nextElementSibling?.classList.remove('hidden');
-                                    }}
-                                  />
-                                ) : (
-                                  <DefaultCover
-                                    contentType={creation.contentType || 'models'}
-                                    className="w-full h-full group-hover:scale-105 transition-transform duration-300"
-                                  />
-                                )}
-
-                                {/* Debug info */}
-                                {process.env.NODE_ENV === 'development' && (
-                                  <div className="absolute bottom-2 left-2 bg-black/80 text-white text-xs p-1 rounded">
-                                    Type: {creation.contentType || 'undefined'}
-                                  </div>
-                                )}
-
-                                {/* Overlay con tipo de contenido */}
-                                <div className="absolute top-3 left-3 px-2 py-1 bg-black/70 backdrop-blur-sm rounded-lg text-white text-xs font-medium flex items-center gap-1">
-                                  <span>{getContentTypeIcon(creation.contentType)}</span>
-                                  <span>{getContentTypeName(creation.contentType)}</span>
-                                </div>
-
-                                {/* Precio */}
-                                <div className="absolute top-3 right-3 px-2 py-1 bg-gradient-to-r from-green-600/90 to-emerald-600/90 backdrop-blur-sm rounded-lg text-white text-xs font-bold">
-                                  {creation.isFree ? 'GRATIS' : `$${creation.price.toLocaleString('es-CL')}`}
-                                </div>
-
-                                {/* Stats overlay */}
-                                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
-                                  <div className="flex items-center gap-3 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1">
-                                    <div className="flex items-center gap-1">
-                                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
-                                      </svg>
-                                      <span>{creation.likes}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                      </svg>
-                                      <span>{creation.views}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Información de la creación */}
-                              <div className="p-4">
-                                <h3 className="text-white font-semibold text-lg mb-2 line-clamp-2 group-hover:text-green-400 transition-colors">
-                                  {creation.title}
-                                </h3>
-
-                                {creation.description && (
-                                  <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                                    {creation.description}
-                                  </p>
-                                )}
-
-                                <div className="flex items-center justify-between text-xs text-gray-500">
-                                  <span>
-                                    {new Date(creation.createdAt).toLocaleDateString('es-CL', {
-                                      day: 'numeric',
-                                      month: 'short',
-                                      year: 'numeric'
-                                    })}
-                                  </span>
-                                  <span className="capitalize">{creation.category}</span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+                            {...createCardProps(creation, {
+                              onClick: () => handleProductClick(creation),
+                              variant: 'default',
+                              showPrice: true,
+                              showStats: true,
+                              showTags: false,
+                              showAuthor: false,
+                              showDescription: true
+                            })}
+                          />
+                        ))}
                       </div>
                     </div>
                   ))}
@@ -822,7 +755,7 @@ export default function ProfilePage() {
       {/* Inline Avatar Editor */}
       <InlineEditor
         type="avatar"
-        currentValue={currentProfile.avatar}
+        currentValue={currentProfile.avatar || undefined}
         onSave={handleAvatarUpdate}
         onCancel={() => setEditingType(null)}
         isOpen={editingType === 'avatar'}
@@ -831,27 +764,36 @@ export default function ProfilePage() {
       {/* Inline Banner Editor */}
       <InlineEditor
         type="banner"
-        currentValue={currentProfile.banner}
+        currentValue={currentProfile.banner || undefined}
         onSave={handleBannerUpdate}
         onCancel={() => setEditingType(null)}
         isOpen={editingType === 'banner'}
       />
 
-      {/* Product Detail Modal */}
-      <ProductDetailProfile
+      {/* Product Modal */}
+      {selectedProduct && (
+        <ProductModal
         product={selectedProduct}
         isOpen={isProductModalOpen}
         onClose={handleCloseProductModal}
+          isOwner={isOwnProfile}
         onEdit={handleEditProduct}
         onDelete={handleDeleteProduct}
+          onBuy={(product) => console.log('Buy product:', product)}
+          onAddToBox={(product) => console.log('Add to box:', product)}
+          onLike={(product) => console.log('Like product:', product)}
+          onSave={(product) => console.log('Save product:', product)}
+          onShare={(product) => console.log('Share product:', product)}
       />
+      )}
 
       {/* Product Editor Modal */}
-      <ProductEditor
+      <ProductEditModal
         product={productToEdit}
         isOpen={isProductEditorOpen}
         onSave={handleSaveProduct}
         onCancel={handleCancelEdit}
+        onDelete={handleDeleteProduct}
       />
 
     </Layout>

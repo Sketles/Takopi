@@ -36,17 +36,17 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
   // Tipos de archivo permitidos por categoría
   const allowedTypes: { [key: string]: string[] } = {
     // Música
-    'musica': ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/ogg', 'audio/m4a'],
+    'musica': ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/ogg', 'audio/m4a', 'application/zip'],
     // Modelos 3D
-    'modelos3d': ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream', 'model/obj'],
+    'modelos3d': ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream', 'model/obj', 'application/zip'],
     // Texturas
-    'texturas': ['image/jpeg', 'image/png', 'image/webp', 'image/tiff'],
-    // Avatares
-    'avatares': ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+    'texturas': ['image/jpeg', 'image/png', 'image/webp', 'image/tiff', 'application/zip'],
+    // Avatares (modelos 3D)
+    'avatares': ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream', 'model/obj', 'application/zip'],
     // Animaciones
-    'animaciones': ['video/mp4', 'video/webm', 'video/ogg', 'image/gif'],
+    'animaciones': ['video/mp4', 'video/webm', 'video/ogg', 'image/gif', 'application/zip'],
     // OBS
-    'OBS': ['text/html', 'text/css', 'application/javascript', 'application/json'],
+    'OBS': ['text/html', 'text/css', 'application/javascript', 'application/json', 'application/zip'],
     // Colecciones
     'colecciones': ['application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed'],
     // Usuarios (avatar/banner)
