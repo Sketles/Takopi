@@ -164,11 +164,16 @@ export async function DELETE(
 
     const { id } = await params;
 
+    console.log('🔍 DELETE Content - ID recibido:', id);
+    console.log('🔍 DELETE Content - Tipo de ID:', typeof id);
+    console.log('🔍 DELETE Content - Es ObjectId válido:', mongoose.Types.ObjectId.isValid(id));
+
     // TODO: Verificar autenticación y autorización
     // Solo el autor puede eliminar su publicación
 
     // Validar ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.error('❌ DELETE Content - ID inválido:', id);
       return NextResponse.json(
         { success: false, error: 'ID de publicación inválido' },
         { status: 400 }
@@ -177,6 +182,8 @@ export async function DELETE(
 
     // Buscar el contenido antes de eliminar
     const content = await Content.findById(id);
+    console.log('🔍 DELETE Content - Contenido encontrado:', !!content);
+    
     if (!content) {
       return NextResponse.json(
         { success: false, error: 'Publicación no encontrada' },
@@ -189,7 +196,8 @@ export async function DELETE(
     // En el futuro se puede agregar lógica para eliminar archivos de public/uploads
 
     // Eliminar completamente de la base de datos
-    await Content.findByIdAndDelete(id);
+    const deletedContent = await Content.findByIdAndDelete(id);
+    console.log('✅ DELETE Content - Contenido eliminado:', !!deletedContent);
 
     return NextResponse.json({
       success: true,
@@ -197,9 +205,18 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error('Error deleting content:', error);
+    console.error('❌ Error deleting content:', error);
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    
+    // Intentar devolver un error más específico
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    
     return NextResponse.json(
-      { success: false, error: 'Error al eliminar la publicación' },
+      { 
+        success: false, 
+        error: `Error al eliminar la publicación: ${errorMessage}`,
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      },
       { status: 500 }
     );
   }

@@ -233,7 +233,10 @@ export default function PurchasePanel({
             </div>
           </div>
           {product.authorId && (
-            <button className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors">
+            <button 
+              onClick={() => window.open(`/user/${product.authorId}`, '_blank')}
+              className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
+            >
               Ver perfil
             </button>
           )}

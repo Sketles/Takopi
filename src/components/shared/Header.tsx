@@ -54,20 +54,6 @@ export default function Header() {
               Explorar
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-blue-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            <Link
-              href="/cultural-map"
-              className="text-gray-300 hover:text-purple-400 transition-all duration-300 relative group"
-            >
-              Mapa Cultural
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-blue-400 transition-all duration-300 group-hover:w-full"></span>
-            </Link>
-            <Link
-              href="/image-generator"
-              className="text-gray-300 hover:text-purple-400 transition-all duration-300 relative group"
-            >
-              Generador Imágenes
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-blue-400 transition-all duration-300 group-hover:w-full"></span>
-            </Link>
           </div>
 
           {/* User Actions */}
@@ -76,7 +62,7 @@ export default function Header() {
             {user && (
               <Link
                 href="/box"
-                className="group relative px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-pink-600 transition-all duration-500 transform hover:scale-110 hover:rotate-1 shadow-lg hover:shadow-orange-500/30 flex items-center gap-2 overflow-hidden"
+                className="group relative px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-500 transform hover:scale-110 hover:rotate-1 shadow-lg hover:shadow-purple-500/30 flex items-center gap-2 overflow-hidden"
               >
                 {/* Efecto de brillo animado */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
@@ -98,8 +84,8 @@ export default function Header() {
                   </svg>
                   <span className="font-semibold">Box</span>
                   
-                  {/* Contador de items (placeholder por ahora) */}
-                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse group-hover:animate-bounce">
+                  {/* Contador de items con mejor visibilidad */}
+                  <div className="bg-white text-purple-700 text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg border-2 border-purple-300 group-hover:animate-bounce">
                     0
                   </div>
                 </div>
@@ -238,31 +224,17 @@ export default function Header() {
               >
                 Explorar
               </Link>
-              <Link
-                href="/cultural-map"
-                className="text-gray-300 hover:text-purple-400 transition-colors py-2 px-4 rounded-lg hover:bg-purple-500/10"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Mapa Cultural
-              </Link>
-              <Link
-                href="/image-generator"
-                className="text-gray-300 hover:text-purple-400 transition-colors py-2 px-4 rounded-lg hover:bg-purple-500/10"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Generador Imágenes
-              </Link>
               <div className="flex flex-col gap-2 pt-2 border-t border-purple-500/20">
                 {user ? (
                   <>
                     {/* Botón Box en Mobile */}
                     <Link
                       href="/box"
-                      className="group relative text-gray-300 hover:text-orange-400 transition-all duration-300 py-2 px-4 rounded-lg hover:bg-orange-500/10 flex items-center gap-3 overflow-hidden"
+                      className="group relative text-gray-300 hover:text-purple-400 transition-all duration-300 py-2 px-4 rounded-lg hover:bg-purple-500/10 flex items-center gap-3 overflow-hidden"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       {/* Efecto de brillo animado */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-orange-400/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-400/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                       
                       <div className="relative z-10 flex items-center gap-3">
                         <svg 
@@ -280,8 +252,8 @@ export default function Header() {
                         </svg>
                         <span className="font-semibold">Box</span>
                         
-                        {/* Contador de items */}
-                        <div className="bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse group-hover:animate-bounce">
+                        {/* Contador de items con mejor visibilidad */}
+                        <div className="bg-white text-purple-700 text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg border-2 border-purple-300 group-hover:animate-bounce">
                           0
                         </div>
                       </div>

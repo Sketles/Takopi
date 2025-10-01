@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import DefaultCover from './DefaultCover';
 
 // Interfaces para tipado
@@ -57,7 +57,7 @@ interface ContentCardProps {
   imageClassName?: string;
 }
 
-export default function ContentCard({
+const ContentCard = memo(function ContentCard({
   id,
   title,
   author,
@@ -95,6 +95,56 @@ export default function ContentCard({
   imageClassName = ''
 }: ContentCardProps) {
   const [imageError, setImageError] = useState(false);
+  
+  // Estados para el sistema de likes
+  const [currentLikes, setCurrentLikes] = useState(likes);
+  const [currentIsLiked, setCurrentIsLiked] = useState(isLiked);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
+
+  // Función para manejar el like
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Evitar que se abra el modal
+    
+    const token = localStorage.getItem('takopi_token');
+    if (!token) {
+      alert('Debes iniciar sesión para dar like');
+      return;
+    }
+
+    setIsLikeLoading(true);
+    try {
+      const action = currentIsLiked ? 'unlike' : 'like';
+      const response = await fetch('/api/likes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          contentId: id,
+          action
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setCurrentIsLiked(!currentIsLiked);
+        setCurrentLikes(prev => currentIsLiked ? prev - 1 : prev + 1);
+        
+        // Llamar al callback si existe
+        if (onLike) {
+          onLike();
+        }
+      } else {
+        alert(result.error || 'Error al actualizar like');
+      }
+    } catch (error) {
+      console.error('Error liking content:', error);
+      alert('Error al actualizar like');
+    } finally {
+      setIsLikeLoading(false);
+    }
+  };
 
   // Función para obtener el icono del tipo de contenido
   const getContentTypeIcon = (type: string) => {
@@ -137,29 +187,23 @@ export default function ContentCard({
     return names[type] || type;
   };
 
-  // Función para formatear precio
-  const formatPrice = (price: string | number, isFree: boolean, currency: string = 'CLP') => {
-    // Si es gratis, mostrar GRATIS
-    if (isFree) {
-      return 'GRATIS';
-    }
+  // Función para formatear precio simple y elegante (memoizada)
+  const formatPrice = useCallback((price: string | number, isFree: boolean, currency: string = 'CLP') => {
+    if (isFree) return 'GRATIS';
     
-    // Convertir a número y validar
     const numPrice = typeof price === 'string' ? parseFloat(price) : Number(price);
     
-    // Si el precio es 0 o no válido, mostrar "Precio no disponible"
     if (isNaN(numPrice) || numPrice <= 0) {
-      return 'Precio no disponible';
+      return 'Consultar';
     }
     
-    // Formatear con separadores de miles
-    return `$${numPrice.toLocaleString('es-CL')} ${currency}`;
-  };
+    return `$${numPrice.toLocaleString('es-CL')}`;
+  }, []);
 
-  // Función para obtener la imagen principal
-  const getMainImage = () => {
+  // Función para obtener la imagen principal (memoizada)
+  const getMainImage = useMemo(() => {
     return coverImage || image;
-  };
+  }, [coverImage, image]);
 
   // Configuración de variantes
   const variantClasses = {
@@ -190,9 +234,9 @@ export default function ContentCard({
       {/* Imagen de la creación */}
       <div className={`${currentVariant.image} relative overflow-hidden ${imageClassName}`}>
         {/* Imagen principal o fallback */}
-        {getMainImage() && !imageError && !getMainImage()?.includes('/placeholder-') ? (
+        {getMainImage && !imageError && !getMainImage?.includes('/placeholder-') ? (
           <img
-            src={getMainImage()}
+            src={getMainImage}
             alt={title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={() => setImageError(true)}
@@ -219,7 +263,7 @@ export default function ContentCard({
                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
                   </svg>
-                  <span>{likes}</span>
+                  <span>{currentLikes}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -235,6 +279,31 @@ export default function ContentCard({
                   <span>{views}</span>
                 </div>
               </div>
+              
+              {/* Botón de corazón estilo Pinterest */}
+              <button
+                onClick={handleLike}
+                disabled={isLikeLoading}
+                className={`p-2 rounded-full transition-all duration-200 ${
+                  currentIsLiked 
+                    ? 'bg-red-500 hover:bg-red-600 text-white' 
+                    : 'bg-black/80 hover:bg-black/90 text-white hover:text-red-400'
+                } ${isLikeLoading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'}`}
+                title={currentIsLiked ? 'Quitar like' : 'Dar like'}
+              >
+                {isLikeLoading ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <svg 
+                    className={`w-4 h-4 transition-all duration-200 ${
+                      currentIsLiked ? 'fill-current scale-110' : 'fill-none stroke-current stroke-2'
+                    }`} 
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  </svg>
+                )}
+              </button>
             </div>
           </div>
         )}
@@ -298,35 +367,25 @@ export default function ContentCard({
                 </span>
               </div>
               
-              {/* Precio en la parte inferior derecha */}
+              {/* Precio simple y elegante */}
               {showPrice && (
-                <div className="px-3 py-1.5 bg-gradient-to-br from-slate-800/90 via-slate-700/90 to-slate-800/90 backdrop-blur-xl rounded-xl shadow-lg border border-slate-500/40 overflow-hidden group/price relative">
-                  {/* Efecto de brillo animado */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent -skew-x-12 translate-x-[-100%] group-hover/price:translate-x-[100%] transition-transform duration-1000 ease-out"></div>
-
-                  {/* Contenido del precio */}
-                  <div className="relative flex items-center justify-center">
-                    <span className="bg-gradient-to-r from-cyan-300 via-blue-300 to-purple-300 bg-clip-text text-transparent font-bold text-xs tracking-wide drop-shadow-lg">
-                      {formatPrice(price, isFree, currency)}
-                    </span>
-
-                    {/* Efecto de resplandor */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-300/30 via-blue-300/30 to-purple-300/30 rounded-lg blur-sm opacity-0 group-hover/price:opacity-100 transition-opacity duration-500"></div>
-                  </div>
-
-                  {/* Borde brillante */}
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-400/50 via-blue-400/50 to-purple-400/50 opacity-0 group-hover/price:opacity-100 transition-opacity duration-500 blur-[1px]"></div>
+                <div className="px-3 py-1.5 bg-black/80 backdrop-blur-sm rounded-lg border border-white/20 shadow-lg">
+                  <span className="text-white font-semibold text-sm">
+                    {formatPrice(price, isFree, currency)}
+                  </span>
                 </div>
               )}
             </div>
       </div>
     </div>
   );
-}
+});
 
-// Hook personalizado para usar la tarjeta
+export default ContentCard;
+
+// Hook personalizado para usar la tarjeta (optimizado)
 export const useContentCard = () => {
-  const createCardProps = (data: any, options: Partial<ContentCardProps> = {}) => {
+  const createCardProps = useCallback((data: any, options: Partial<ContentCardProps> = {}) => {
     return {
       id: data.id || data._id,
       title: data.title,
@@ -348,10 +407,11 @@ export const useContentCard = () => {
       favorites: data.favorites || 0,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
+      isLiked: data.isLiked || false,
       ...options,
       showDescription: options.showDescription ?? false
     };
-  };
+  }, []);
 
   return { createCardProps };
 };

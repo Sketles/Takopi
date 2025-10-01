@@ -204,12 +204,24 @@ export default function ProductPage({
                           <div className="text-gray-400 text-sm mb-2">
                             {file.type.split('/')[1]?.toUpperCase()} • {(file.size / 1024 / 1024).toFixed(1)} MB
                           </div>
-                          <button
-                            onClick={() => window.open(file.url, '_blank')}
-                            className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
-                          >
-                            Ver archivo
-                          </button>
+                          {isOwner ? (
+                            <button
+                              onClick={() => window.open(file.url, '_blank')}
+                              className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
+                            >
+                              Ver archivo
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                alert('Debes comprar este contenido para poder ver y descargar los archivos.');
+                              }}
+                              className="text-gray-500 text-sm font-medium cursor-not-allowed"
+                              disabled
+                            >
+                              🔒 Comprar para ver
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

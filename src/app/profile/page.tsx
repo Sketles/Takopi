@@ -9,7 +9,7 @@ import RoleSelector from '@/components/profile/RoleSelector';
 import ContentCard, { useContentCard } from '@/components/shared/ContentCard';
 import ProductModal from '@/components/product/ProductModal';
 import ProductEditModal from '@/components/product/ProductEditModal';
-import Link from 'next/link';
+import PurchasesSection from '@/components/profile/PurchasesSection';
 
 // Datos de ejemplo para el perfil (solo para estadísticas por defecto)
 const defaultStats = {
@@ -44,6 +44,7 @@ export default function ProfilePage() {
   const [productToEdit, setProductToEdit] = useState<any>(null);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<'creations' | 'purchases'>('creations');
   const { user } = useAuth();
   const { createCardProps } = useContentCard();
 
@@ -66,10 +67,9 @@ export default function ProfilePage() {
       if (response.ok) {
         const result = await response.json();
         setRealStats(result.data);
-        console.log('✅ Estadísticas cargadas:', result.data);
       }
     } catch (error) {
-      console.error('❌ Error cargando estadísticas:', error);
+      // Error silencioso para estadísticas
     }
   };
 
@@ -90,10 +90,9 @@ export default function ProfilePage() {
       if (response.ok) {
         const result = await response.json();
         setUserCreations(result.data.creations);
-        console.log('✅ Creaciones cargadas:', result.data.creations.length);
       }
     } catch (error) {
-      console.error('❌ Error cargando creaciones:', error);
+      // Error silencioso para creaciones
     } finally {
       setLoadingCreations(false);
     }
@@ -122,18 +121,16 @@ export default function ProfilePage() {
         // Ya no auto-actualizamos la ubicación
       }
     } catch (error) {
-      console.error('Error al cargar perfil:', error);
+      // Error silencioso para perfil
     }
   };
 
 
   // Función para guardar cambios del perfil
   const handleSaveProfile = async (updatedProfile: any) => {
-    console.log('🔍 ProfilePage - Datos recibidos del modal:', updatedProfile);
     setIsLoading(true);
     try {
       const token = localStorage.getItem('takopi_token');
-      console.log('🔍 ProfilePage - Enviando a API:', updatedProfile);
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: {
@@ -145,14 +142,11 @@ export default function ProfilePage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('🔍 ProfilePage - Respuesta de la API:', data);
-        console.log('🔍 ProfilePage - Location en respuesta:', data.user.location);
         setCurrentProfile(prev => ({
           ...prev,
           ...data.user,
           stats: prev.stats,
         }));
-        console.log('🔍 ProfilePage - Perfil actualizado en estado local');
         setIsEditing(false);
 
         // Actualizar el usuario en el contexto
@@ -172,7 +166,6 @@ export default function ProfilePage() {
         alert(`Error: ${errorData.error}`);
       }
     } catch (error) {
-      console.error('Error al actualizar perfil:', error);
       alert('Error al actualizar el perfil');
     } finally {
       setIsLoading(false);
@@ -229,7 +222,6 @@ export default function ProfilePage() {
         alert(`Error: ${errorData.error}`);
       }
     } catch (error) {
-      console.error('Error al actualizar avatar:', error);
       alert('Error al actualizar el avatar');
     }
   };
@@ -259,7 +251,6 @@ export default function ProfilePage() {
         alert(`Error: ${errorData.error}`);
       }
     } catch (error) {
-      console.error('Error al actualizar el banner:', error);
       alert('Error al actualizar el banner');
     }
   };
@@ -295,15 +286,25 @@ export default function ProfilePage() {
         alert(`Error: ${errorData.error}`);
       }
     } catch (error) {
-      console.error('Error al actualizar rol:', error);
       alert('Error al actualizar el rol');
     }
   };
 
   // Función para transformar datos de creación a formato de ProductModal
   const transformCreationToModal = (creation: any) => {
+    // Asegurar que el ID sea un string válido
+    const contentId = creation.id || creation._id;
+    const validId = typeof contentId === 'string' ? contentId : contentId?.toString();
+    
+    console.log('🔍 Transformando creación:', {
+      originalId: creation.id,
+      mongoId: creation._id,
+      finalId: validId,
+      type: typeof validId
+    });
+    
     return {
-      id: creation.id || creation._id,
+      id: validId,
       title: creation.title || creation.provisionalName,
       description: creation.description || '',
       shortDescription: creation.shortDescription,
@@ -351,13 +352,14 @@ export default function ProfilePage() {
   };
 
   // Función para eliminar producto
-  const handleDeleteProduct = async (product: any) => {
-    if (!confirm(`¿Estás seguro de que quieres eliminar "${product.title}"? Esta acción no se puede deshacer.`)) {
-      return;
-    }
-
+  const handleDeleteProduct = async (product: any, source?: string) => {
     try {
       const token = localStorage.getItem('takopi_token');
+      
+      // Debug: verificar el ID que se está enviando
+      console.log('🔍 Eliminando producto con ID:', product.id);
+      console.log('🔍 Fuente:', source);
+      
       const response = await fetch(`/api/content/${product.id}`, {
         method: 'DELETE',
         headers: {
@@ -366,18 +368,38 @@ export default function ProfilePage() {
       });
 
       if (response.ok) {
-        // Remover el producto de la lista de creaciones
-        setUserCreations(prev =>
-          prev.filter(creation => creation.id !== product.id)
-        );
-        alert('Producto eliminado exitosamente');
+        // Remover el producto de la lista de creaciones solo si estamos en el perfil
+        if (source === 'profile') {
+          setUserCreations(prev =>
+            prev.filter(creation => creation.id !== product.id)
+          );
+        }
+        
+        // No mostrar alert - eliminación silenciosa y profesional
+        // El modal se cerrará automáticamente por el ProductModal
+        return { success: true };
       } else {
-        const errorData = await response.json();
-        alert(`Error: ${errorData.error}`);
+        console.error('❌ Error response status:', response.status);
+        console.error('❌ Error response statusText:', response.statusText);
+        
+        let errorMessage = 'Error desconocido';
+        try {
+          const errorData = await response.json();
+          console.error('❌ Error eliminando producto:', errorData);
+          errorMessage = errorData.error || errorData.message || 'Error al eliminar el producto';
+        } catch (jsonError) {
+          console.error('❌ Error parsing JSON:', jsonError);
+          errorMessage = `Error ${response.status}: ${response.statusText}`;
+        }
+        
+        // Solo mostrar error en caso de fallo
+        alert(`Error: ${errorMessage}`);
+        throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('Error al eliminar producto:', error);
+      console.error('❌ Error eliminando producto:', error);
       alert('Error al eliminar el producto');
+      throw error;
     }
   };
 
@@ -409,7 +431,6 @@ export default function ProfilePage() {
         alert(`Error: ${errorData.error}`);
       }
     } catch (error) {
-      console.error('Error al actualizar producto:', error);
       alert('Error al actualizar el producto');
     }
   };
@@ -587,13 +608,13 @@ export default function ProfilePage() {
             <div className="grid grid-cols-2 md:grid-cols-6 gap-8 text-center">
               <div className="group cursor-pointer">
                 <div className="text-3xl font-bold text-white mb-1 group-hover:text-purple-400 transition-colors">
-                  {currentProfile.stats.followers.toLocaleString()}
+                  {realStats ? realStats.followersCount.toLocaleString() : currentProfile.stats.followers.toLocaleString()}
                 </div>
                 <div className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Seguidores</div>
               </div>
               <div className="group cursor-pointer">
                 <div className="text-3xl font-bold text-white mb-1 group-hover:text-blue-400 transition-colors">
-                  {currentProfile.stats.following}
+                  {realStats ? realStats.followingCount : currentProfile.stats.following}
                 </div>
                 <div className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Siguiendo</div>
               </div>
@@ -617,7 +638,7 @@ export default function ProfilePage() {
               </div>
               <div className="group cursor-pointer">
                 <div className="text-3xl font-bold text-white mb-1 group-hover:text-pink-400 transition-colors">
-                  {currentProfile.stats.pinsCreated}
+                  {realStats ? (realStats.pinsCreated || 0) : currentProfile.stats.pinsCreated}
                 </div>
                 <div className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Pines</div>
               </div>
@@ -628,20 +649,50 @@ export default function ProfilePage() {
         {/* Sección de Mis Creaciones por Categorías */}
         {isOwnProfile && (
           <div className="max-w-7xl mx-auto px-4 py-6">
-            {/* Header de Mis Creaciones */}
+            {/* Tabs de navegación */}
             <div className="mb-8">
+              <div className="flex space-x-1 bg-gray-800/50 rounded-lg p-1 mb-6">
+                <button
+                  onClick={() => setActiveSection('creations')}
+                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    activeSection === 'creations'
+                      ? 'bg-purple-600 text-white shadow-lg'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  }`}
+                >
+                  🎨 Mis Creaciones
+                </button>
+                <button
+                  onClick={() => setActiveSection('purchases')}
+                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    activeSection === 'purchases'
+                      ? 'bg-purple-600 text-white shadow-lg'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  }`}
+                >
+                  🛒 Mis Compras
+                </button>
+              </div>
+
+              {/* Header dinámico */}
               <div>
-                <h2 className="text-3xl font-bold text-white mb-2">Mis Creaciones</h2>
+                <h2 className="text-3xl font-bold text-white mb-2">
+                  {activeSection === 'creations' ? 'Mis Creaciones' : 'Mis Compras'}
+                </h2>
                 <p className="text-gray-400">
-                  {userCreations.length > 0
+                  {activeSection === 'creations' 
+                    ? (userCreations.length > 0
                     ? `${userCreations.length} ${userCreations.length === 1 ? 'creación' : 'creaciones'} publicadas`
-                    : 'Aún no tienes creaciones publicadas'
+                        : 'Aún no tienes creaciones publicadas')
+                    : 'Contenido que has comprado y puedes descargar'
                   }
                 </p>
               </div>
             </div>
 
-            {loadingCreations ? (
+            {/* Contenido dinámico según la sección activa */}
+            {activeSection === 'creations' ? (
+              loadingCreations ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400"></div>
                 <span className="ml-3 text-gray-300">Cargando creaciones...</span>
@@ -739,7 +790,11 @@ export default function ProfilePage() {
                   <p className="text-gray-400">Comienza compartiendo tu primera creación con la comunidad</p>
                 </div>
               );
-            })()}
+            })()
+            ) : (
+              // Sección de Mis Compras
+              <PurchasesSection />
+            )}
           </div>
         )}
       </div>
@@ -779,11 +834,12 @@ export default function ProfilePage() {
           isOwner={isOwnProfile}
         onEdit={handleEditProduct}
         onDelete={handleDeleteProduct}
-          onBuy={(product) => console.log('Buy product:', product)}
-          onAddToBox={(product) => console.log('Add to box:', product)}
-          onLike={(product) => console.log('Like product:', product)}
-          onSave={(product) => console.log('Save product:', product)}
-          onShare={(product) => console.log('Share product:', product)}
+          onBuy={() => {}}
+          onAddToBox={() => {}}
+          onLike={() => {}}
+          onSave={() => {}}
+          onShare={() => {}}
+          source="profile"
       />
       )}
 

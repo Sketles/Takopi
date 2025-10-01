@@ -2,8 +2,7 @@
 
 import Layout from '@/components/shared/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState, useEffect } from 'react';
-import { ModelViewerModal, ModelViewerPreview } from '@/components/ModelViewer3D';
+import { useState, useEffect, useMemo } from 'react';
 import ContentCard, { useContentCard } from '@/components/shared/ContentCard';
 import ProductModal from '@/components/product/ProductModal';
 
@@ -57,7 +56,91 @@ export default function ExplorePage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [likesData, setLikesData] = useState<{ [key: string]: { isLiked: boolean; likesCount: number } }>({});
   const { createCardProps } = useContentCard();
+
+  // Función para cargar todos los likes de una vez
+  const loadAllLikes = async (items: ContentItem[]) => {
+    const token = localStorage.getItem('takopi_token');
+    if (!token) return;
+
+    try {
+      const promises = items.map(async (item) => {
+        try {
+          const response = await fetch(`/api/likes?contentId=${item.id}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+              return {
+                contentId: item.id,
+                data: result.data
+              };
+            }
+          }
+        } catch (error) {
+          // Error silencioso para likes individuales
+        }
+        
+        return {
+          contentId: item.id,
+          data: { isLiked: false, likesCount: item.likes || 0 }
+        };
+      });
+
+      const results = await Promise.all(promises);
+      const likesMap: { [key: string]: { isLiked: boolean; likesCount: number } } = {};
+      
+      results.forEach(result => {
+        likesMap[result.contentId] = result.data;
+      });
+
+      setLikesData(likesMap);
+    } catch (error) {
+      // Error silencioso para carga de likes
+    }
+  };
+
+  // Función para obtener las props de una tarjeta de manera síncrona (sin side effects)
+  const getCardProps = (item: ContentItem, options: any = {}) => {
+    // Usar datos de likes ya cargados
+    const likeInfo = likesData[item.id] || { isLiked: false, likesCount: item.likes || 0 };
+    
+    return {
+      id: item.id,
+      title: item.title,
+      author: item.author,
+      authorAvatar: (item as any).authorAvatar,
+      contentType: item.contentType || item.type,
+      category: item.category,
+      price: item.price,
+      isFree: item.isFree,
+      currency: item.currency,
+      image: item.image,
+      coverImage: item.coverImage,
+      description: item.description,
+      shortDescription: item.shortDescription,
+      tags: item.tags || [],
+      likes: likeInfo.likesCount,
+      views: item.views || 0,
+      downloads: item.downloads || 0,
+      favorites: (item as any).favorites || 0,
+      createdAt: item.createdAt,
+      updatedAt: (item as any).updatedAt || item.createdAt,
+      isLiked: likeInfo.isLiked,
+      ...options
+    };
+  };
+
+  // Componente optimizado para tarjetas
+  const ContentCardWrapper = ({ item, options }: { item: ContentItem; options: any }) => {
+    const cardProps = useMemo(() => getCardProps(item, options), [item, options, likesData]);
+    return <ContentCard {...cardProps} className="flex flex-col h-[420px]" />;
+  };
 
   // Función para mapear categorías del frontend a tipos de contenido del backend
   const mapCategoryToContentType = (category: string): string => {
@@ -88,17 +171,16 @@ export default function ExplorePage() {
       }
 
       const result = await response.json();
-      console.log('🔍 fetchContent - Respuesta de API:', result);
 
       if (result.success) {
-        console.log('🔍 fetchContent - Datos recibidos:', result.data);
-        console.log('🔍 fetchContent - Primer item files:', result.data[0]?.files);
         setContent(result.data);
+        
+        // Cargar likes después de cargar el contenido
+        loadAllLikes(result.data);
       } else {
         throw new Error(result.error || 'Error al cargar contenido');
       }
     } catch (err) {
-      console.error('Error fetching content:', err);
       setError(err instanceof Error ? err.message : 'Error desconocido');
       // En caso de error, mostrar lista vacía
       setContent([]);
@@ -131,10 +213,43 @@ export default function ExplorePage() {
     setSelectedItem(null);
   };
 
+  // Función para manejar eliminación de contenido
+  const handleDeleteContent = async (product: any, source?: string) => {
+    try {
+      const token = localStorage.getItem('takopi_token');
+      
+      console.log('🔍 Eliminando contenido con ID:', product.id);
+      
+      const response = await fetch(`/api/content/${product.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        // Remover el contenido de la lista si estamos en explore
+        if (source === 'explore') {
+          setContent(prev => prev.filter(item => item.id !== product.id));
+        }
+        
+        // El modal se cerrará automáticamente por el ProductModal
+        return { success: true };
+      } else {
+        console.error('❌ Error eliminando contenido:', response.status);
+        const errorData = await response.json().catch(() => ({}));
+        alert(`Error: ${errorData.error || 'Error al eliminar el contenido'}`);
+        throw new Error(errorData.error || 'Error al eliminar el contenido');
+      }
+    } catch (error) {
+      console.error('❌ Error eliminando contenido:', error);
+      alert('Error al eliminar el contenido');
+      throw error;
+    }
+  };
+
   // Función para transformar ContentItem a formato de ProductModal
   const transformContentItem = (item: ContentItem) => {
-    console.log('🔍 transformContentItem - Item recibido:', item);
-    console.log('🔍 transformContentItem - Item.files:', (item as any).files);
     
     const transformed = {
       id: item.id,
@@ -151,8 +266,8 @@ export default function ExplorePage() {
       visibility: 'public',
       status: 'published',
       author: item.author,
-      authorAvatar: undefined,
-      authorId: undefined,
+      authorAvatar: (item as any).authorAvatar,
+      authorId: (item as any).authorId,
       likes: item.likes,
       views: item.views,
       files: (item as any).files || [], // Usar los archivos reales de la API
@@ -164,7 +279,6 @@ export default function ExplorePage() {
       updatedAt: item.createdAt
     };
     
-    console.log('🔍 transformContentItem - Resultado transformado:', transformed);
     return transformed;
   };
 
@@ -252,8 +366,9 @@ export default function ExplorePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {content.slice(0, 3).map((item, index) => (
                 <div key={`personalized-${item.id}`} className="relative">
-                  <ContentCard
-                    {...createCardProps(item, {
+                  <ContentCardWrapper
+                    item={item}
+                    options={{
                       onClick: () => openItemModal(item),
                       variant: 'featured',
                       showPrice: true,
@@ -261,7 +376,7 @@ export default function ExplorePage() {
                       showTags: false,
                       showAuthor: false,
                       showDescription: true
-                    })}
+                    }}
                   />
                   <div className="absolute top-3 right-3 z-10">
                     <span className="px-3 py-1.5 bg-gradient-to-r from-purple-600/90 to-blue-600/90 backdrop-blur-sm text-white text-xs font-medium rounded-full border border-purple-400/50 shadow-lg">
@@ -336,8 +451,9 @@ export default function ExplorePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredItems.map((item, index) => (
               <div key={item.id} style={{ animationDelay: `${index * 100}ms` }}>
-                <ContentCard
-                  {...createCardProps(item, {
+                <ContentCardWrapper
+                  item={item}
+                  options={{
                     onClick: () => openItemModal(item),
                     variant: 'default',
                     showPrice: true,
@@ -345,8 +461,7 @@ export default function ExplorePage() {
                     showTags: false,
                     showAuthor: false,
                     showDescription: true
-                  })}
-                  className="flex flex-col h-[420px]"
+                  }}
                 />
               </div>
             ))}
@@ -427,14 +542,17 @@ export default function ExplorePage() {
           product={transformContentItem(selectedItem)}
           isOpen={isModalOpen}
           onClose={closeModal}
-          isOwner={user?.username === selectedItem.author}
-          onEdit={(product) => console.log('Edit product:', product)}
-          onDelete={(product) => console.log('Delete product:', product)}
-          onBuy={(product) => console.log('Buy product:', product)}
-          onAddToBox={(product) => console.log('Add to box:', product)}
-          onLike={(product) => console.log('Like product:', product)}
-          onSave={(product) => console.log('Save product:', product)}
-          onShare={(product) => console.log('Share product:', product)}
+          isOwner={(() => {
+            return user?.username === selectedItem.author;
+          })()}
+          onEdit={() => {}}
+          onDelete={handleDeleteContent}
+          onBuy={() => {}}
+          onAddToBox={() => {}}
+          onLike={() => {}}
+          onSave={() => {}}
+          onShare={() => {}}
+          source="explore"
         />
       )}
     </Layout>

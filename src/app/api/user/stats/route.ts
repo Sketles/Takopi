@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import jwt from 'jsonwebtoken';
 import User from '@/models/User';
 import Content from '@/models/Content';
+import Follow from '@/models/Follow';
 
 // Función para verificar el token JWT
 async function verifyToken(request: NextRequest) {
@@ -66,10 +67,16 @@ export async function GET(request: NextRequest) {
       { $group: { _id: '$contentType', count: { $sum: 1 } } }
     ]);
 
+    // Obtener estadísticas de seguidores y siguiendo
+    const followersCount = await Follow.countDocuments({ following: decoded.userId });
+    const followingCount = await Follow.countDocuments({ follower: decoded.userId });
+
     const stats = {
       totalCreations,
       totalSales,
       heartsReceived: totalLikes,
+      followersCount,
+      followingCount,
       contentByType: contentByType.reduce((acc, item) => {
         acc[item._id] = item.count;
         return acc;

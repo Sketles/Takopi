@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { ModelViewerModal } from '../ModelViewer3D';
 import DefaultCover from '../shared/DefaultCover';
+import MusicPlayer from './MusicPlayer';
+import TextureViewer from './TextureViewer';
 
 interface ProductMediaTabsProps {
   product: {
@@ -28,6 +30,10 @@ interface ProductMediaTabsProps {
 export default function ProductMediaTabs({ product, isOwner = false, className = '' }: ProductMediaTabsProps) {
   const [activeTab, setActiveTab] = useState<'viewer' | 'files'>('viewer');
   const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set(['viewer']));
+  const [selectedFileForViewer, setSelectedFileForViewer] = useState<string | null>(null);
+
+  // Debug: verificar el estado de isOwner
+  console.log('🔍 ProductMediaTabs - isOwner:', isOwner, 'product.author:', product.author);
 
   // Cerrar menús al hacer clic fuera
   useEffect(() => {
@@ -84,6 +90,11 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
     file.name?.match(/\.(mp3|wav|ogg|flac|m4a)$/i)
   );
 
+  const hasTextures = product.files?.some(file => 
+    file.type?.includes('image') || 
+    file.name?.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)
+  );
+
   // Establecer tab inicial
   useEffect(() => {
     setActiveTab('viewer');
@@ -95,6 +106,12 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
   };
 
   const get3DModelUrl = () => {
+    // Si hay un archivo seleccionado específicamente, usarlo
+    if (selectedFileForViewer) {
+      return selectedFileForViewer;
+    }
+    
+    // Si no, buscar el primer modelo 3D disponible
     const modelFile = product.files?.find(file => 
       file.type?.includes('gltf') || 
       file.type?.includes('glb') || 
@@ -159,9 +176,9 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
     {
       id: 'viewer' as const,
       label: 'Visor',
-      icon: has3D ? '🧩' : hasVideo ? '🎬' : hasImages ? '🖼️' : '📁',
+      icon: (product.contentType === 'musica' && hasAudio) ? '🎵' : (product.contentType === 'texturas' && hasTextures) ? '🖼️' : has3D ? '🧩' : hasVideo ? '🎬' : hasImages ? '🖼️' : '📁',
       available: true,
-      description: has3D ? 'Modelo 3D interactivo' : hasVideo ? 'Reproductor de vídeo' : hasImages ? 'Galería de imágenes' : 'Vista previa'
+      description: (product.contentType === 'musica' && hasAudio) ? 'Reproductor de música' : (product.contentType === 'texturas' && hasTextures) ? 'Visor de texturas' : has3D ? 'Modelo 3D interactivo' : hasVideo ? 'Reproductor de vídeo' : hasImages ? 'Galería de imágenes' : 'Vista previa'
     },
     {
       id: 'files' as const,
@@ -203,19 +220,38 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
       </div>
 
       {/* Tab Content */}
-      <div className="relative min-h-[520px] bg-gradient-to-br from-gray-800/30 to-purple-900/30">
+      <div className="relative min-h-[400px] bg-gradient-to-br from-gray-800/30 to-purple-900/30">
         {activeTab === 'viewer' && (
           <div className="w-full h-full">
             {loadedTabs.has('viewer') ? (
-              // Mostrar el contenido principal basado en el tipo - PRIORIDAD: 3D > Video > Imágenes
-              has3D ? (
+              // Mostrar el contenido principal basado en el tipo - PRIORIDAD: Música > Texturas > 3D > Video > Imágenes
+              product.contentType === 'musica' && hasAudio ? (
+                <div className="w-full h-full p-6">
+                  <MusicPlayer
+                    files={product.files || []}
+                    title={product.title}
+                    coverImage={product.coverImage}
+                    className="h-full"
+                  />
+                </div>
+              ) : product.contentType === 'texturas' && hasTextures ? (
+                <div className="w-full h-full">
+                  <TextureViewer
+                    files={product.files || []}
+                    title={product.title}
+                    coverImage={product.coverImage}
+                    className="h-full"
+                    isOwner={isOwner}
+                  />
+                </div>
+              ) : has3D ? (
                 get3DModelUrl() ? (
                   <div className="w-full h-full">
                     <ModelViewerModal
                       src={get3DModelUrl()!}
                       alt={product.title}
                       width="100%"
-                      height="520px"
+                      height="400px"
                       autoRotate={true}
                       cameraControls={true}
                     />
@@ -328,23 +364,36 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
                           </div>
                           
                         <div className="flex items-center gap-3">
-                          {/* Botón "Ver en visor" - siempre visible */}
-                          <button
-                            onClick={() => {
-                              // Si es un modelo 3D, cambiar al tab visor
-                              if (file.type === 'model/gltf-binary' || file.type === 'model/gltf+json' || 
-                                  file.type === 'application/octet-stream' || file.name.toLowerCase().includes('.glb') || 
-                                  file.name.toLowerCase().includes('.gltf') || file.name.toLowerCase().includes('.vrm')) {
-                                setActiveTab('viewer');
-                              } else {
-                                // Para otros archivos, abrir en nueva ventana
-                                window.open(file.url, '_blank');
-                              }
-                            }}
-                            className="px-3 py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded-lg text-sm font-medium transition-colors"
-                          >
-                            Ver en visor
-                          </button>
+                          {/* Botón "Ver en visor" - solo si es el dueño */}
+                          {isOwner ? (
+                            <button
+                              onClick={() => {
+                                // Si es un modelo 3D, cambiar al tab visor y establecer el archivo
+                                if (file.type === 'model/gltf-binary' || file.type === 'model/gltf+json' || 
+                                    file.type === 'application/octet-stream' || file.name.toLowerCase().includes('.glb') || 
+                                    file.name.toLowerCase().includes('.gltf') || file.name.toLowerCase().includes('.vrm')) {
+                                  setSelectedFileForViewer(file.url);
+                                  setActiveTab('viewer');
+                                } else {
+                                  // Para otros archivos, abrir en nueva ventana
+                                  window.open(file.url, '_blank');
+                                }
+                              }}
+                              className="px-3 py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded-lg text-sm font-medium transition-colors"
+                            >
+                              Ver en visor
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                alert('Debes comprar este contenido para poder ver y descargar los archivos.');
+                              }}
+                              className="px-3 py-2 bg-gray-600/20 hover:bg-gray-600/30 text-gray-400 rounded-lg text-sm font-medium transition-colors cursor-not-allowed"
+                              disabled
+                            >
+                              🔒 Comprar para ver
+                            </button>
+                          )}
                           
                           {/* Menú de tres puntos - solo si es el dueño */}
                           {isOwner && (
@@ -385,6 +434,12 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
                                 <div className="py-1">
                                   <button
                                     onClick={() => {
+                                      // Verificación adicional de seguridad
+                                      if (!isOwner) {
+                                        alert('No tienes permisos para descargar este archivo.');
+                                        return;
+                                      }
+                                      
                                       const link = document.createElement('a');
                                       link.href = file.url;
                                       link.download = file.originalName || file.name;

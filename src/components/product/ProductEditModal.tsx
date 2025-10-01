@@ -178,8 +178,9 @@ export default function ProductEditModal({
     if (!product || !onDelete) return;
 
     try {
-      await onDelete(product.id);
+      await onDelete(product);
       setShowDeleteConfirm(false);
+      onCancel(); // Cerrar el modal después de eliminar
     } catch (error) {
       console.error('Error al eliminar producto:', error);
     }
