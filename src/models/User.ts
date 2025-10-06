@@ -92,9 +92,7 @@ const UserSchema = new Schema<IUser>({
   timestamps: true
 });
 
-// Índices para mejorar performance
-UserSchema.index({ email: 1 });
-UserSchema.index({ username: 1 });
+// Índices para mejorar performance (email y username ya tienen índice único automático)
 UserSchema.index({ role: 1 });
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

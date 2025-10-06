@@ -8,22 +8,29 @@ import { config } from '@/config/env';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('🔍 Purchases API - Request received');
     await connectToDatabase();
 
     // Obtener token de autorización
     const authHeader = request.headers.get('authorization');
+    console.log('🔍 Purchases API - Auth header:', authHeader ? 'Present' : 'Missing');
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ Purchases API - No valid auth header');
       return NextResponse.json({ error: 'Token de autorización requerido' }, { status: 401 });
     }
 
     const token = authHeader.split(' ')[1];
+    console.log('🔍 Purchases API - Token extracted:', token ? 'Yes' : 'No');
     
     // Verificar token
     let userId;
     try {
       const decoded = jwt.verify(token, config.jwt.secret) as any;
       userId = decoded.userId;
+      console.log('✅ Purchases API - Token valid, userId:', userId);
     } catch (error) {
+      console.log('❌ Purchases API - Token invalid:', error);
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
@@ -56,6 +63,14 @@ export async function GET(request: NextRequest) {
     const totalPurchases = await Purchase.countDocuments({ 
       buyer: userId, 
       status: 'completed' 
+    });
+    
+    console.log('🔍 Purchases found:', {
+      userId,
+      purchasesCount: purchases.length,
+      totalPurchases,
+      page,
+      limit
     });
 
     // Formatear respuesta

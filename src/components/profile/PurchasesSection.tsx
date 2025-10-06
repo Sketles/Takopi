@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ContentCard from '@/components/shared/ContentCard';
 import { useAuth } from '@/contexts/AuthContext';
+import FileExplorerModal from '@/components/product/FileExplorerModal';
 
 interface PurchaseItem {
   id: string;
@@ -51,6 +52,8 @@ export default function PurchasesSection() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [selectedContent, setSelectedContent] = useState<any>(null);
+  const [showFileExplorer, setShowFileExplorer] = useState(false);
 
   const loadPurchases = async (page: number = 1) => {
     if (!user) return;
@@ -64,11 +67,16 @@ export default function PurchasesSection() {
         return;
       }
 
+      console.log('🔍 PurchasesSection - Token found:', token ? 'Yes' : 'No');
+      console.log('🔍 PurchasesSection - Making request to purchases API');
+
       const response = await fetch(`/api/user/purchases?page=${page}&limit=20`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+
+      console.log('🔍 PurchasesSection - Response status:', response.status);
 
       if (response.ok) {
         const result: PurchasesResponse = await response.json();
@@ -141,6 +149,60 @@ export default function PurchasesSection() {
     return `$${amount.toLocaleString('es-CL')} ${currency}`;
   };
 
+  // Función para obtener el icono según el tipo de contenido
+  const getContentTypeIcon = (contentType: string) => {
+    switch (contentType) {
+      case 'avatares':
+        return '👤';
+      case 'modelos3d':
+        return '🎲';
+      case 'musica':
+        return '🎵';
+      case 'texturas':
+        return '🖼️';
+      case 'animaciones':
+        return '🎬';
+      case 'OBS':
+        return '📺';
+      case 'colecciones':
+        return '📦';
+      default:
+        return '📄';
+    }
+  };
+
+  // Función para obtener la acción según el tipo de contenido
+  const getContentTypeAction = (contentType: string) => {
+    switch (contentType) {
+      case 'avatares':
+      case 'modelos3d':
+        return 'Ver en Visor';
+      case 'musica':
+        return 'Reproducir';
+      case 'texturas':
+      case 'animaciones':
+        return 'Ver Galería';
+      case 'OBS':
+        return 'Ver Widget';
+      case 'colecciones':
+        return 'Ver Colección';
+      default:
+        return 'Ver Contenido';
+    }
+  };
+
+  // Función para manejar la visualización del contenido
+  const handleViewContent = (content: any) => {
+    setSelectedContent(content);
+    setShowFileExplorer(true);
+  };
+
+  // Función para cerrar el explorador de archivos
+  const closeFileExplorer = () => {
+    setShowFileExplorer(false);
+    setSelectedContent(null);
+  };
+
   useEffect(() => {
     loadPurchases();
   }, [user]);
@@ -201,74 +263,104 @@ export default function PurchasesSection() {
             {purchases.map((purchase) => (
               <div
                 key={purchase.id}
-                className="bg-gradient-to-br from-gray-700/50 to-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-600/40 overflow-hidden hover:border-purple-500/50 transition-all duration-300"
+                className="group bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden hover:border-purple-500/60 transition-all duration-500 hover:shadow-2xl hover:shadow-purple-500/20 hover:scale-[1.02]"
               >
-                {/* Header con información de compra */}
-                <div className="p-4 border-b border-gray-600/40">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-400">
-                      Comprado el {formatDate(purchase.purchaseDate)}
-                    </span>
-                    <span className="text-sm font-semibold text-green-400">
-                      {formatPrice(purchase.amount, purchase.currency)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">Vendedor:</span>
-                    <span className="text-sm text-purple-300 font-medium">
-                      {purchase.seller.username}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                    <span>📥 {purchase.downloadCount} descargas</span>
-                    {purchase.lastDownloadDate && (
-                      <span>Última: {formatDate(purchase.lastDownloadDate)}</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Contenido de la compra */}
-                <div className="p-4">
-                  <ContentCard
-                    id={purchase.content.id}
-                    title={purchase.content.title}
-                    author={purchase.content.author}
-                    contentType={purchase.content.contentType}
-                    category={purchase.content.category}
-                    image={purchase.content.coverImage}
-                    price={purchase.content.price}
-                    isFree={purchase.content.isFree}
-                    currency={purchase.content.currency}
-                    likes={0}
-                    comments={0}
-                    visits={0}
-                    license={purchase.content.license}
-                    tags={purchase.content.tags}
-                    createdAt={purchase.content.createdAt}
-                    showPrice={false}
-                    showStats={false}
-                    className="h-[280px]"
+                {/* Imagen del contenido con overlay de información */}
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={purchase.content.coverImage || '/placeholder-content.jpg'}
+                    alt={purchase.content.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
+                  
+                  {/* Overlay con información de compra */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
+                    <div className="absolute top-3 left-3 right-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-gray-300 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full">
+                          {formatDate(purchase.purchaseDate)}
+                        </span>
+                        <span className="text-sm font-bold text-green-400 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full">
+                          {formatPrice(purchase.amount, purchase.currency)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Tipo de contenido */}
+                    <div className="absolute top-3 left-3 mt-8">
+                      <span className="inline-flex items-center gap-1 text-xs text-white bg-purple-600/80 backdrop-blur-sm px-2 py-1 rounded-full">
+                        {purchase.content.contentType === 'avatares' && '👤'}
+                        {purchase.content.contentType === 'modelos3d' && '🎲'}
+                        {purchase.content.contentType === 'musica' && '🎵'}
+                        {purchase.content.contentType === 'texturas' && '🖼️'}
+                        {purchase.content.contentType === 'animaciones' && '🎬'}
+                        {purchase.content.contentType === 'OBS' && '📺'}
+                        {purchase.content.contentType === 'colecciones' && '📦'}
+                        {purchase.content.contentType || '📄'}
+                      </span>
+                    </div>
+
+                    {/* Vendedor */}
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-300">por</span>
+                        <span className="text-sm font-semibold text-purple-300 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full">
+                          {purchase.seller.username}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Botones de acción */}
-                <div className="p-4 border-t border-gray-600/40">
-                  <button
-                    onClick={() => handleDownload(purchase.id, purchase.content.title)}
-                    disabled={downloading === purchase.id}
-                    className="w-full px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-lg transition-all duration-300 font-medium flex items-center justify-center gap-2"
-                  >
-                    {downloading === purchase.id ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Procesando...
-                      </>
-                    ) : (
-                      <>
-                        📥 Descargar Contenido
-                      </>
+                {/* Información del contenido */}
+                <div className="p-5">
+                  <h4 className="text-lg font-bold text-white mb-2 line-clamp-2 group-hover:text-purple-300 transition-colors">
+                    {purchase.content.title}
+                  </h4>
+                  
+                  <div className="flex items-center gap-4 text-xs text-gray-400 mb-4">
+                    <span className="flex items-center gap-1">
+                      📥 {purchase.downloadCount} descargas
+                    </span>
+                    {purchase.lastDownloadDate && (
+                      <span className="flex items-center gap-1">
+                        🕒 {formatDate(purchase.lastDownloadDate)}
+                      </span>
                     )}
-                  </button>
+                  </div>
+
+                      {/* Botones de acción según el tipo de contenido */}
+                      <div className="grid grid-cols-2 gap-2">
+                        {/* Botón de ver detalles */}
+                        <button
+                          onClick={() => handleViewContent(purchase.content)}
+                          className="px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl transition-all duration-300 font-medium text-sm flex items-center justify-center gap-2 group/btn"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          Ver Detalles
+                        </button>
+
+                        {/* Botón de descarga */}
+                        <button
+                          onClick={() => handleDownload(purchase.id, purchase.content.title)}
+                          disabled={downloading === purchase.id}
+                          className="px-3 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-xl transition-all duration-300 font-medium text-sm flex items-center justify-center gap-2 group/btn"
+                        >
+                          {downloading === purchase.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              Descargar
+                            </>
+                          )}
+                        </button>
+                      </div>
                 </div>
               </div>
             ))}
@@ -298,6 +390,15 @@ export default function PurchasesSection() {
           )}
         </>
       )}
+
+          {/* Modal del Explorador de Archivos */}
+          {showFileExplorer && selectedContent && (
+            <FileExplorerModal
+              isOpen={showFileExplorer}
+              onClose={closeFileExplorer}
+              content={selectedContent}
+            />
+          )}
     </div>
   );
 }

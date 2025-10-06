@@ -11,26 +11,34 @@ export interface IPurchase extends Document {
   lastDownloadDate?: Date;
   status: 'completed' | 'pending' | 'refunded';
   transactionId?: string;
+  // Campos específicos de Webpay
+  webpayToken?: string;
+  webpayBuyOrder?: string;
+  webpaySessionId?: string;
+  authorizationCode?: string;
+  paymentTypeCode?: string;
+  responseCode?: number;
+  installmentsNumber?: number;
+  transactionDate?: string;
+  accountingDate?: string;
+  vci?: string;
 }
 
 const PurchaseSchema = new Schema<IPurchase>({
   buyer: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
-    index: true
+    required: true
   },
   content: {
     type: Schema.Types.ObjectId,
     ref: 'Content',
-    required: true,
-    index: true
+    required: true
   },
   seller: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
-    index: true
+    required: true
   },
   amount: {
     type: Number,
@@ -45,8 +53,7 @@ const PurchaseSchema = new Schema<IPurchase>({
   purchaseDate: {
     type: Date,
     default: Date.now,
-    required: true,
-    index: true
+    required: true
   },
   downloadCount: {
     type: Number,
@@ -65,6 +72,37 @@ const PurchaseSchema = new Schema<IPurchase>({
   transactionId: {
     type: String,
     sparse: true
+  },
+  // Campos específicos de Webpay
+  webpayToken: {
+    type: String
+  },
+  webpayBuyOrder: {
+    type: String
+  },
+  webpaySessionId: {
+    type: String
+  },
+  authorizationCode: {
+    type: String
+  },
+  paymentTypeCode: {
+    type: String
+  },
+  responseCode: {
+    type: Number
+  },
+  installmentsNumber: {
+    type: Number
+  },
+  transactionDate: {
+    type: String
+  },
+  accountingDate: {
+    type: String
+  },
+  vci: {
+    type: String
   }
 }, {
   timestamps: true

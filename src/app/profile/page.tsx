@@ -3,6 +3,7 @@
 import Layout from '@/components/shared/Layout';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSearchParams } from 'next/navigation';
 import ProfileEditor from '@/components/profile/ProfileEditor';
 import InlineEditor from '@/components/profile/InlineEditor';
 import RoleSelector from '@/components/profile/RoleSelector';
@@ -47,8 +48,19 @@ export default function ProfilePage() {
   const [activeSection, setActiveSection] = useState<'creations' | 'purchases'>('creations');
   const { user } = useAuth();
   const { createCardProps } = useContentCard();
+  const searchParams = useSearchParams();
 
   const isOwnProfile = user?.username === currentProfile.username;
+
+  // Manejar parámetro de pestaña desde la URL
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'purchases') {
+      setActiveSection('purchases');
+    } else {
+      setActiveSection('creations');
+    }
+  }, [searchParams]);
 
   // Función para cargar las estadísticas reales del usuario
   const loadUserStats = async () => {

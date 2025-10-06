@@ -25,6 +25,7 @@ interface PurchasePanelProps {
     views: number;
     status: string;
     visibility: string;
+    coverImage?: string;
   };
   isOwner?: boolean;
   onEdit?: () => void;
@@ -154,13 +155,27 @@ export default function PurchasePanel({
           // CTAs para visitante
           <>
             <button
-              onClick={onBuy}
+              onClick={() => {
+                // Para TODOS los productos (gratuitos y de pago), redirigir al checkout
+                const checkoutItem = {
+                  id: product.id,
+                  title: product.title,
+                  price: product.price,
+                  currency: product.currency,
+                  contentType: product.contentType,
+                  author: typeof product.author === 'string' ? product.author : product.author?.username || 'Anónimo',
+                  coverImage: product.coverImage
+                };
+                
+                const checkoutUrl = `/checkout?items=${encodeURIComponent(JSON.stringify([checkoutItem]))}&total=${product.price}`;
+                window.location.href = checkoutUrl;
+              }}
               className="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-green-500/25"
             >
               <svg className="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
               </svg>
-              {product.isFree ? 'Obtener Gratis' : 'Comprar Ahora'}
+              {product.isFree ? 'Obtener Gratis' : 'Comprar con Webpay'}
             </button>
             
             <button
