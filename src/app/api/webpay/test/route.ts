@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { webpayConfig, generateBuyOrder, generateSessionId } from "@/config/webpay";
 
+// Importar WebpayPlus de manera condicional para mejor manejo de errores
+let WebpayPlus: any;
+try {
+  WebpayPlus = require("transbank-sdk").WebpayPlus;
+  console.log('✅ Transbank SDK loaded successfully for test');
+} catch (error) {
+  console.error('❌ Error loading Transbank SDK for test:', error);
+}
+
 export async function POST(req: NextRequest) {
   try {
     console.log('🧪 Webpay TEST API called');
@@ -23,27 +32,51 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Verificar si el SDK está disponible
+    if (!WebpayPlus) {
+      console.error('❌ Transbank SDK not available for test');
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'SDK de Transbank no disponible para pruebas',
+          details: 'El SDK de Transbank no se pudo cargar correctamente'
+        },
+        { status: 500 }
+      );
+    }
+
     // Generar identificadores únicos
     const buyOrder = generateBuyOrder(contentId, userId);
     const sessionId = generateSessionId();
+    const returnUrl = `${webpayConfig.baseUrl}/webpay/return`;
     
-    console.log('🧪 Generated identifiers:', { buyOrder, sessionId });
+    console.log('🧪 Generated identifiers:', { 
+      buyOrder, 
+      sessionId, 
+      returnUrl,
+      commerceCode: webpayConfig.commerceCode,
+      apiKey: webpayConfig.apiKey ? '***' + webpayConfig.apiKey.slice(-4) : 'undefined'
+    });
 
-    // Simular respuesta de Webpay para testing
-    const mockResponse = {
-      url: 'https://webpay3gint.transbank.cl/rswebpaytransaction/api/webpay/v1.2/transactions',
-      token: `mock-token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    };
+    // Configurar transacción usando la API real de Transbank
+    const tx = WebpayPlus.Transaction.buildForIntegration(
+      webpayConfig.commerceCode,
+      webpayConfig.apiKey
+    );
 
-    console.log('🧪 Mock Webpay response:', mockResponse);
+    console.log('🧪 Attempting to create REAL Webpay transaction for test...');
+    // Crear transacción real en Webpay (ambiente de integración)
+    const response = await tx.create(buyOrder, sessionId, amount, returnUrl);
+    console.log('✅ Real Webpay transaction created for test:', response);
 
     return NextResponse.json({
       success: true,
-      url: mockResponse.url,
-      token: mockResponse.token,
+      url: response.url,
+      token: response.token,
       buyOrder,
       sessionId,
-      isTest: true
+      isTest: true,
+      message: 'Transacción de prueba creada exitosamente con Transbank'
     });
 
   } catch (error) {
@@ -51,7 +84,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { 
         success: false,
-        error: 'Error en la API de prueba',
+        error: 'Error al crear transacción de prueba con Transbank',
         details: process.env.NODE_ENV === 'development' ? error : undefined
       },
       { status: 500 }

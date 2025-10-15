@@ -63,6 +63,17 @@ export default function CheckoutPage() {
     setError(null);
 
     try {
+      // Verificar que el token existe
+      const token = localStorage.getItem('takopi_token');
+      if (!token) {
+        setError('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        // Limpiar datos de usuario y redirigir
+        localStorage.removeItem('takopi_user');
+        localStorage.removeItem('takopi_token');
+        router.push('/auth/login');
+        return;
+      }
+
       // Por simplicidad, procesamos solo el primer item
       // En una implementación real, se procesarían todos los items
       const firstItem = items[0];
@@ -74,7 +85,7 @@ export default function CheckoutPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('takopi_token')}`,
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({
             contentId: firstItem.id,
@@ -85,6 +96,14 @@ export default function CheckoutPage() {
         const data = await response.json();
 
         if (!response.ok) {
+          // Si es error de token, manejar específicamente
+          if (response.status === 401) {
+            setError('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+            localStorage.removeItem('takopi_user');
+            localStorage.removeItem('takopi_token');
+            router.push('/auth/login');
+            return;
+          }
           throw new Error(data.error || 'Error al procesar la compra gratuita');
         }
 
@@ -100,7 +119,7 @@ export default function CheckoutPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('takopi_token')}`,
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({
             amount: total,
@@ -112,6 +131,14 @@ export default function CheckoutPage() {
         const data = await response.json();
 
         if (!response.ok) {
+          // Si es error de token, manejar específicamente
+          if (response.status === 401) {
+            setError('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+            localStorage.removeItem('takopi_user');
+            localStorage.removeItem('takopi_token');
+            router.push('/auth/login');
+            return;
+          }
           throw new Error(data.error || 'Error al crear la transacción');
         }
 

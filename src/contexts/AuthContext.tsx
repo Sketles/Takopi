@@ -25,13 +25,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Función para verificar si el token es válido
+  const verifyToken = async (token: string): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('Token verification error:', error);
+      return false;
+    }
+  };
+
   // Verificar si hay usuario guardado al cargar la app
   useEffect(() => {
-    const savedUser = localStorage.getItem('takopi_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
+    const initializeAuth = async () => {
+      const savedUser = localStorage.getItem('takopi_user');
+      const savedToken = localStorage.getItem('takopi_token');
+      
+      if (savedUser && savedToken) {
+        // Verificar si el token sigue siendo válido
+        const isValid = await verifyToken(savedToken);
+        
+        if (isValid) {
+          setUser(JSON.parse(savedUser));
+        } else {
+          // Token expirado, limpiar datos
+          console.log('Token expirado, limpiando datos de autenticación');
+          localStorage.removeItem('takopi_user');
+          localStorage.removeItem('takopi_token');
+          setUser(null);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
