@@ -32,8 +32,7 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
   const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set(['viewer']));
   const [selectedFileForViewer, setSelectedFileForViewer] = useState<string | null>(null);
 
-  // Debug: verificar el estado de isOwner
-  console.log('🔍 ProductMediaTabs - isOwner:', isOwner, 'product.author:', product.author);
+  // Debug: verificar el estado de isOwner (removed for performance)
 
   // Cerrar menús al hacer clic fuera
   useEffect(() => {
@@ -71,12 +70,7 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
     file.name?.endsWith('.vrm')
   );
 
-  // Debug: Log para verificar detección de modelos 3D
-  useEffect(() => {
-    console.log('🔍 ProductMediaTabs - Product files:', product.files);
-    console.log('🔍 ProductMediaTabs - Has 3D:', has3D);
-    console.log('🔍 ProductMediaTabs - 3D Model URL:', get3DModelUrl());
-  }, [product.files, has3D]);
+  // Debug: Log para verificar detección de modelos 3D (removed for performance)
   
   const hasImages = product.coverImage || (product.additionalImages && product.additionalImages.length > 0);
   
@@ -120,6 +114,7 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
       file.name?.endsWith('.gltf') ||
       file.name?.endsWith('.vrm')
     );
+    
     return modelFile?.previewUrl || modelFile?.url;
   };
 

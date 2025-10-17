@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import User from '@/models/User';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { config } from '@/config/env';
 
 // Configuración de multer para Next.js API routes
 const upload = multer({
@@ -62,7 +61,7 @@ async function verifyToken(request: NextRequest) {
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
     if (!token) return null;
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-key') as any;
+    const decoded = jwt.verify(token, config.jwt.secret) as any;
     return decoded;
   } catch (error) {
     console.error('Error verificando token:', error);
@@ -84,23 +83,12 @@ function parseMultipartFormData(request: NextRequest): Promise<any> {
 // POST - Subir archivos
 export async function POST(request: NextRequest) {
   try {
-    await connectToDatabase();
-
     // Verificar autenticación
     const decoded = await verifyToken(request);
     if (!decoded) {
       return NextResponse.json(
         { success: false, error: 'Token inválido o expirado' },
         { status: 401 }
-      );
-    }
-
-    // Verificar que el usuario existe
-    const user = await User.findById(decoded.userId);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Usuario no encontrado' },
-        { status: 404 }
       );
     }
 
@@ -123,8 +111,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log(`📤 Subiendo ${files.length} archivos de tipo: ${contentType}`);
 
     // Crear directorio de destino
     const uploadDir = path.join(process.cwd(), 'public/uploads/content', contentType);
@@ -181,8 +167,8 @@ export async function POST(request: NextRequest) {
       fs.writeFileSync(filePath, buffer);
       coverImageUrl = `/uploads/covers/${filename}`;
 
-      console.log(`✅ Imagen de portada subida: ${coverImageUrl}`);
     }
+
 
     return NextResponse.json({
       success: true,
@@ -190,15 +176,20 @@ export async function POST(request: NextRequest) {
         files: uploadedFiles,
         coverImage: coverImageUrl,
         contentType,
-        uploadedBy: user.username
+        uploadedBy: decoded.userId
       },
       message: `${uploadedFiles.length} archivo(s) subido(s) exitosamente`
     });
 
   } catch (error) {
     console.error('Error uploading files:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return NextResponse.json(
-      { success: false, error: 'Error al subir archivos' },
+      { 
+        success: false, 
+        error: 'Error al subir archivos',
+        details: errorMessage
+      },
       { status: 500 }
     );
   }

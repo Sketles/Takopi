@@ -1,0 +1,46 @@
+[
+  {
+    "userId": "test-user-456",
+    "contentId": "test-content-123",
+    "amount": 19990,
+    "currency": "CLP",
+    "paymentMethod": "webpay",
+    "status": "pending",
+    "_id": "176051103356782oedzda1",
+    "createdAt": "2025-10-15T06:50:33.567Z",
+    "updatedAt": "2025-10-15T06:50:33.567Z"
+  },
+  {
+    "userId": "test-user-456",
+    "contentId": "test-content-123",
+    "amount": 19990,
+    "currency": "CLP",
+    "paymentMethod": "webpay",
+    "status": "pending",
+    "_id": "17605112701473bbnkncz3",
+    "createdAt": "2025-10-15T06:54:30.147Z",
+    "updatedAt": "2025-10-15T06:54:30.147Z"
+  },
+  {
+    "userId": "test-user-456",
+    "contentId": "test-content-123",
+    "amount": 19990,
+    "currency": "CLP",
+    "paymentMethod": "webpay",
+    "status": "pending",
+    "_id": "1760592670247a5xvybunf",
+    "createdAt": "2025-10-16T05:31:10.247Z",
+    "updatedAt": "2025-10-16T05:31:10.247Z"
+  },
+  {
+    "userId": "1760508654867qjtn6oj03",
+    "contentId": "1760575627002e5n9n1vby",
+    "amount": 1700,
+    "currency": "CLP",
+    "paymentMethod": "webpay",
+    "status": "pending",
+    "_id": "17605938186723zvw88gex",
+    "createdAt": "2025-10-16T05:50:18.672Z",
+    "updatedAt": "2025-10-16T05:50:18.672Z"
+  }
+]

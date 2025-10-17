@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
+import { NextRequest, NextResponse } from 'next/server';
+import { VerifyTokenUseCase } from '@/features/auth/domain/usecases/verify-token.usecase';
+import { createAuthRepository } from '@/features/auth/data/repositories/auth.repository';
 
 export async function POST(req: NextRequest) {
   try {
-    console.log('🔍 Token verification API called');
+    console.log('🔍 Token verification API (Clean Architecture)');
     
     // Verificar autorización
     const authHeader = req.headers.get('authorization');
@@ -18,24 +18,28 @@ export async function POST(req: NextRequest) {
 
     const token = authHeader.split(' ')[1];
     
-    try {
-      // Verificar el token JWT
-      const decodedToken = jwt.verify(token, config.jwt.secret);
-      console.log('✅ Token válido:', { userId: (decodedToken as any).userId });
-      
+    // Crear repository y usecase (Clean Architecture)
+    const repository = createAuthRepository();
+    const usecase = new VerifyTokenUseCase(repository);
+
+    // Ejecutar caso de uso
+    const result = await usecase.execute(token);
+
+    if (result.valid) {
+      console.log('✅ Token válido:', result.userId);
       return NextResponse.json({
         valid: true,
         user: {
-          userId: (decodedToken as any).userId,
-          email: (decodedToken as any).email
+          userId: result.userId,
+          email: result.email
         }
       });
-    } catch (error) {
-      console.log('❌ Token inválido o expirado:', error);
+    } else {
+      console.log('❌ Token inválido:', result.error);
       return NextResponse.json(
         { 
           valid: false,
-          error: 'Token inválido o expirado' 
+          error: result.error
         },
         { status: 401 }
       );
@@ -46,7 +50,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { 
         valid: false,
-        error: 'Error interno del servidor' 
+        error: 'Error interno del servidor'
       },
       { status: 500 }
     );

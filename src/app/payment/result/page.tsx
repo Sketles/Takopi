@@ -13,23 +13,58 @@ export default function PaymentResultPage() {
   useEffect(() => {
     const checkPaymentStatus = async () => {
       try {
-        // Simular verificación del estado del pago
-        // En una implementación real, esto vendría de la API
+        // Verificar el estado del pago desde los parámetros de la URL
         const success = searchParams.get('success') === 'true';
         const error = searchParams.get('error');
+        const details = searchParams.get('details');
         
         if (success) {
-          // Aquí se podría hacer una llamada a la API para verificar el estado real
+          // Pago exitoso - obtener información de la transacción
+          const transactionId = searchParams.get('transactionId');
+          const purchaseId = searchParams.get('purchaseId');
+          const amount = searchParams.get('amount');
+          const currency = searchParams.get('currency') || 'CLP';
+          const buyOrder = searchParams.get('buyOrder');
+          const authorizationCode = searchParams.get('authorizationCode');
+          
           setPaymentResult({
             success: true,
             message: '¡Pago realizado exitosamente!',
-            details: 'Tu compra ha sido procesada correctamente.'
+            details: 'Tu compra ha sido procesada correctamente con Transbank.',
+            transactionId,
+            purchaseId,
+            amount,
+            currency,
+            buyOrder,
+            authorizationCode
           });
         } else {
+          // Error en el pago
+          let errorMessage = 'Error en el pago';
+          let errorDetails = 'Ha ocurrido un error durante el proceso de pago.';
+          
+          if (error === 'not_authorized') {
+            errorMessage = 'Pago no autorizado';
+            errorDetails = 'La transacción no fue autorizada por Transbank.';
+          } else if (error === 'transbank_error') {
+            errorMessage = 'Error de Transbank';
+            errorDetails = 'Hubo un problema al comunicarse con Transbank.';
+          } else if (error === 'sdk_error') {
+            errorMessage = 'Error del sistema';
+            errorDetails = 'El sistema de pagos no está disponible.';
+          } else if (error === 'purchase_error') {
+            errorMessage = 'Error al registrar compra';
+            errorDetails = 'El pago fue exitoso pero hubo un error al registrar tu compra.';
+          }
+          
+          if (details) {
+            errorDetails = decodeURIComponent(details);
+          }
+          
           setPaymentResult({
             success: false,
-            message: 'Error en el pago',
-            details: error || 'Ha ocurrido un error durante el proceso de pago.'
+            message: errorMessage,
+            details: errorDetails
           });
         }
       } catch (error) {
@@ -91,7 +126,44 @@ export default function PaymentResultPage() {
 
                 {/* Información adicional */}
                 <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-6 mb-8">
-                  <h3 className="font-semibold text-green-300 mb-2">✅ Transacción Completada</h3>
+                  <h3 className="font-semibold text-green-300 mb-4">✅ Transacción Completada</h3>
+                  
+                  {/* Detalles de la transacción */}
+                  <div className="space-y-2 mb-4">
+                    {paymentResult.transactionId && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-200">ID Transacción:</span>
+                        <span className="text-green-300 font-mono">{paymentResult.transactionId}</span>
+                      </div>
+                    )}
+                    {paymentResult.purchaseId && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-200">ID Compra:</span>
+                        <span className="text-green-300 font-mono">{paymentResult.purchaseId}</span>
+                      </div>
+                    )}
+                    {paymentResult.buyOrder && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-200">Orden de Compra:</span>
+                        <span className="text-green-300 font-mono">{paymentResult.buyOrder}</span>
+                      </div>
+                    )}
+                    {paymentResult.authorizationCode && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-200">Código Autorización:</span>
+                        <span className="text-green-300 font-mono">{paymentResult.authorizationCode}</span>
+                      </div>
+                    )}
+                    {paymentResult.amount && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-200">Monto:</span>
+                        <span className="text-green-300 font-semibold">
+                          ${parseInt(paymentResult.amount).toLocaleString()} {paymentResult.currency || 'CLP'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  
                   <p className="text-green-200 text-sm">
                     Tu contenido digital ya está disponible en tu perfil. 
                     Puedes descargarlo desde la sección "Mis Compras".

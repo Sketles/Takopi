@@ -1,0 +1,75 @@
+[
+  {
+    "title": "Musica de Stream",
+    "description": "Incluye:\n-musica\n-noticicaciones\n-alertas",
+    "author": "1760508654867qjtn6oj03",
+    "authorUsername": "sushinapan",
+    "price": "2500",
+    "currency": "CLP",
+    "contentType": "musica",
+    "category": "musica",
+    "tags": [
+      "audio",
+      "sound",
+      "instrumental",
+      "ambient",
+      "electronic"
+    ],
+    "coverImage": "/uploads/covers/cover-1760509624100-156509763.jpg",
+    "files": [
+      {
+        "name": "file-1760509624092-145412462.mp3",
+        "originalName": "Vibe Fusion.mp3",
+        "size": 2361730,
+        "type": "audio/mpeg",
+        "url": "/uploads/content/musica/file-1760509624092-145412462.mp3"
+      },
+      {
+        "name": "file-1760509624095-3675966.wav",
+        "originalName": "Music_fx_imaginate_que_eres_un_artista_en_la.wav",
+        "size": 5760044,
+        "type": "audio/wav",
+        "url": "/uploads/content/musica/file-1760509624095-3675966.wav"
+      }
+    ],
+    "isPublished": true,
+    "likes": 0,
+    "views": 0,
+    "downloads": 0,
+    "_id": "1760509624867pjzjuclsj",
+    "createdAt": "2025-10-15T06:27:04.867Z",
+    "updatedAt": "2025-10-15T06:27:04.867Z"
+  },
+  {
+    "title": "Vaso Starbuck Low Poly",
+    "description": "nada un vaso",
+    "author": "1760575468321uo9zmwzvl",
+    "authorUsername": "istzby",
+    "price": "1700",
+    "currency": "CLP",
+    "contentType": "modelos3d",
+    "category": "modelos3d",
+    "tags": [
+      "prop",
+      "escenario",
+      "blender"
+    ],
+    "coverImage": "/uploads/covers/cover-1760575626627-940927130.png",
+    "files": [
+      {
+        "name": "file-1760575626623-494457824.glb",
+        "originalName": "starbucks_disposable_cup.glb",
+        "size": 540056,
+        "type": "application/octet-stream",
+        "url": "/uploads/content/modelos3d/file-1760575626623-494457824.glb"
+      }
+    ],
+    "isPublished": true,
+    "likes": 0,
+    "views": 0,
+    "downloads": 0,
+    "_id": "1760575627002e5n9n1vby",
+    "createdAt": "2025-10-16T00:47:07.002Z",
+    "updatedAt": "2025-10-16T00:47:07.002Z"
+  }
+]

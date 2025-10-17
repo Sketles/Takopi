@@ -155,39 +155,36 @@ export default function FileUploader({
       // Simular subida (aquí iría la lógica real de subida)
       try {
         await simulateUpload(file, fileId, (progress) => {
-          onFilesChange(prevFiles =>
-            prevFiles.map(f =>
-              f.id === fileId ? { ...f, uploadProgress: progress } : f
-            )
+          const updatedFiles = files.map(f =>
+            f.id === fileId ? { ...f, uploadProgress: progress } : f
           );
+          onFilesChange(updatedFiles);
         });
 
         // Marcar como completado
-        onFilesChange(prevFiles =>
-          prevFiles.map(f =>
-            f.id === fileId 
-              ? { 
-                  ...f, 
-                  isUploading: false, 
-                  url: URL.createObjectURL(file),
-                  previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
-                } 
-              : f
-          )
+        const completedFiles = files.map(f =>
+          f.id === fileId 
+            ? { 
+                ...f, 
+                isUploading: false, 
+                url: URL.createObjectURL(file),
+                previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
+              } 
+            : f
         );
+        onFilesChange(completedFiles);
       } catch (error) {
         // Marcar como error
-        onFilesChange(prevFiles =>
-          prevFiles.map(f =>
-            f.id === fileId 
-              ? { 
-                  ...f, 
-                  isUploading: false, 
-                  error: 'Error al subir el archivo'
-                } 
-              : f
-          )
+        const errorFiles = files.map(f =>
+          f.id === fileId 
+            ? { 
+                ...f, 
+                isUploading: false, 
+                error: 'Error al subir el archivo'
+              } 
+            : f
         );
+        onFilesChange(errorFiles);
       } finally {
         setUploadingFiles(prev => {
           const newSet = new Set(prev);

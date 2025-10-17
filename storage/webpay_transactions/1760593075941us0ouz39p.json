@@ -1,0 +1,14 @@
+{
+  "_id": "1760593075941us0ouz39p",
+  "buyOrder": "buy_1760575627002e5n9n1vby_1760508654867qjtn6oj03_1760593075941_ayu9t5ubn",
+  "sessionId": "session_1760593075941_kz0cz8dw2",
+  "amount": 1700,
+  "currency": "CLP",
+  "userId": "1760508654867qjtn6oj03",
+  "contentId": "1760575627002e5n9n1vby",
+  "token": "1760593075941_nswc1hcpgig",
+  "url": "https://webpay3gint.transbank.cl/rswebpaytransaction/api/webpay/v1.2/transactions/1760593075941_nswc1hcpgig",
+  "status": "pending",
+  "createdAt": "2025-10-16T05:37:55.941Z",
+  "updatedAt": "2025-10-16T05:37:55.941Z"
+}

@@ -8,7 +8,6 @@ interface DefaultCoverProps {
 }
 
 const DefaultCover: React.FC<DefaultCoverProps> = ({ contentType, className = "" }) => {
-  console.log('🎨 DefaultCover renderizando para:', contentType);
 
   const getCoverConfig = (type: string) => {
     const configs = {
@@ -53,7 +52,6 @@ const DefaultCover: React.FC<DefaultCoverProps> = ({ contentType, className = ""
   };
 
   const config = getCoverConfig(contentType);
-  console.log('🔧 Config obtenida:', config);
 
   // Siempre usar emoji/gradiente (sin logo externo)
 

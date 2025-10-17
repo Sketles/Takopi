@@ -1,0 +1,14 @@
+{
+  "_id": "1760592640805di5vfzoc2",
+  "buyOrder": "tk638719nt-123er-456",
+  "sessionId": "s638719vjjmlr",
+  "amount": 19990,
+  "currency": "CLP",
+  "userId": "test-user-456",
+  "contentId": "test-content-123",
+  "token": "01abb8cccc5587cc5b13eea4c91c76388fee1a13fb5d152c2064f22e5b812897",
+  "url": "https://webpay3gint.transbank.cl/webpayserver/initTransaction",
+  "status": "completed",
+  "createdAt": "2025-10-16T05:30:40.805Z",
+  "updatedAt": "2025-10-16T05:31:10.244Z"
+}

@@ -1,26 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import Content from '@/models/Content';
-import User from '@/models/User';
+import { CreateContentUseCase } from '@/features/content/domain/usecases/create-content.usecase';
+import { GetContentUseCase } from '@/features/content/domain/usecases/get-content.usecase';
+import { createContentRepository } from '@/features/content/data/repositories/content.repository';
 import jwt from 'jsonwebtoken';
+import { config } from '@/config/env';
 
 // Función para verificar el token JWT
 async function verifyToken(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.substring(7);
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-
-    console.log('🔍 Token recibido:', token ? `${token.substring(0, 50)}...` : 'No token');
-
-    if (!token) {
-      console.log('❌ No hay token en el header');
-      return null;
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-key') as any;
-    console.log('✅ Token verificado:', { userId: decoded.userId, email: decoded.email });
+    const decoded = jwt.verify(token, config.jwt.secret) as any;
     return decoded;
   } catch (error) {
-    console.error('❌ Error verificando token:', error);
     return null;
   }
 }
@@ -28,100 +24,71 @@ async function verifyToken(request: NextRequest) {
 // GET - Obtener publicaciones (con filtros opcionales)
 export async function GET(request: NextRequest) {
   try {
-    await connectToDatabase();
-
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const contentType = searchParams.get('type');
-    const category = searchParams.get('category');
-    const tags = searchParams.get('tags');
+    const category = searchParams.get('category') || searchParams.get('type') || 'all';
     const author = searchParams.get('author');
-    const sortBy = searchParams.get('sort') || 'newest'; // newest, popular, trending
     const search = searchParams.get('search');
 
-    // Construir filtros
-    const filters: any = {
-      status: 'published',
-      visibility: { $in: ['public', 'unlisted'] }
-    };
+    console.log('🔍 Get Content API (Clean Architecture):', { category, author, search });
 
-    if (contentType) {
-      filters.contentType = contentType;
-    }
+    // Crear repository y usecase (Clean Architecture)
+    const repository = createContentRepository();
+    const usecase = new GetContentUseCase(repository);
 
-    if (category) {
-      filters.category = category;
-    }
+    // Ejecutar caso de uso
+    let content = await usecase.execute(category);
 
-    if (tags) {
-      const tagArray = tags.split(',').map(tag => tag.trim().toLowerCase());
-      filters.tags = { $in: tagArray };
-    }
-
+    // Filtros adicionales
     if (author) {
-      filters.authorUsername = author;
+      content = content.filter(item => item.author === author || item.authorId === author);
     }
 
     if (search) {
-      filters.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { tags: { $in: [new RegExp(search, 'i')] } }
-      ];
+      const searchLower = search.toLowerCase();
+      content = content.filter(item => 
+        item.title.toLowerCase().includes(searchLower) ||
+        item.description.toLowerCase().includes(searchLower) ||
+        (item.tags && item.tags.some(tag => tag.toLowerCase().includes(searchLower)))
+      );
     }
 
-    // Construir ordenamiento
-    let sort: any = { createdAt: -1 };
-    switch (sortBy) {
-      case 'popular':
-        sort = { views: -1, likes: -1 };
-        break;
-      case 'trending':
-        // Combinación de views, likes y fecha (últimos 30 días)
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        filters.createdAt = { $gte: thirtyDaysAgo };
-        sort = { likes: -1, views: -1, createdAt: -1 };
-        break;
-      case 'price-low':
-        sort = { price: 1 };
-        break;
-      case 'price-high':
-        sort = { price: -1 };
-        break;
-      default:
-        sort = { createdAt: -1 };
-    }
+    console.log('✅ Content retrieved:', { count: content.length, category, author, search });
 
-    // Ejecutar consulta
-    const skip = (page - 1) * limit;
-    const contents = await Content.find(filters)
-      .populate('author', 'username avatar role')
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    const total = await Content.countDocuments(filters);
+    // Serializar entities para respuesta JSON
+    const serializedContent = content.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      shortDescription: item.shortDescription || item.description?.substring(0, 100) + '...',
+      author: item.authorUsername,
+      authorAvatar: item.authorAvatar,
+      authorId: item.authorId,
+      type: item.typeDisplay,
+      category: item.categoryDisplay,
+      image: item.coverImage,
+      files: item.files || [],
+      coverImage: item.coverImage,
+      price: item.price,
+      isFree: item.isFree,
+      currency: item.currency,
+      contentType: item.contentType,
+      tags: item.tags || [],
+      likes: item.likes || 0,
+      views: item.views || 0,
+      downloads: item.downloads || 0,
+      createdAt: item.createdAt?.toISOString(),
+      updatedAt: item.updatedAt?.toISOString()
+    }));
 
     return NextResponse.json({
       success: true,
-      data: {
-        contents,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit)
-        }
-      }
+      data: serializedContent
     });
 
   } catch (error) {
-    console.error('Error fetching contents:', error);
+    console.error('❌ Error fetching content:', error);
     return NextResponse.json(
-      { success: false, error: 'Error al obtener publicaciones' },
+      { success: false, error: 'Error al obtener contenido' },
       { status: 500 }
     );
   }
@@ -130,104 +97,74 @@ export async function GET(request: NextRequest) {
 // POST - Crear nueva publicación
 export async function POST(request: NextRequest) {
   try {
-    await connectToDatabase();
+    console.log('🔍 Create Content API (Clean Architecture)');
 
     // Verificar autenticación
     const decoded = await verifyToken(request);
     if (!decoded) {
-      return NextResponse.json(
-        { success: false, error: 'Token inválido o expirado' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    const body = await request.json();
+    const requestBody = await request.json();
+    console.log('🔍 Datos de creación:', requestBody);
 
-    console.log('📥 Datos recibidos:', JSON.stringify(body, null, 2));
+    // Crear repository y usecase (Clean Architecture)
+    const repository = createContentRepository();
+    const usecase = new CreateContentUseCase(repository);
 
-    // Validar datos requeridos
-    const requiredFields = ['title', 'description', 'contentType', 'category', 'files'];
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return NextResponse.json(
-          { success: false, error: `El campo ${field} es requerido` },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Verificar que el usuario existe
-    const user = await User.findById(decoded.userId);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Usuario no encontrado' },
-        { status: 404 }
-      );
-    }
-
-    // Procesar archivos - ahora con URLs reales
-    const processedFiles = body.files.map((file: any) => ({
-      name: file.name,
-      originalName: file.originalName || file.name,
-      size: file.size,
-      type: file.type,
-      url: file.url, // URL real del archivo subido
-      previewUrl: file.previewUrl || (file.type.startsWith('image/') ? file.url : undefined)
-    }));
-
-    console.log('📁 Archivos procesados:', JSON.stringify(processedFiles, null, 2));
-
-
-    // Crear la publicación
+    // Preparar datos para el UseCase
     const contentData = {
-      title: body.title.trim(),
-      provisionalName: body.provisionalName?.trim(),
-      description: body.description.trim(),
-      shortDescription: body.shortDescription?.trim(),
-      contentType: body.contentType,
-      category: body.category.trim(),
-      subcategory: body.subcategory?.trim(),
-      files: processedFiles,
-      coverImage: body.coverImage,
-      additionalImages: body.additionalImages || [],
-      price: parseFloat(body.price) || 0,
-      isFree: body.isFree || parseFloat(body.price) === 0,
-      currency: 'CLP',
-      license: body.license || 'personal',
-      customLicense: body.customLicense?.trim(),
-      tags: [...(body.tags || []), ...(body.customTags || [])].map((tag: string) =>
-        tag.trim().toLowerCase()
-      ).filter((tag: string) => tag),
-      customTags: (body.customTags || []).map((tag: string) =>
-        tag.trim().toLowerCase()
-      ).filter((tag: string) => tag),
-      visibility: body.visibility || 'public',
-      allowTips: body.allowTips || false,
-      allowCommissions: body.allowCommissions || false,
+      title: requestBody.title,
+      description: requestBody.description,
       author: decoded.userId,
-      authorUsername: user.username,
-      status: body.visibility === 'draft' ? 'draft' : 'published'
+      authorUsername: decoded.email?.split('@')[0] || 'Usuario', // Temporal
+      price: requestBody.price || 0,
+      currency: requestBody.currency || 'CLP',
+      contentType: requestBody.contentType,
+      category: requestBody.category,
+      tags: requestBody.tags || [],
+      coverImage: requestBody.coverImage,
+      files: requestBody.files || []
     };
 
-    const content = new Content(contentData);
-    await content.save();
+    // Ejecutar caso de uso
+    const newContent = await usecase.execute(contentData);
 
-    console.log('✅ Contenido guardado exitosamente:', content._id);
+    console.log('✅ Contenido creado:', newContent.id);
 
-    // Poblar datos del autor para la respuesta
-    await content.populate('author', 'username avatar role');
+    // Serializar entity para respuesta JSON
+    const serializedContent = {
+      id: newContent.id,
+      title: newContent.title,
+      description: newContent.description,
+      author: newContent.authorUsername,
+      authorId: newContent.author,
+      price: newContent.price,
+      isFree: newContent.isFree,
+      currency: newContent.currency,
+      contentType: newContent.contentType,
+      category: newContent.category,
+      tags: newContent.tags,
+      coverImage: newContent.coverImage,
+      files: newContent.files,
+      createdAt: newContent.createdAt?.toISOString(),
+      updatedAt: newContent.updatedAt?.toISOString()
+    };
 
     return NextResponse.json({
       success: true,
-      data: content,
-      message: 'Publicación creada exitosamente'
+      message: 'Contenido creado exitosamente',
+      data: serializedContent
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating content:', error);
+    console.error('❌ Error creating content:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
+    const statusCode = errorMessage.includes('debe tener') ? 400 : 500;
+    
     return NextResponse.json(
-      { success: false, error: 'Error al crear la publicación' },
-      { status: 500 }
+      { success: false, error: errorMessage },
+      { status: statusCode }
     );
   }
 }

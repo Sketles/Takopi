@@ -6,6 +6,7 @@ interface Comment {
   id: string;
   author: string;
   avatar?: string;
+  userId?: string;
   text: string;
   time: string;
   likes: number;
@@ -16,6 +17,7 @@ interface CommentsSectionProps {
   productId: string;
   comments?: Comment[];
   isOwner?: boolean;
+  currentUserId?: string;
   onAddComment?: (text: string) => void;
   onLikeComment?: (commentId: string) => void;
   className?: string;
@@ -25,6 +27,7 @@ export default function CommentsSection({
   productId,
   comments = [],
   isOwner = false,
+  currentUserId,
   onAddComment,
   onLikeComment,
   className = ''
@@ -32,79 +35,152 @@ export default function CommentsSection({
   const [newComment, setNewComment] = useState('');
   const [localComments, setLocalComments] = useState<Comment[]>(comments);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Datos de ejemplo si no hay comentarios
-  const defaultComments: Comment[] = [
-    {
-      id: '1',
-      author: 'Usuario1',
-      avatar: '/placeholders/placeholder-avatar.svg',
-      text: '¡Excelente producto! Muy buena calidad.',
-      time: 'hace 2 horas',
-      likes: 3,
-      isLiked: false
-    },
-    {
-      id: '2',
-      author: 'Usuario2',
-      text: 'Perfecto para mi proyecto. Lo recomiendo.',
-      time: 'hace 5 horas',
-      likes: 1,
-      isLiked: true
-    }
-  ];
+  const displayComments = localComments;
 
-  const displayComments = localComments.length > 0 ? localComments : defaultComments;
+  // Cargar comentarios al montar el componente
+  useEffect(() => {
+    loadComments();
+  }, [productId]);
+
+  const loadComments = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/comments?contentId=${productId}`);
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setLocalComments(result.data.map((comment: any) => ({
+            id: comment.id,
+            author: comment.username,
+            avatar: comment.userAvatar,
+            userId: comment.userId,
+            text: comment.text,
+            time: formatTimeAgo(comment.createdAt),
+            likes: comment.likes,
+            isLiked: comment.isLiked
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading comments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTimeAgo = (dateString: string): string => {
+    const now = new Date();
+    const commentDate = new Date(dateString);
+    const diffInSeconds = Math.floor((now.getTime() - commentDate.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return 'ahora';
+    if (diffInSeconds < 3600) return `hace ${Math.floor(diffInSeconds / 60)} min`;
+    if (diffInSeconds < 86400) return `hace ${Math.floor(diffInSeconds / 3600)} horas`;
+    if (diffInSeconds < 2592000) return `hace ${Math.floor(diffInSeconds / 86400)} días`;
+    
+    return commentDate.toLocaleDateString('es-CL');
+  };
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!newComment.trim() || isSubmitting) return;
 
+    const token = localStorage.getItem('takopi_token');
+    if (!token) {
+      alert('Debes iniciar sesión para comentar');
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Crear comentario optimista
-    const optimisticComment: Comment = {
-      id: Date.now().toString(),
-      author: 'Tú',
-      text: newComment,
-      time: 'ahora',
-      likes: 0,
-      isLiked: false
-    };
-
-    setLocalComments(prev => [optimisticComment, ...prev]);
-    setNewComment('');
-
     try {
-      if (onAddComment) {
-        await onAddComment(newComment);
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          contentId: productId,
+          text: newComment.trim()
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          const newCommentData = result.data;
+          const formattedComment: Comment = {
+            id: newCommentData.id,
+            author: newCommentData.username,
+            avatar: newCommentData.userAvatar,
+            userId: newCommentData.userId,
+            text: newCommentData.text,
+            time: 'ahora',
+            likes: newCommentData.likes,
+            isLiked: newCommentData.isLiked
+          };
+
+          setLocalComments(prev => [formattedComment, ...prev]);
+          setNewComment('');
+        } else {
+          alert(result.error || 'Error al crear comentario');
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        alert(errorData.error || 'Error al crear comentario');
       }
     } catch (error) {
-      // Revertir comentario optimista en caso de error
-      setLocalComments(prev => prev.filter(comment => comment.id !== optimisticComment.id));
       console.error('Error al agregar comentario:', error);
+      alert('Error al crear comentario');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleLikeComment = (commentId: string) => {
-    setLocalComments(prev =>
-      prev.map(comment =>
-        comment.id === commentId
-          ? {
-              ...comment,
-              isLiked: !comment.isLiked,
-              likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1
-            }
-          : comment
-      )
-    );
+  const handleLikeComment = async (commentId: string) => {
+    const token = localStorage.getItem('takopi_token');
+    if (!token) {
+      alert('Debes iniciar sesión para dar like');
+      return;
+    }
 
-    if (onLikeComment) {
-      onLikeComment(commentId);
+    try {
+      const response = await fetch(`/api/comments/${commentId}/like`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          const updatedComment = result.data;
+          setLocalComments(prev =>
+            prev.map(comment =>
+              comment.id === commentId
+                ? {
+                    ...comment,
+                    isLiked: updatedComment.isLiked,
+                    likes: updatedComment.likes
+                  }
+                : comment
+            )
+          );
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        alert(errorData.error || 'Error al dar like');
+      }
+    } catch (error) {
+      console.error('Error al dar like:', error);
+      alert('Error al dar like');
     }
   };
 
@@ -113,19 +189,31 @@ export default function CommentsSection({
     return author.charAt(0).toUpperCase();
   };
 
+  const handleAuthorClick = (commentUserId: string) => {
+    if (commentUserId && currentUserId && commentUserId === currentUserId) {
+      // Es el usuario actual, ir al perfil personal
+      window.open('/profile', '_blank');
+    } else {
+      // Es otro usuario, ir al perfil público
+      window.open(`/user/${commentUserId}`, '_blank');
+    }
+  };
+
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Formulario de nuevo comentario */}
-      {!isOwner && (
+      {(
         <div className="bg-gradient-to-br from-gray-800/40 to-purple-900/40 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
-          <h4 className="text-lg font-semibold text-white mb-4">Deja un comentario</h4>
+          <h4 className="text-lg font-semibold text-white mb-4">
+            {isOwner ? "Agregar comentario" : "Deja un comentario"}
+          </h4>
           <form onSubmit={handleSubmitComment} className="space-y-4">
             <div>
               <textarea
                 ref={textareaRef}
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Comparte tu opinión sobre este producto..."
+                placeholder={isOwner ? "Agrega una nota o actualización..." : "Comparte tu opinión sobre este producto..."}
                 className="w-full h-24 px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                 disabled={isSubmitting}
               />
@@ -168,7 +256,12 @@ export default function CommentsSection({
           )}
         </div>
 
-        {displayComments.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-8 text-gray-400">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto mb-2"></div>
+            <div className="text-sm">Cargando comentarios...</div>
+          </div>
+        ) : displayComments.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
             <div className="text-4xl mb-2">💬</div>
             <div className="text-lg font-medium mb-1">No hay comentarios aún</div>
@@ -183,7 +276,10 @@ export default function CommentsSection({
               >
                 <div className="flex gap-3">
                   {/* Avatar del autor */}
-                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                  <button
+                    onClick={() => comment.userId && handleAuthorClick(comment.userId)}
+                    className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0 hover:scale-110 transition-transform cursor-pointer"
+                  >
                     {comment.avatar ? (
                       <img
                         src={comment.avatar}
@@ -198,12 +294,17 @@ export default function CommentsSection({
                     <span className={`text-white font-bold text-xs ${comment.avatar ? 'hidden' : ''}`}>
                       {getAuthorInitial(comment.author)}
                     </span>
-                  </div>
+                  </button>
 
                   {/* Contenido del comentario */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-white text-sm">{comment.author}</span>
+                      <button
+                        onClick={() => comment.userId && handleAuthorClick(comment.userId)}
+                        className="font-semibold text-white text-sm hover:text-purple-300 transition-colors cursor-pointer"
+                      >
+                        {comment.author}
+                      </button>
                       <span className="text-gray-400 text-xs">{comment.time}</span>
                     </div>
                     <p className="text-gray-300 text-sm leading-relaxed mb-2">{comment.text}</p>

@@ -1,223 +1,201 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import Content from '@/models/Content';
-import User from '@/models/User';
-import mongoose from 'mongoose';
+import { GetContentByIdUseCase } from '@/features/content/domain/usecases/get-content-by-id.usecase';
+import { UpdateContentUseCase } from '@/features/content/domain/usecases/update-content.usecase';
+import { DeleteContentUseCase } from '@/features/content/domain/usecases/delete-content.usecase';
+import { createContentRepository } from '@/features/content/data/repositories/content.repository';
+import jwt from 'jsonwebtoken';
+import { config } from '@/config/env';
 
-// GET - Obtener publicación específica
+// Función para verificar el token JWT
+async function verifyToken(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.substring(7);
+  try {
+    const decoded = jwt.verify(token, config.jwt.secret) as any;
+    return decoded;
+  } catch (error) {
+    return null;
+  }
+}
+
+// GET - Obtener contenido específico
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await connectToDatabase();
-
     const { id } = await params;
 
-    // Validar ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { success: false, error: 'ID de publicación inválido' },
-        { status: 400 }
-      );
-    }
+    console.log('🔍 Get Content by ID API (Clean Architecture):', id);
 
-    // Buscar la publicación
-    const content = await Content.findById(id)
-      .populate('author', 'username avatar role bio banner')
-      .lean() as any;
+    // Crear repository y usecase (Clean Architecture)
+    const repository = createContentRepository();
+    const usecase = new GetContentByIdUseCase(repository);
+
+    // Ejecutar caso de uso
+    const content = await usecase.execute(id);
 
     if (!content) {
       return NextResponse.json(
-        { success: false, error: 'Publicación no encontrada' },
+        { success: false, error: 'Contenido no encontrado' },
         { status: 404 }
       );
     }
 
-    // Verificar visibilidad
-    if (content.visibility === 'unlisted') {
-      // Solo el autor puede ver contenido unlisted sin enlace directo
-      // TODO: Implementar verificación de autor si es necesario
-    }
+    console.log('✅ Contenido obtenido:', content.id);
 
-    if (content.status !== 'published') {
-      return NextResponse.json(
-        { success: false, error: 'Publicación no disponible' },
-        { status: 404 }
-      );
-    }
-
-    // Incrementar contador de views (asíncrono, no esperamos)
-    Content.findByIdAndUpdate(id, { $inc: { views: 1 } }).catch(console.error);
-
-    // Transformar datos para el frontend
-    const transformedContent = {
-      ...content,
-      author: content.author?.username || content.authorUsername || 'Anónimo',
-      authorAvatar: content.author?.avatar || null,
-      authorId: content.author?._id?.toString() || null
+    // Serializar entity para respuesta JSON
+    const serializedContent = {
+      id: content.id,
+      title: content.title,
+      description: content.description,
+      shortDescription: content.shortDescription,
+      author: content.authorUsername,
+      authorAvatar: content.authorAvatar,
+      authorId: content.authorId,
+      type: content.typeDisplay,
+      category: content.categoryDisplay,
+      image: content.coverImage,
+      files: content.files || [],
+      coverImage: content.coverImage,
+      price: content.price,
+      isFree: content.isFree,
+      currency: content.currency,
+      contentType: content.contentType,
+      tags: content.tags || [],
+      likes: content.likes || 0,
+      views: content.views || 0,
+      downloads: content.downloads || 0,
+      createdAt: content.createdAt?.toISOString(),
+      updatedAt: content.updatedAt?.toISOString()
     };
 
     return NextResponse.json({
       success: true,
-      data: transformedContent
+      data: serializedContent
     });
 
   } catch (error) {
-    console.error('Error fetching content:', error);
+    console.error('❌ Error fetching content:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return NextResponse.json(
-      { success: false, error: 'Error al obtener la publicación' },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
 }
 
-// PUT - Actualizar publicación
+// PUT - Actualizar contenido
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await connectToDatabase();
-
     const { id } = await params;
-    const body = await request.json();
 
-    // TODO: Verificar autenticación y autorización
-    // Solo el autor puede editar su publicación
+    console.log('🔍 Update Content API (Clean Architecture):', id);
 
-    // Validar ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { success: false, error: 'ID de publicación inválido' },
-        { status: 400 }
-      );
+    // Verificar autenticación
+    const decoded = await verifyToken(request);
+    if (!decoded) {
+      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    // Buscar la publicación existente
-    const existingContent = await Content.findById(id);
-    if (!existingContent) {
-      return NextResponse.json(
-        { success: false, error: 'Publicación no encontrada' },
-        { status: 404 }
-      );
-    }
+    const requestBody = await request.json();
+    console.log('🔍 Datos de actualización:', requestBody);
 
-    // Actualizar solo los campos proporcionados
-    const updateData: any = {};
+    // Crear repository y usecase (Clean Architecture)
+    const repository = createContentRepository();
+    const usecase = new UpdateContentUseCase(repository);
 
-    if (body.title !== undefined) updateData.title = body.title.trim();
-    if (body.description !== undefined) updateData.description = body.description.trim();
-    if (body.category !== undefined) updateData.category = body.category.trim();
-    if (body.subcategory !== undefined) updateData.subcategory = body.subcategory?.trim();
-    if (body.price !== undefined) {
-      updateData.price = parseFloat(body.price) || 0;
-      updateData.isFree = body.isFree || parseFloat(body.price) === 0;
-    }
-    if (body.license !== undefined) updateData.license = body.license;
-    if (body.visibility !== undefined) updateData.visibility = body.visibility;
-    if (body.allowTips !== undefined) updateData.allowTips = body.allowTips;
-    if (body.allowCommissions !== undefined) updateData.allowCommissions = body.allowCommissions;
-    if (body.tags !== undefined) {
-      updateData.tags = body.tags.map((tag: string) => tag.trim().toLowerCase());
-    }
-    if (body.customTags !== undefined) {
-      updateData.customTags = body.customTags.map((tag: string) => tag.trim().toLowerCase());
-    }
+    // Ejecutar caso de uso
+    const updatedContent = await usecase.execute(id, decoded.userId, requestBody);
 
-    // Actualizar estado si es necesario
-    if (body.visibility === 'draft') {
-      updateData.status = 'draft';
-    } else if (body.visibility === 'public' && existingContent.status === 'draft') {
-      updateData.status = 'published';
-      updateData.publishedAt = new Date();
-    }
+    console.log('✅ Contenido actualizado:', updatedContent.id);
 
-    const updatedContent = await Content.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true, runValidators: true }
-    ).populate('author', 'username avatar role');
+    // Serializar entity para respuesta JSON
+    const serializedContent = {
+      id: updatedContent.id,
+      title: updatedContent.title,
+      description: updatedContent.description,
+      price: updatedContent.price,
+      isFree: updatedContent.isFree,
+      currency: updatedContent.currency,
+      contentType: updatedContent.contentType,
+      tags: updatedContent.tags,
+      createdAt: updatedContent.createdAt?.toISOString(),
+      updatedAt: updatedContent.updatedAt?.toISOString()
+    };
 
     return NextResponse.json({
       success: true,
-      data: updatedContent,
-      message: 'Publicación actualizada exitosamente'
+      message: 'Contenido actualizado exitosamente',
+      data: serializedContent
     });
 
   } catch (error) {
-    console.error('Error updating content:', error);
+    console.error('❌ Error updating content:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
+    const statusCode = errorMessage.includes('No tienes permisos') ? 403 : 
+                        errorMessage.includes('no encontrado') ? 404 : 500;
+    
     return NextResponse.json(
-      { success: false, error: 'Error al actualizar la publicación' },
-      { status: 500 }
+      { success: false, error: errorMessage },
+      { status: statusCode }
     );
   }
 }
 
-// DELETE - Eliminar publicación
+// DELETE - Eliminar contenido
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await connectToDatabase();
-
     const { id } = await params;
 
-    console.log('🔍 DELETE Content - ID recibido:', id);
-    console.log('🔍 DELETE Content - Tipo de ID:', typeof id);
-    console.log('🔍 DELETE Content - Es ObjectId válido:', mongoose.Types.ObjectId.isValid(id));
+    console.log('🔍 Delete Content API (Clean Architecture):', id);
 
-    // TODO: Verificar autenticación y autorización
-    // Solo el autor puede eliminar su publicación
+    // Verificar autenticación
+    const decoded = await verifyToken(request);
+    if (!decoded) {
+      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+    }
 
-    // Validar ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      console.error('❌ DELETE Content - ID inválido:', id);
+    // Crear repository y usecase (Clean Architecture)
+    const repository = createContentRepository();
+    const usecase = new DeleteContentUseCase(repository);
+
+    // Ejecutar caso de uso
+    const success = await usecase.execute(id, decoded.userId);
+
+    if (!success) {
       return NextResponse.json(
-        { success: false, error: 'ID de publicación inválido' },
-        { status: 400 }
+        { success: false, error: 'Error al eliminar el contenido' },
+        { status: 500 }
       );
     }
 
-    // Buscar el contenido antes de eliminar
-    const content = await Content.findById(id);
-    console.log('🔍 DELETE Content - Contenido encontrado:', !!content);
-    
-    if (!content) {
-      return NextResponse.json(
-        { success: false, error: 'Publicación no encontrada' },
-        { status: 404 }
-      );
-    }
-
-    // TODO: Eliminar archivos físicos del servidor
-    // Por ahora solo eliminamos de la base de datos
-    // En el futuro se puede agregar lógica para eliminar archivos de public/uploads
-
-    // Eliminar completamente de la base de datos
-    const deletedContent = await Content.findByIdAndDelete(id);
-    console.log('✅ DELETE Content - Contenido eliminado:', !!deletedContent);
+    console.log('✅ Contenido eliminado:', id);
 
     return NextResponse.json({
       success: true,
-      message: 'Publicación eliminada exitosamente'
+      message: 'Contenido eliminado exitosamente'
     });
 
   } catch (error) {
     console.error('❌ Error deleting content:', error);
-    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    
-    // Intentar devolver un error más específico
-    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
+    const statusCode = errorMessage.includes('No tienes permisos') ? 403 : 
+                        errorMessage.includes('no encontrado') ? 404 : 500;
     
     return NextResponse.json(
-      { 
-        success: false, 
-        error: `Error al eliminar la publicación: ${errorMessage}`,
-        details: process.env.NODE_ENV === 'development' ? error : undefined
-      },
-      { status: 500 }
+      { success: false, error: errorMessage },
+      { status: statusCode }
     );
   }
 }

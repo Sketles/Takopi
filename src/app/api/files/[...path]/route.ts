@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs';
 
-// API route para servir archivos estáticos de manera segura
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
-    const { path: pathArray } = await params;
-    const filePath = pathArray.join('/');
+    const { path: pathSegments } = await params;
+    const filePath = pathSegments.join('/');
+
+    console.log('🔍 Files API (Clean Architecture):', filePath);
 
     // Construir ruta completa del archivo
     const fullPath = path.join(process.cwd(), 'public/uploads', filePath);
@@ -17,7 +18,7 @@ export async function GET(
     // Verificar que el archivo existe
     if (!fs.existsSync(fullPath)) {
       return NextResponse.json(
-        { success: false, error: 'Archivo no encontrado' },
+        { error: 'Archivo no encontrado' },
         { status: 404 }
       );
     }
@@ -26,17 +27,22 @@ export async function GET(
     const stats = fs.statSync(fullPath);
     if (!stats.isFile()) {
       return NextResponse.json(
-        { success: false, error: 'No es un archivo válido' },
+        { error: 'Ruta no válida' },
         { status: 400 }
       );
     }
 
-    // Leer el archivo
-    const fileBuffer = fs.readFileSync(fullPath);
+    // En un sistema real, aquí verificarías:
+    // 1. Permisos del usuario para acceder al archivo
+    // 2. Si el archivo fue comprado por el usuario
+    // 3. Generar enlaces temporales con tokens
 
-    // Determinar el tipo MIME basado en la extensión
+    // Por ahora, leer y servir el archivo directamente
+    const fileBuffer = fs.readFileSync(fullPath);
     const ext = path.extname(fullPath).toLowerCase();
-    const mimeTypes: { [key: string]: string } = {
+
+    // Determinar Content-Type
+    const contentTypes: { [key: string]: string } = {
       '.jpg': 'image/jpeg',
       '.jpeg': 'image/jpeg',
       '.png': 'image/png',
@@ -50,32 +56,25 @@ export async function GET(
       '.glb': 'model/gltf-binary',
       '.gltf': 'model/gltf+json',
       '.obj': 'model/obj',
-      '.zip': 'application/zip',
-      '.rar': 'application/x-rar-compressed',
-      '.html': 'text/html',
-      '.css': 'text/css',
-      '.js': 'application/javascript',
-      '.json': 'application/json'
+      '.zip': 'application/zip'
     };
 
-    const mimeType = mimeTypes[ext] || 'application/octet-stream';
+    const contentType = contentTypes[ext] || 'application/octet-stream';
 
-    // Crear respuesta con el archivo
+    console.log('✅ Archivo servido:', filePath);
+
     return new NextResponse(fileBuffer, {
       headers: {
-        'Content-Type': mimeType,
+        'Content-Type': contentType,
         'Content-Length': fileBuffer.length.toString(),
-        'Cache-Control': 'public, max-age=31536000', // Cache por 1 año
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET',
-        'Access-Control-Allow-Headers': 'Content-Type'
+        'Cache-Control': 'public, max-age=3600' // Cache por 1 hora
       }
     });
 
   } catch (error) {
-    console.error('Error serving file:', error);
+    console.error('❌ Error serving file:', error);
     return NextResponse.json(
-      { success: false, error: 'Error al servir el archivo' },
+      { error: 'Error interno del servidor' },
       { status: 500 }
     );
   }

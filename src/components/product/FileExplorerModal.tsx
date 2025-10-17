@@ -292,45 +292,57 @@ export default function FileExplorerModal({ isOpen, onClose, content }: FileExpl
             {/* Header del panel */}
             <div className="p-4 border-b border-gray-700/50">
               <h4 className="text-lg font-semibold text-white mb-2">📁 Archivos del Producto</h4>
-              <p className="text-sm text-gray-400">{content.files.length} archivo(s)</p>
+              <p className="text-sm text-gray-400">{content.files?.length || 0} archivo(s)</p>
             </div>
 
             {/* Lista de archivos */}
             <div className="flex-1 overflow-y-auto">
               <div className="p-2 space-y-1">
-                {content.files.map((file, index) => (
-                  <div
-                    key={index}
-                    onClick={() => handleFileSelect(file)}
-                    className={`p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-700/50 ${
-                      selectedFile?.name === file.name 
-                        ? 'bg-purple-600/20 border border-purple-500/50' 
-                        : 'hover:bg-gray-700/30'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="text-2xl">{getFileIcon(file.name, file.type)}</div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white font-medium truncate">{file.name}</p>
-                        <p className="text-xs text-gray-400">
-                          {formatFileSize(file.size)} • {file.type}
-                        </p>
+                {content.files?.length ? (
+                  content.files.map((file, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleFileSelect(file)}
+                      className={`p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-700/50 ${
+                        selectedFile?.name === file.name 
+                          ? 'bg-purple-600/20 border border-purple-500/50' 
+                          : 'hover:bg-gray-700/30'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="text-2xl">{getFileIcon(file.name, file.type)}</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-medium truncate">{file.name}</p>
+                          <p className="text-xs text-gray-400">
+                            {formatFileSize(file.size)} • {file.type}
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(file);
+                          }}
+                          className="p-1 hover:bg-gray-600/50 rounded transition-colors"
+                          title="Descargar archivo"
+                        >
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3" />
+                          </svg>
+                        </button>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDownload(file);
-                        }}
-                        className="p-1 hover:bg-gray-600/50 rounded transition-colors"
-                        title="Descargar archivo"
-                      >
-                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3" />
-                        </svg>
-                      </button>
                     </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center">
+                    <div className="text-gray-400 mb-2">
+                      <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-400 text-sm">No hay archivos disponibles</p>
+                    <p className="text-gray-500 text-xs mt-1">El contenido puede haber sido eliminado</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>

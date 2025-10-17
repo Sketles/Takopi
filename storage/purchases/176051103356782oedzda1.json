@@ -1,0 +1,11 @@
+{
+  "userId": "test-user-456",
+  "contentId": "test-content-123",
+  "amount": 19990,
+  "currency": "CLP",
+  "paymentMethod": "webpay",
+  "status": "pending",
+  "_id": "176051103356782oedzda1",
+  "createdAt": "2025-10-15T06:50:33.567Z",
+  "updatedAt": "2025-10-15T06:50:33.567Z"
+}

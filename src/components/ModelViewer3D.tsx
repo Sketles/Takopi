@@ -3,26 +3,44 @@
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import '../styles/model-viewer.css';
+import { configureModelViewerEnvironment, getOptimizedModelViewerProps } from '@/config/model-viewer';
 
 // Componente wrapper para el web component model-viewer
 const ModelViewerWrapper = dynamic(
   () => Promise.resolve(function ModelViewerWrapper({ children, onLoad, onError, ...rest }: any) {
     const modelViewerRef = useRef<any>(null);
+    const [isLoaded, setIsLoaded] = useState(false);
 
-    // Cargar el web component dinámicamente
+    // Cargar el web component dinámicamente solo una vez
     useEffect(() => {
+      let isMounted = true;
+      
       const loadModelViewer = async () => {
         try {
+          // Configurar el entorno de model-viewer para reducir advertencias
+          configureModelViewerEnvironment();
+          
           await import('@google/model-viewer');
+          
+          if (isMounted) {
+            setIsLoaded(true);
+          }
         } catch (error) {
           console.error('Error loading model-viewer:', error);
         }
       };
+      
       loadModelViewer();
+      
+      return () => {
+        isMounted = false;
+      };
     }, []);
 
     // Adjuntar listeners a eventos del web component
     useEffect(() => {
+      if (!isLoaded) return;
+      
       const el = modelViewerRef.current;
       if (!el) return;
 
@@ -37,11 +55,20 @@ const ModelViewerWrapper = dynamic(
 
       el.addEventListener('load', handleLoad as any);
       el.addEventListener('error', handleError as any);
+      
       return () => {
         el.removeEventListener('load', handleLoad as any);
         el.removeEventListener('error', handleError as any);
       };
-    }, [onLoad, onError]);
+    }, [onLoad, onError, isLoaded]);
+
+    // No renderizar hasta que model-viewer esté cargado
+    if (!isLoaded) {
+      return <div className="w-full h-full bg-gray-800 rounded-lg flex items-center justify-center">
+        <div className="text-gray-400">Cargando visor 3D...</div>
+      </div>;
+    }
+
 
     return React.createElement('model-viewer', {
       ref: modelViewerRef,
@@ -136,7 +163,6 @@ export default function ModelViewer3D({
   const handleLoad = () => {
     setIsLoading(false);
     setHasError(false);
-    try { console.log('✅ model-viewer cargado:', { src }); } catch { }
     onLoad?.();
   };
 
@@ -274,20 +300,8 @@ export default function ModelViewer3D({
           height: '100%',
           backgroundColor: 'transparent'
         }}
-        auto-rotate={currentRotation}
-        camera-controls={cameraControls}
-        loading="eager"
-        reveal="auto"
-        shadow-intensity={currentShadows}
-        exposure={currentExposure}
-        tone-mapping="aces"
-        interaction-prompt="auto"
-        interaction-prompt-style="basic"
-        interaction-prompt-threshold={1500}
-        ar
-        ar-modes="webxr scene-viewer quick-look"
-        ar-scale="auto"
-        ar-placement="floor"
+        autoRotate={currentRotation}
+        cameraControls={cameraControls}
         onLoad={handleLoad}
         onError={handleError}
       >

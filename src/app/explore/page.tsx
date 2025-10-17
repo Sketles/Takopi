@@ -5,6 +5,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect, useMemo } from 'react';
 import ContentCard, { useContentCard } from '@/components/shared/ContentCard';
 import ProductModal from '@/components/product/ProductModal';
+import SearchBar from '@/components/search/SearchBar';
+import Link from 'next/link';
+import { useCart } from '@/hooks/useCart';
+import { useToast } from '@/components/shared/Toast';
 
 // Interfaces para los datos
 interface ContentItem {
@@ -50,6 +54,8 @@ const personalizedItems = marketplaceItems.slice(1, 7);
 
 export default function ExplorePage() {
   const { user, isLoading } = useAuth();
+  const { addProductToCart, isProductInCart } = useCart();
+  const { addToast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState('Todo');
   const [content, setContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +64,12 @@ export default function ExplorePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [likesData, setLikesData] = useState<{ [key: string]: { isLiked: boolean; likesCount: number } }>({});
   const { createCardProps } = useContentCard();
+
+  // Estados para búsqueda
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<ContentItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState<Array<{ type: string; value: string }>>([]);
 
   // Función para cargar todos los likes de una vez
   const loadAllLikes = async (items: ContentItem[]) => {
@@ -196,10 +208,69 @@ export default function ExplorePage() {
     }
   }, [selectedCategory, isLoading]);
 
+  // Funciones para búsqueda
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      setIsSearching(false);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      setLoading(true);
+      
+      const params = new URLSearchParams();
+      params.set('q', searchQuery);
+      
+      const response = await fetch(`/api/search?${params}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setSearchResults(data.data.items);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error('Error en búsqueda:', error);
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setIsSearching(false);
+    fetchContent(selectedCategory);
+  };
+
+  const handleSuggestions = async (partial: string) => {
+    if (partial.length < 2) return;
+    
+    try {
+      const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(partial)}&limit=8`);
+      const data = await response.json();
+      
+      if (data.success) {
+        const suggestions = [
+          ...data.data.tags.map((tag: string) => ({ type: 'tag', value: tag })),
+          ...data.data.titles.map((title: string) => ({ type: 'title', value: title }))
+        ];
+        setSearchSuggestions(suggestions);
+      }
+    } catch (error) {
+      console.error('Error obteniendo sugerencias:', error);
+    }
+  };
+
 
 
   // Filtrar por categoría (ahora se hace en el servidor)
   const filteredItems = content;
+
+  // Determinar qué contenido mostrar
+  const displayItems = isSearching ? searchResults : filteredItems;
 
   // Función para abrir el modal con los detalles
   const openItemModal = (item: ContentItem) => {
@@ -211,6 +282,49 @@ export default function ExplorePage() {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedItem(null);
+  };
+
+  // Función para manejar agregar al carrito
+  const handleAddToBox = async (product: any) => {
+    try {
+      // Verificar si ya está en el carrito
+      if (isProductInCart(product.id)) {
+        addToast({
+          type: 'warning',
+          title: 'Ya está en tu Box',
+          message: 'Este producto ya está en tu carrito'
+        });
+        return;
+      }
+
+      // Agregar al carrito
+      const result = addProductToCart({
+        ...product,
+        author: product.author || 'Usuario',
+        authorUsername: typeof product.author === 'string' ? product.author : 'Usuario',
+        coverImage: product.coverImage || product.image || '/placeholder-content.jpg'
+      });
+
+      if (result.success) {
+        addToast({
+          type: 'success',
+          title: 'Agregado a tu Box',
+          message: result.message
+        });
+      } else {
+        addToast({
+          type: 'error',
+          title: 'Error',
+          message: result.message
+        });
+      }
+    } catch (error) {
+      addToast({
+        type: 'error',
+        title: 'Error',
+        message: 'No se pudo agregar al carrito'
+      });
+    }
   };
 
   // Función para manejar eliminación de contenido
@@ -354,6 +468,57 @@ export default function ExplorePage() {
           )}
         </div>
 
+        {/* SearchBar integrado */}
+        <div className="mb-12">
+          <div className="max-w-4xl mx-auto">
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onSearch={handleSearch}
+              onSuggestions={handleSuggestions}
+              suggestions={searchSuggestions}
+              loading={loading}
+              placeholder="Buscar contenido... (ej: música streaming, modelo 3D casa, texturas metal)"
+            />
+            
+            {/* Indicador de búsqueda activa */}
+            {isSearching && (
+              <div className="mt-4 flex items-center justify-between bg-purple-900/20 backdrop-blur-sm border border-purple-500/30 rounded-lg p-4">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <span className="text-purple-300">
+                    Buscando: <strong className="text-white">{searchQuery}</strong>
+                  </span>
+                  <span className="text-gray-400 text-sm">
+                    ({isSearching ? searchResults.length : content.length} resultados)
+                  </span>
+                </div>
+                <button
+                  onClick={handleClearSearch}
+                  className="px-4 py-2 bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 hover:text-white rounded-lg transition-colors text-sm"
+                >
+                  Limpiar búsqueda
+                </button>
+              </div>
+            )}
+
+            {/* Enlace a búsqueda avanzada */}
+            <div className="text-center mt-4">
+              <Link
+                href="/search"
+                className="text-purple-400 hover:text-purple-300 text-sm transition-colors inline-flex items-center gap-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                Búsqueda avanzada con filtros
+              </Link>
+            </div>
+          </div>
+        </div>
+
         {/* Sección de contenido recomendado para usuarios autenticados */}
         {user && content.length > 0 && (
           <div className="mb-12">
@@ -449,7 +614,7 @@ export default function ExplorePage() {
         {/* Grid de Contenido del Marketplace */}
         {!loading && !error && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredItems.map((item, index) => (
+            {displayItems.map((item, index) => (
               <div key={item.id} style={{ animationDelay: `${index * 100}ms` }}>
                 <ContentCardWrapper
                   item={item}
@@ -469,32 +634,46 @@ export default function ExplorePage() {
         )}
 
         {/* Mensaje cuando no hay contenido */}
-        {!loading && !error && filteredItems.length === 0 && (
+        {!loading && !error && displayItems.length === 0 && (
           <div className="text-center py-16">
             <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 backdrop-blur-md rounded-2xl border border-purple-500/20 p-8 max-w-2xl mx-auto">
               <div className="w-20 h-20 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-xl mx-auto mb-4 flex items-center justify-center">
                 <svg className="w-10 h-10 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                 </svg>
               </div>
               <h3 className="text-2xl font-bold text-white mb-4">
-                No hay contenido disponible
+                {isSearching ? 'No se encontraron resultados' : 'No hay contenido disponible'}
               </h3>
               <p className="text-gray-300 mb-6">
-                {selectedCategory === 'Todo'
-                  ? 'Aún no hay contenido subido a la plataforma. ¡Sé el primero en subir algo!'
-                  : `No hay contenido disponible en la categoría "${selectedCategory}". Prueba con otra categoría.`
+                {isSearching
+                  ? `No se encontraron resultados para "${searchQuery}". Intenta con otros términos.`
+                  : selectedCategory === 'Todo'
+                    ? 'Aún no hay contenido subido a la plataforma. ¡Sé el primero en subir algo!'
+                    : `No hay contenido disponible en la categoría "${selectedCategory}". Prueba con otra categoría.`
                 }
               </p>
-              <a
-                href="/upload"
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Subir Contenido
-              </a>
+              {isSearching ? (
+                <button
+                  onClick={handleClearSearch}
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Limpiar búsqueda
+                </button>
+              ) : (
+                <a
+                  href="/upload"
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Subir Contenido
+                </a>
+              )}
             </div>
           </div>
         )}
@@ -545,10 +724,11 @@ export default function ExplorePage() {
           isOwner={(() => {
             return user?.username === selectedItem.author;
           })()}
+          currentUserId={user?._id}
           onEdit={() => {}}
           onDelete={handleDeleteContent}
           onBuy={() => {}}
-          onAddToBox={() => {}}
+          onAddToBox={handleAddToBox}
           onLike={() => {}}
           onSave={() => {}}
           onShare={() => {}}

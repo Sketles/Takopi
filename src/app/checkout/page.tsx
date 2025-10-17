@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/components/shared/Layout';
+import { useCart } from '@/hooks/useCart';
 
 interface CheckoutItem {
   id: string;
@@ -17,6 +18,7 @@ interface CheckoutItem {
 
 export default function CheckoutPage() {
   const { user } = useAuth();
+  const { clearCart } = useCart();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -31,6 +33,7 @@ export default function CheckoutPage() {
       const totalParam = searchParams.get('total');
       
       if (itemsParam) {
+        // Formato JSON (para compatibilidad con compras individuales)
         const parsedItems = JSON.parse(decodeURIComponent(itemsParam));
         setItems(parsedItems);
         
@@ -39,6 +42,35 @@ export default function CheckoutPage() {
           setTotal(parseInt(totalParam));
         } else {
           setTotal(parsedItems.reduce((sum: number, item: CheckoutItem) => sum + item.price, 0));
+        }
+      } else {
+        // Formato múltiple parámetros (desde Box/carrito)
+        const parsedItems: CheckoutItem[] = [];
+        let index = 0;
+        
+        while (true) {
+          const contentId = searchParams.get(`items[${index}][contentId]`);
+          const title = searchParams.get(`items[${index}][title]`);
+          const price = searchParams.get(`items[${index}][price]`);
+          
+          if (!contentId || !title || !price) break;
+          
+          parsedItems.push({
+            id: contentId,
+            title: title,
+            price: parseInt(price),
+            currency: 'CLP',
+            contentType: 'producto',
+            author: 'Usuario',
+            coverImage: '/placeholder-content.jpg'
+          });
+          
+          index++;
+        }
+        
+        if (parsedItems.length > 0) {
+          setItems(parsedItems);
+          setTotal(parsedItems.reduce((sum, item) => sum + item.price, 0));
         }
       }
     } catch (error) {
@@ -108,6 +140,8 @@ export default function CheckoutPage() {
         }
 
         if (data.success) {
+          // Limpiar carrito después de compra exitosa
+          clearCart();
           // Redirigir a página de éxito
           router.push('/payment/result?success=true&type=free');
         } else {
@@ -143,7 +177,7 @@ export default function CheckoutPage() {
         }
 
         if (data.success && data.url && data.token) {
-          // Crear formulario y enviar automáticamente a Webpay
+          // Crear formulario y enviar automáticamente a Transbank
           const form = document.createElement('form');
           form.method = 'POST';
           form.action = data.url;
@@ -158,7 +192,12 @@ export default function CheckoutPage() {
           document.body.appendChild(form);
           form.submit();
         } else {
-          throw new Error('Respuesta inválida del servidor');
+          console.error('Respuesta del servidor:', data);
+          throw new Error(`Respuesta inválida del servidor. Faltan campos requeridos: ${JSON.stringify({
+            success: data.success,
+            hasUrl: !!data.url,
+            hasToken: !!data.token
+          })}`);
         }
       }
 

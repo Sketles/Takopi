@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import Purchase from '@/models/Purchase';
-import Content from '@/models/Content';
+import { createPurchaseRepository } from '@/features/purchase/data/repositories/purchase.repository';
+import { createContentRepository } from '@/features/content/data/repositories/content.repository';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config/env';
+import path from 'path';
+import fs from 'fs';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { purchaseId: string } }
+  { params }: { params: Promise<{ purchaseId: string }> }
 ) {
   try {
-    await connectToDatabase();
+    const { purchaseId } = await params;
+
+    console.log('🔍 Download Purchase API (Clean Architecture):', purchaseId);
 
     // Obtener token de autorización
     const authHeader = request.headers.get('authorization');
@@ -29,29 +32,20 @@ export async function POST(
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    const { purchaseId } = params;
+    // Verificar que la compra existe y pertenece al usuario (usando Clean Architecture)
+    const purchaseRepository = createPurchaseRepository();
+    const purchases = await purchaseRepository.findByUserId(userId);
+    const purchase = purchases.find(p => p.id === purchaseId);
 
-    // Verificar que la compra existe y pertenece al usuario
-    const purchase = await Purchase.findOne({
-      _id: purchaseId,
-      buyer: userId,
-      status: 'completed'
-    }).populate('content');
-
-    if (!purchase) {
+    if (!purchase || purchase.status !== 'completed') {
       return NextResponse.json({ 
         error: 'Compra no encontrada o no autorizada' 
       }, { status: 404 });
     }
 
-    // Actualizar contador de descargas y fecha de última descarga
-    await Purchase.findByIdAndUpdate(purchaseId, {
-      $inc: { downloadCount: 1 },
-      lastDownloadDate: new Date()
-    });
-
-    // Obtener información del contenido para la descarga
-    const content = await Content.findById(purchase.content._id).select('files title');
+    // Obtener información del contenido
+    const contentRepository = createContentRepository();
+    const content = await contentRepository.findById(purchase.contentId);
 
     if (!content) {
       return NextResponse.json({ 
@@ -59,26 +53,35 @@ export async function POST(
       }, { status: 404 });
     }
 
+    console.log('✅ Compra verificada, generando enlace de descarga');
+
+    // Generar enlace de descarga temporal (por ahora devolvemos la URL directa)
+    const downloadLinks = content.files.map(filePath => ({
+      filename: path.basename(filePath),
+      url: `/api/files/${filePath}`,
+      type: path.extname(filePath).toLowerCase()
+    }));
+
+    // En un sistema real, aquí generarías enlaces temporales con tokens
+    // Por ahora devolvemos las URLs directas
+
     return NextResponse.json({
       success: true,
       data: {
-        content: {
-          id: content._id,
-          title: content.title,
-          files: content.files || []
-        },
-        downloadInfo: {
-          purchaseId: purchase._id,
-          downloadCount: purchase.downloadCount + 1,
-          lastDownloadDate: new Date()
-        }
+        purchaseId: purchase.id,
+        contentTitle: content.title,
+        downloadLinks: downloadLinks,
+        downloadCount: purchase.downloadCount || 0,
+        lastDownloadDate: purchase.lastDownloadDate
       }
     });
 
   } catch (error) {
-    console.error('Error processing download:', error);
-    return NextResponse.json({ 
-      error: 'Error interno del servidor' 
-    }, { status: 500 });
+    console.error('❌ Error processing download:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
+    return NextResponse.json(
+      { success: false, error: errorMessage },
+      { status: 500 }
+    );
   }
 }

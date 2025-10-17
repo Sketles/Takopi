@@ -1,27 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
+import { GetUserCreationsUseCase } from '@/features/user/domain/usecases/get-user-creations.usecase';
+import { createUserRepository } from '@/features/user/data/repositories/user.repository';
 import jwt from 'jsonwebtoken';
-import User from '@/models/User';
-import Content from '@/models/Content';
+import { config } from '@/config/env';
 
 // Función para verificar el token JWT
 async function verifyToken(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.substring(7);
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return null;
-    }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-key') as any;
+    const decoded = jwt.verify(token, config.jwt.secret) as any;
     return decoded;
   } catch (error) {
-    console.error('❌ Error verificando token en creations API:', error);
     return null;
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    await connectToDatabase();
+    console.log('🔍 Get User Creations API (Clean Architecture)');
 
     // Verificar autenticación
     const decoded = await verifyToken(request);
@@ -32,133 +33,49 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Verificar que el usuario existe
-    const user = await User.findById(decoded.userId);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Usuario no encontrado' },
-        { status: 404 }
-      );
-    }
+    // Crear repository y usecase (Clean Architecture)
+    const repository = createUserRepository();
+    const usecase = new GetUserCreationsUseCase(repository);
 
-    // Obtener las creaciones del usuario
-    const creations = await Content.find({
-      author: decoded.userId,
-      status: 'published'
-    })
-      .sort({ createdAt: -1 }) // Más recientes primero
-      .limit(12) // Máximo 12 creaciones
-      .select('title description shortDescription contentType category price isFree files coverImage likes views downloads createdAt');
+    // Ejecutar caso de uso
+    const creations = await usecase.execute(decoded.userId);
 
-    // Procesar las creaciones para incluir la imagen
-    const processedCreations = creations.map(creation => {
-      // Función para obtener la imagen del contenido
-      const getContentImage = (content: any): string => {
-        // Si hay imagen de portada, usarla
-        if (content.coverImage) {
-          return content.coverImage;
-        }
+    console.log('✅ Creaciones obtenidas:', creations.length);
 
-        // Si hay archivos, buscar una imagen
-        if (content.files && content.files.length > 0) {
-          const imageFile = content.files.find((file: any) =>
-            file.type && (
-              file.type.startsWith('image/') ||
-              file.name.endsWith('.svg')
-            )
-          );
-          if (imageFile && (imageFile.previewUrl || imageFile.url)) {
-            return imageFile.previewUrl || imageFile.url;
-          }
-        }
-
-        // Generar portada por defecto con gradiente e icono
-        return generateDefaultCover(content.contentType);
-      };
-
-      return {
-        id: creation._id,
-        title: creation.title,
-        description: creation.description,
-        shortDescription: creation.shortDescription,
-        contentType: creation.contentType,
-        category: creation.category,
-        price: Number(creation.price) || 0, // Asegurar que siempre sea un número válido
-        isFree: Boolean(creation.isFree), // Asegurar que siempre sea un booleano
-        image: getContentImage(creation),
-        author: user.username, // Incluir nombre de usuario del autor
-        authorAvatar: user.avatar || null, // Incluir avatar del autor
-        authorId: user._id.toString(), // Incluir ID del autor
-        likes: creation.likes || 0,
-        views: creation.views || 0,
-        downloads: creation.downloads || 0,
-        createdAt: creation.createdAt
-      };
-    });
-
-    console.log(`✅ ${processedCreations.length} creaciones obtenidas para usuario ${user.username}`);
+    // Serializar creaciones
+    const serializedCreations = creations.map(item => ({
+      id: item._id,
+      title: item.title,
+      description: item.description,
+      contentType: item.contentType,
+      category: item.category,
+      price: item.price,
+      currency: item.currency,
+      isFree: item.price === 0,
+      coverImage: item.coverImage,
+      files: item.files || [],
+      tags: item.tags || [],
+      likes: item.likes || 0,
+      views: item.views || 0,
+      downloads: item.downloads || 0,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt
+    }));
 
     return NextResponse.json({
       success: true,
       data: {
-        creations: processedCreations,
-        total: processedCreations.length
+        creations: serializedCreations,
+        total: serializedCreations.length
       }
-    }, { status: 200 });
+    });
 
-  } catch (error: any) {
-    console.error('Error fetching user creations:', error);
+  } catch (error) {
+    console.error('❌ Error fetching user creations:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return NextResponse.json(
-      { success: false, error: 'Error al obtener las creaciones del usuario' },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
-
-// Función para generar portada por defecto con gradiente e icono
-function generateDefaultCover(contentType: string): string {
-  const coverConfig = {
-    'avatares': {
-      gradient: 'from-green-500 to-teal-500',
-      icon: '👤',
-      placeholder: '/placeholders/placeholder-avatar.svg'
-    },
-    'modelos3d': {
-      gradient: 'from-blue-500 to-cyan-500',
-      icon: '🧩',
-      placeholder: '/placeholders/placeholder-3d.svg'
-    },
-    'musica': {
-      gradient: 'from-purple-500 to-pink-500',
-      icon: '🎵',
-      placeholder: '/placeholders/placeholder-music.svg'
-    },
-    'texturas': {
-      gradient: 'from-indigo-500 to-purple-500',
-      icon: '🖼️',
-      placeholder: '/placeholders/placeholder-texture.svg'
-    },
-    'animaciones': {
-      gradient: 'from-orange-500 to-red-500',
-      icon: '🎬',
-      placeholder: '/placeholders/placeholder-animation.svg'
-    },
-    'OBS': {
-      gradient: 'from-gray-500 to-blue-500',
-      icon: '📺',
-      placeholder: '/placeholders/placeholder-widget.svg',
-      customLogo: '/logos/OBS_Studio_logo.png'
-    },
-    'colecciones': {
-      gradient: 'from-yellow-500 to-orange-500',
-      icon: '📦',
-      placeholder: '/placeholders/placeholder-collection.svg'
-    }
-  };
-
-  const config = coverConfig[contentType as keyof typeof coverConfig] || coverConfig['modelos3d'];
-
-  // Por ahora retornamos el placeholder, pero en el futuro se podría generar
-  // una imagen SVG dinámica con gradiente e icono
-  return config.placeholder;
 }

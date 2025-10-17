@@ -14,12 +14,12 @@ import PurchasesSection from '@/components/profile/PurchasesSection';
 
 // Datos de ejemplo para el perfil (solo para estadísticas por defecto)
 const defaultStats = {
-  followers: 2847,
-  following: 156,
-  modelsPublished: 24,
-  totalSales: 156,
-  heartsReceived: 342,
-  pinsCreated: 8
+  followers: 0,
+  following: 0,
+  modelsPublished: 0,
+  totalSales: 0,
+  heartsReceived: 0,
+  pinsCreated: 0
 };
 
 export default function ProfilePage() {
@@ -70,18 +70,28 @@ export default function ProfilePage() {
       const token = localStorage.getItem('takopi_token');
       if (!token) return;
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+
       const response = await fetch('/api/user/stats', {
         headers: {
           'Authorization': `Bearer ${token}`
-        }
+        },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const result = await response.json();
         setRealStats(result.data);
       }
     } catch (error) {
-      // Error silencioso para estadísticas
+      if (error.name === 'AbortError') {
+        console.log('Stats request timeout - using default values');
+      } else {
+        console.log('Stats request failed - using default values');
+      }
     }
   };
 
@@ -93,18 +103,28 @@ export default function ProfilePage() {
       const token = localStorage.getItem('takopi_token');
       if (!token) return;
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+
       const response = await fetch('/api/user/creations', {
         headers: {
           'Authorization': `Bearer ${token}`
-        }
+        },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const result = await response.json();
         setUserCreations(result.data.creations);
       }
     } catch (error) {
-      // Error silencioso para creaciones
+      if (error.name === 'AbortError') {
+        console.log('Creations request timeout');
+      } else {
+        console.log('Creations request failed');
+      }
     } finally {
       setLoadingCreations(false);
     }
@@ -116,11 +136,19 @@ export default function ProfilePage() {
 
     try {
       const token = localStorage.getItem('takopi_token');
+      if (!token) return;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+
       const response = await fetch('/api/user/profile', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -133,7 +161,11 @@ export default function ProfilePage() {
         // Ya no auto-actualizamos la ubicación
       }
     } catch (error) {
-      // Error silencioso para perfil
+      if (error.name === 'AbortError') {
+        console.log('Profile request timeout');
+      } else {
+        console.log('Profile request failed');
+      }
     }
   };
 
@@ -143,6 +175,17 @@ export default function ProfilePage() {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('takopi_token');
+      
+      if (!token) {
+        alert('No hay token de autenticación. Por favor, inicia sesión nuevamente.');
+        return;
+      }
+
+      console.log('🔄 Enviando datos al servidor:', updatedProfile);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos timeout
+      
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: {
@@ -150,35 +193,48 @@ export default function ProfilePage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(updatedProfile),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
+      console.log('📡 Respuesta del servidor:', response.status, response.statusText);
 
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Datos recibidos del servidor:', data);
+        
         setCurrentProfile(prev => ({
           ...prev,
           ...data.user,
+          banner: data.user.banner || null,
+          location: data.user.location || '',
           stats: prev.stats,
         }));
-        setIsEditing(false);
-
+        
         // Actualizar el usuario en el contexto
         if (user) {
-          const updatedUser = {
-            ...user,
-            username: data.user.username,
-            bio: data.user.bio,
-            role: data.user.role,
-            avatar: data.user.avatar,
-            location: data.user.location,
-          };
+          const updatedUser = { ...user, ...data.user };
           localStorage.setItem('takopi_user', JSON.stringify(updatedUser));
         }
+        
+        setIsEditing(false);
+        alert('Perfil actualizado exitosamente');
       } else {
-        const errorData = await response.json();
-        alert(`Error: ${errorData.error}`);
+        console.error('❌ Error del servidor:', response.status, response.statusText);
+        const errorData = await response.json().catch(() => ({ error: 'Error desconocido del servidor' }));
+        alert(`Error del servidor (${response.status}): ${errorData.error}`);
       }
     } catch (error) {
-      alert('Error al actualizar el perfil');
+      console.error('❌ Error al actualizar perfil:', error);
+      
+      if (error.name === 'AbortError') {
+        alert('Error de conexión: La solicitud tardó demasiado tiempo. Verifica tu conexión a internet.');
+      } else if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        alert('Error de conexión: No se pudo conectar con el servidor. Verifica que el servidor esté ejecutándose.');
+      } else {
+        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+        alert(`Error al actualizar el perfil: ${errorMessage}`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -192,7 +248,10 @@ export default function ProfilePage() {
         username: user.username,
         email: user.email,
         role: user.role,
-        avatar: user.avatar || null
+        avatar: user.avatar || null,
+        banner: user.banner || null,
+        bio: user.bio || '',
+        location: user.location || ''
       }));
       
       loadUserProfile();
@@ -257,6 +316,13 @@ export default function ProfilePage() {
           ...prev,
           banner: data.user.banner
         }));
+        
+        // Actualizar el usuario en el contexto
+        if (user) {
+          const updatedUser = { ...user, banner: data.user.banner };
+          localStorage.setItem('takopi_user', JSON.stringify(updatedUser));
+        }
+        
         setEditingType(null);
       } else {
         const errorData = await response.json();
@@ -632,25 +698,25 @@ export default function ProfilePage() {
               </div>
               <div className="group">
                 <div className="text-3xl font-bold text-white mb-1 group-hover:text-green-400 transition-colors">
-                  {realStats ? realStats.totalCreations : currentProfile.stats.modelsPublished}
+                  {realStats ? realStats.contentCount : currentProfile.stats.modelsPublished}
                 </div>
                 <div className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Creaciones</div>
               </div>
               <div className="group cursor-pointer">
                 <div className="text-3xl font-bold text-white mb-1 group-hover:text-yellow-400 transition-colors">
-                  {realStats ? realStats.totalSales : currentProfile.stats.totalSales}
+                  {realStats ? realStats.purchaseCount : currentProfile.stats.totalSales}
                 </div>
                 <div className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Ventas</div>
               </div>
               <div className="group cursor-pointer">
                 <div className="text-3xl font-bold text-white mb-1 group-hover:text-red-400 transition-colors">
-                  {realStats ? realStats.heartsReceived : currentProfile.stats.heartsReceived}
+                  {realStats ? realStats.totalLikes : currentProfile.stats.heartsReceived}
                 </div>
                 <div className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Corazones</div>
               </div>
               <div className="group cursor-pointer">
                 <div className="text-3xl font-bold text-white mb-1 group-hover:text-pink-400 transition-colors">
-                  {realStats ? (realStats.pinsCreated || 0) : currentProfile.stats.pinsCreated}
+                  {realStats ? realStats.totalDownloads : currentProfile.stats.pinsCreated}
                 </div>
                 <div className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Pines</div>
               </div>
@@ -844,6 +910,7 @@ export default function ProfilePage() {
         isOpen={isProductModalOpen}
         onClose={handleCloseProductModal}
           isOwner={isOwnProfile}
+        currentUserId={user?._id}
         onEdit={handleEditProduct}
         onDelete={handleDeleteProduct}
           onBuy={() => {}}

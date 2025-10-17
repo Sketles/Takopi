@@ -38,13 +38,14 @@ interface ProductModalProps {
     coverImage?: string;
     additionalImages?: string[];
     tags: string[];
-    customTags: string[];
+    customTags?: string[];
     createdAt: string;
     updatedAt: string;
   } | null;
   isOpen: boolean;
   onClose: () => void;
   isOwner?: boolean;
+  currentUserId?: string;
   onEdit?: (product: any) => void;
   onDelete?: (product: any, source?: string) => void;
   onBuy?: (product: any) => void;
@@ -60,6 +61,7 @@ export default function ProductModal({
   isOpen,
   onClose,
   isOwner = false,
+  currentUserId,
   onEdit,
   onDelete,
   onBuy,
@@ -156,9 +158,9 @@ export default function ProductModal({
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-purple-500/20">
             <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold text-white truncate">{product.title}</h1>
+              <h1 className="text-xl font-bold text-white truncate">{product.title || 'Sin título'}</h1>
               <span className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs rounded-full border border-purple-500/30">
-                {product.contentType}
+                {product.contentType || 'Sin tipo'}
               </span>
             </div>
             <button
@@ -182,8 +184,8 @@ export default function ProductModal({
                 <div className="bg-gradient-to-br from-gray-800/40 to-purple-900/40 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
                   <h3 className="text-base font-semibold text-white mb-3">Descripción</h3>
                   <DescriptionClamp
-                    description={product.description}
-                    shortDescription={product.shortDescription}
+                    description={product.description || 'Sin descripción'}
+                    shortDescription={product.shortDescription || product.description || 'Sin descripción'}
                     maxLines={3}
                     showViewMore={true}
                   />
@@ -197,15 +199,15 @@ export default function ProductModal({
                       {product.files.slice(0, 3).map((file, index) => (
                         <div key={index} className="flex items-center gap-2 p-2 bg-gray-700/30 rounded-lg">
                           <span className="text-sm">
-                            {file.type.startsWith('image/') ? '🖼️' : 
-                             file.type.startsWith('video/') ? '🎬' :
-                             file.type.startsWith('audio/') ? '🎵' :
-                             file.type.includes('gltf') || file.type.includes('glb') ? '🧩' : '📁'}
+                            {file.type?.startsWith('image/') ? '🖼️' : 
+                             file.type?.startsWith('video/') ? '🎬' :
+                             file.type?.startsWith('audio/') ? '🎵' :
+                             file.type?.includes('gltf') || file.type?.includes('glb') ? '🧩' : '📁'}
                           </span>
                           <div className="flex-1 min-w-0">
                             <div className="text-white text-xs font-medium truncate">{file.name}</div>
                             <div className="text-gray-400 text-xs">
-                              {file.type.split('/')[1]?.toUpperCase()} • {(file.size / 1024 / 1024).toFixed(1)} MB
+                              {file.type?.split('/')[1]?.toUpperCase()} • {file.size ? (file.size / 1024 / 1024).toFixed(1) : '0'} MB
                             </div>
                           </div>
                         </div>
@@ -218,8 +220,9 @@ export default function ProductModal({
                 <div className="bg-gradient-to-br from-gray-800/40 to-purple-900/40 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
                   <h3 className="text-base font-semibold text-white mb-3">Comentarios</h3>
                   <CommentsSection
-                    productId={product.id}
+                    productId={product.id || ''}
                     isOwner={isOwner}
+                    currentUserId={currentUserId}
                     onAddComment={(text) => console.log('Agregar comentario:', text)}
                     onLikeComment={(commentId) => console.log('Like comentario:', commentId)}
                   />
@@ -230,11 +233,11 @@ export default function ProductModal({
                   <h3 className="text-base font-semibold text-white mb-3">Detalles</h3>
                   <div className="space-y-3">
                     {/* Tags */}
-                    {(product.tags.length > 0 || product.customTags.length > 0) && (
+                    {((product.tags && product.tags.length > 0) || (product.customTags && product.customTags.length > 0)) && (
                       <div>
                         <h4 className="text-xs font-medium text-gray-400 mb-2">Etiquetas</h4>
                         <div className="flex flex-wrap gap-1">
-                          {[...product.tags, ...product.customTags].slice(0, 6).map((tag, index) => (
+                          {[...(product.tags || []), ...(product.customTags || [])].slice(0, 6).map((tag, index) => (
                             <span
                               key={index}
                               className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs rounded-full border border-purple-500/30"
@@ -242,9 +245,9 @@ export default function ProductModal({
                               #{tag}
                             </span>
                           ))}
-                          {([...product.tags, ...product.customTags].length > 6) && (
+                          {([...(product.tags || []), ...(product.customTags || [])].length > 6) && (
                             <span className="px-2 py-1 bg-gray-500/20 text-gray-400 text-xs rounded-full">
-                              +{([...product.tags, ...product.customTags].length - 6)}
+                              +{([...(product.tags || []), ...(product.customTags || [])].length - 6)}
                             </span>
                           )}
                         </div>
@@ -256,13 +259,13 @@ export default function ProductModal({
                       <div>
                         <span className="text-gray-400">Creado:</span>
                         <span className="text-white ml-1">
-                          {new Date(product.createdAt).toLocaleDateString('es-CL')}
+                          {product.createdAt ? new Date(product.createdAt).toLocaleDateString('es-CL') : 'No disponible'}
                         </span>
                       </div>
                       <div>
                         <span className="text-gray-400">Actualizado:</span>
                         <span className="text-white ml-1">
-                          {new Date(product.updatedAt).toLocaleDateString('es-CL')}
+                          {product.updatedAt ? new Date(product.updatedAt).toLocaleDateString('es-CL') : 'No disponible'}
                         </span>
                       </div>
                     </div>

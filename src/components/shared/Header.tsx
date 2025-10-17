@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/hooks/useCart';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { itemCount } = useCart();
   const profileRef = useRef<HTMLDivElement>(null);
 
   // Cerrar dropdown cuando se hace clic fuera
@@ -85,8 +87,8 @@ export default function Header() {
                   <span className="font-semibold">Box</span>
                   
                   {/* Contador de items con mejor visibilidad */}
-                  <div className="bg-white text-purple-700 text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg border-2 border-purple-300 group-hover:animate-bounce">
-                    0
+                  <div className="bg-white text-purple-700 text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg border-2 border-purple-300 group-hover:animate-bounce transition-all duration-300">
+                    {itemCount}
                   </div>
                 </div>
                 
@@ -96,19 +98,6 @@ export default function Header() {
                   <div className="absolute top-3 right-3 w-1 h-1 bg-white/40 rounded-full animate-ping group-hover:animate-bounce" style={{animationDelay: '0.2s'}}></div>
                   <div className="absolute bottom-2 left-4 w-1 h-1 bg-white/50 rounded-full animate-ping group-hover:animate-bounce" style={{animationDelay: '0.4s'}}></div>
                 </div>
-              </Link>
-            )}
-            
-            {/* Test Webpay - Solo en desarrollo */}
-            {process.env.NODE_ENV === 'development' && (
-              <Link
-                href="/test-webpay"
-                className="px-4 py-2 bg-gradient-to-r from-yellow-600 to-orange-600 text-white rounded-lg font-medium hover:from-yellow-700 hover:to-orange-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-yellow-500/25 flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-                Test Webpay
               </Link>
             )}
             
@@ -266,8 +255,8 @@ export default function Header() {
                         <span className="font-semibold">Box</span>
                         
                         {/* Contador de items con mejor visibilidad */}
-                        <div className="bg-white text-purple-700 text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg border-2 border-purple-300 group-hover:animate-bounce">
-                          0
+                        <div className="bg-white text-purple-700 text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg border-2 border-purple-300 group-hover:animate-bounce transition-all duration-300">
+                          {itemCount}
                         </div>
                       </div>
                     </Link>

@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import ProductPage from '@/components/product/ProductPage';
 import ProductModal from '@/components/product/ProductModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/hooks/useCart';
+import { useToast } from '@/components/shared/Toast';
 
 interface Product {
   id: string;
@@ -47,6 +49,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { addProductToCart, isProductInCart } = useCart();
+  const { addToast } = useToast();
 
   // Desenvolver params con React.use()
   const resolvedParams = use(params);
@@ -122,8 +126,45 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   };
 
   const handleAddToBox = async (product: Product) => {
-    console.log('Add to box:', product);
-    // Implementar lógica de agregar al carrito
+    try {
+      // Verificar si ya está en el carrito
+      if (isProductInCart(product.id)) {
+        addToast({
+          type: 'warning',
+          title: 'Ya está en tu Box',
+          message: 'Este producto ya está en tu carrito'
+        });
+        return;
+      }
+
+      // Agregar al carrito
+      const result = addProductToCart({
+        ...product,
+        author: product.author?.username || 'Usuario',
+        authorUsername: product.author?.username || 'Usuario',
+        coverImage: product.coverImage || '/placeholder-content.jpg'
+      });
+
+      if (result.success) {
+        addToast({
+          type: 'success',
+          title: 'Agregado a tu Box',
+          message: result.message
+        });
+      } else {
+        addToast({
+          type: 'error',
+          title: 'Error',
+          message: result.message
+        });
+      }
+    } catch (error) {
+      addToast({
+        type: 'error',
+        title: 'Error',
+        message: 'No se pudo agregar al carrito'
+      });
+    }
   };
 
   const handleLike = async (product: Product) => {
@@ -202,6 +243,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         isOpen={true}
         onClose={handleCloseModal}
         isOwner={isOwner}
+        currentUserId={user?._id}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onBuy={handleBuy}

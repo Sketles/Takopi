@@ -461,7 +461,6 @@ export default function UploadPage() {
       // Agregar metadata
       uploadFormData.append('contentType', formData.contentType);
 
-      console.log('📤 Subiendo archivos...');
 
       const uploadResponse = await fetch('/api/upload', {
         method: 'POST',
@@ -472,12 +471,20 @@ export default function UploadPage() {
       });
 
       const uploadResult = await uploadResponse.json();
+      
 
       if (!uploadResponse.ok) {
+        // Si es error de autenticación, limpiar localStorage y redirigir
+        if (uploadResponse.status === 401) {
+          localStorage.removeItem('takopi_user');
+          localStorage.removeItem('takopi_token');
+          alert('❌ Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+          router.push('/auth/login');
+          return;
+        }
         throw new Error(uploadResult.error || 'Error al subir archivos');
       }
 
-      console.log('✅ Archivos subidos:', uploadResult.data);
 
       const uploadedFiles = uploadResult.data.files;
       const coverImageUrl = uploadResult.data.coverImage;
@@ -518,6 +525,14 @@ export default function UploadPage() {
       const result = await response.json();
 
       if (!response.ok) {
+        // Si es error de autenticación, limpiar localStorage y redirigir
+        if (response.status === 401) {
+          localStorage.removeItem('takopi_user');
+          localStorage.removeItem('takopi_token');
+          alert('❌ Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+          router.push('/auth/login');
+          return;
+        }
         throw new Error(result.error || 'Error al subir la creación');
       }
 

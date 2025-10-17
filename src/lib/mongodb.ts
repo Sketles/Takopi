@@ -1,5 +1,14 @@
+/**
+ * MongoDB Connection Service
+ * 
+ * ⚠️ IMPORTANTE: Este archivo solo se usa cuando LOCAL=false
+ * Cuando LOCAL=true, el sistema usa archivos JSON locales en /storage
+ * 
+ * Para cambiar el modo, modifica la variable LOCAL en .env.local:
+ * - LOCAL=true  → Usa archivos locales (recomendado para desarrollo)
+ * - LOCAL=false → Usa MongoDB (requiere conexión a base de datos)
+ */
 import mongoose from 'mongoose';
-import { getDatabaseConfig, getAutoDatabaseConfig } from '@/config/database';
 
 // Cache para la conexión
 let cached = global.mongoose;

@@ -39,7 +39,7 @@ interface ProductPageProps {
     coverImage?: string;
     additionalImages?: string[];
     tags: string[];
-    customTags: string[];
+    customTags?: string[];
     createdAt: string;
     updatedAt: string;
   } | null;
@@ -258,11 +258,11 @@ export default function ProductPage({
               {activeTab === 'overview' && (
                 <div className="space-y-6">
                   {/* Tags */}
-                  {(product.tags.length > 0 || product.customTags.length > 0) && (
+                  {(product.tags.length > 0 || (product.customTags && product.customTags.length > 0)) && (
                     <div>
                       <h3 className="text-lg font-semibold text-white mb-4">Etiquetas</h3>
                       <div className="flex flex-wrap gap-2">
-                        {[...product.tags, ...product.customTags].map((tag, index) => (
+                        {[...product.tags, ...(product.customTags || [])].map((tag, index) => (
                           <span
                             key={index}
                             className="px-3 py-1 bg-purple-500/20 text-purple-300 text-sm rounded-full border border-purple-500/30"

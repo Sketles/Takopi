@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongodb";
-import Purchase from "@/models/Purchase";
-import Content from "@/models/Content";
-import User from "@/models/User";
+import { CreatePurchaseUseCase } from "@/features/purchase/domain/usecases/create-purchase.usecase";
+import { createPurchaseRepository } from "@/features/purchase/data/repositories/purchase.repository";
+import { GetContentByIdUseCase } from "@/features/content/domain/usecases/get-content-by-id.usecase";
+import { createContentRepository } from "@/features/content/data/repositories/content.repository";
 import jwt from 'jsonwebtoken';
 import { config } from '@/config/env';
 
 export async function POST(req: NextRequest) {
   try {
-    console.log('🎁 Free purchase API called');
+    console.log('🎁 Free purchase API (Clean Architecture)');
     
     // Verificar autorización
     const authHeader = req.headers.get('authorization');
@@ -55,10 +55,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await connectToDatabase();
+    // Verificar que el contenido existe y es gratuito (usando Clean Architecture)
+    const contentRepository = createContentRepository();
+    const getContentUseCase = new GetContentByIdUseCase(contentRepository);
+    const content = await getContentUseCase.execute(contentId);
 
-    // Verificar que el contenido existe y es gratuito
-    const content = await Content.findById(contentId);
     if (!content) {
       console.log('❌ Content not found:', contentId);
       return NextResponse.json(
@@ -75,69 +76,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verificar que el usuario existe
-    const buyer = await User.findById(userId);
-    if (!buyer) {
-      console.log('❌ User not found:', userId);
-      return NextResponse.json(
-        { error: 'Usuario no encontrado' },
-        { status: 404 }
-      );
-    }
+    // Crear compra gratuita (usando Clean Architecture)
+    const purchaseRepository = createPurchaseRepository();
+    const createPurchaseUseCase = new CreatePurchaseUseCase(purchaseRepository);
 
-    // Verificar que el usuario no haya comprado ya este contenido
-    const existingPurchase = await Purchase.findOne({
-      buyer: userId,
-      content: contentId
-    });
-
-    if (existingPurchase) {
-      console.log('❌ User already purchased this content:', { userId, contentId });
-      return NextResponse.json(
-        { error: 'Ya has obtenido este contenido gratuitamente' },
-        { status: 400 }
-      );
-    }
-
-    // Crear la compra gratuita
-    const purchase = new Purchase({
-      buyer: userId,
-      content: contentId,
-      seller: content.author,
+    const purchase = await createPurchaseUseCase.execute({
+      userId,
+      contentId,
       amount: 0,
       currency: 'CLP',
-      status: 'completed',
-      // No hay campos de Webpay para compras gratuitas
+      paymentMethod: 'free',
+      transactionId: `free-${Date.now()}`
     });
 
-    await purchase.save();
-
-    console.log('✅ Free purchase created successfully:', {
-      purchaseId: purchase._id,
-      buyer: buyer.username,
-      content: content.title,
-      amount: 0
-    });
+    console.log('✅ Free purchase created:', purchase.id);
 
     return NextResponse.json({
       success: true,
-      message: 'Contenido obtenido gratuitamente',
-      purchaseId: purchase._id
+      message: 'Contenido gratuito agregado a tus compras',
+      data: {
+        purchaseId: purchase.id,
+        contentId: content.id,
+        contentTitle: content.title
+      }
     });
 
   } catch (error) {
-    console.error('❌ Error creating free purchase:', error);
-    console.error('❌ Error message:', error instanceof Error ? error.message : 'Unknown error');
-    
+    console.error('❌ Error in free purchase API:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return NextResponse.json(
       { 
         success: false,
-        error: 'Error al procesar la compra gratuita',
-        details: process.env.NODE_ENV === 'development' ? {
-          message: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined,
-          type: typeof error
-        } : undefined
+        error: errorMessage
       },
       { status: 500 }
     );

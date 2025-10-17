@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import MetaChips from './MetaChips';
 import SocialCapsule from './SocialCapsule';
+import { useCart } from '@/hooks/useCart';
+import { useToast } from '@/components/shared/Toast';
 
 interface PurchasePanelProps {
   product: {
@@ -54,11 +56,69 @@ export default function PurchasePanel({
 }: PurchasePanelProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  
+  const { addProductToCart, isProductInCart } = useCart();
+  const { addToast } = useToast();
 
-  const formatPrice = (price: number, isFree: boolean, currency: string) => {
+  const formatPrice = (price: number | undefined, isFree: boolean, currency: string) => {
     if (isFree) return 'GRATIS';
+    if (!price || isNaN(price)) return 'Precio no disponible';
     return `$${price.toLocaleString('es-CL')} ${currency}`;
   };
+
+  const handleAddToBox = async () => {
+    if (isAddingToCart) return;
+    
+    setIsAddingToCart(true);
+    
+    try {
+      // Verificar si ya está en el carrito
+      if (isProductInCart(product.id)) {
+        addToast({
+          type: 'warning',
+          title: 'Ya está en tu Box',
+          message: 'Este producto ya está en tu carrito'
+        });
+        return;
+      }
+
+      // Agregar al carrito
+      const result = addProductToCart({
+        ...product,
+        author: product.author || 'Usuario',
+        authorUsername: typeof product.author === 'string' ? product.author : 'Usuario',
+        coverImage: product.coverImage || '/placeholder-content.jpg'
+      });
+
+      if (result.success) {
+        addToast({
+          type: 'success',
+          title: 'Agregado a tu Box',
+          message: result.message
+        });
+        
+        // Llamar callback si existe
+        onAddToBox?.();
+      } else {
+        addToast({
+          type: 'error',
+          title: 'Error',
+          message: result.message
+        });
+      }
+    } catch (error) {
+      addToast({
+        type: 'error',
+        title: 'Error',
+        message: 'No se pudo agregar al carrito'
+      });
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
+  const isInCart = isProductInCart(product.id);
 
   const getAuthorInitial = (author: string | object | null | undefined) => {
     if (!author) return '?';
@@ -160,14 +220,14 @@ export default function PurchasePanel({
                 const checkoutItem = {
                   id: product.id,
                   title: product.title,
-                  price: product.price,
+                  price: product.price || 0,
                   currency: product.currency,
                   contentType: product.contentType,
                   author: typeof product.author === 'string' ? product.author : product.author?.username || 'Anónimo',
                   coverImage: product.coverImage
                 };
                 
-                const checkoutUrl = `/checkout?items=${encodeURIComponent(JSON.stringify([checkoutItem]))}&total=${product.price}`;
+                const checkoutUrl = `/checkout?items=${encodeURIComponent(JSON.stringify([checkoutItem]))}&total=${product.price || 0}`;
                 window.location.href = checkoutUrl;
               }}
               className="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-green-500/25"
@@ -179,13 +239,36 @@ export default function PurchasePanel({
             </button>
             
             <button
-              onClick={onAddToBox}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center justify-center gap-2"
+              onClick={handleAddToBox}
+              disabled={isAddingToCart || isInCart}
+              className={`w-full py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
+                isInCart
+                  ? 'bg-green-600 text-white cursor-default'
+                  : isAddingToCart
+                  ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+              }`}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Agregar a Box
+              {isAddingToCart ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Agregando...
+                </>
+              ) : isInCart ? (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  En tu Box
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Agregar a Box
+                </>
+              )}
             </button>
           </>
         )}

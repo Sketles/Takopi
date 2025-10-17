@@ -1,47 +1,58 @@
-import { NextRequest, NextResponse } from "next/server";
-import { webpayConfig, generateBuyOrder, generateSessionId } from "@/config/webpay";
+import { NextRequest, NextResponse } from 'next/server';
+import { CreateWebpayTransactionUseCase } from '@/features/payment/domain/usecases/create-webpay-transaction.usecase';
+import { createPaymentRepository } from '@/features/payment/data/repositories/payment.repository';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config/env';
+import { webpayConfig, generateBuyOrder, generateSessionId } from '@/config/webpay';
 
 // Importar WebpayPlus de manera condicional para mejor manejo de errores
 let WebpayPlus: any;
 try {
   WebpayPlus = require("transbank-sdk").WebpayPlus;
-  console.log('✅ Transbank SDK loaded successfully');
+  console.log('✅ Transbank SDK loaded successfully for create');
 } catch (error) {
-  console.error('❌ Error loading Transbank SDK:', error);
+  console.error('❌ Error loading Transbank SDK for create:', error);
 }
 
-export async function POST(req: NextRequest) {
+// Función para verificar el token JWT
+async function verifyToken(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.substring(7);
   try {
-    console.log('🔍 Webpay create API called');
-    
-    // Verificar autorización
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('❌ No authorization header');
-      return NextResponse.json(
-        { error: 'Token de autorización requerido' },
-        { status: 401 }
-      );
+    const decoded = jwt.verify(token, config.jwt.secret) as any;
+    return decoded;
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    // Verificar autenticación
+    const decoded = await verifyToken(request);
+    if (!decoded) {
+      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    const token = authHeader.split(' ')[1];
-    let decodedToken: any;
-    try {
-      decodedToken = jwt.verify(token, config.jwt.secret);
-      console.log('✅ Token válido:', { userId: decodedToken.userId });
-    } catch (error) {
-      console.log('❌ Token inválido:', error);
-      return NextResponse.json(
-        { error: 'Token inválido o expirado' },
-        { status: 401 }
-      );
+    const requestBody = await request.json();
+    const { amount, contentId } = requestBody;
+
+    // Validaciones
+    if (!amount || amount <= 0) {
+      return NextResponse.json({ error: 'Monto inválido' }, { status: 400 });
     }
-    
+
+    if (!contentId) {
+      return NextResponse.json({ error: 'ID de contenido es requerido' }, { status: 400 });
+    }
+
     // Verificar si el SDK está disponible
     if (!WebpayPlus) {
-      console.error('❌ Transbank SDK not available');
+      console.error('❌ Transbank SDK not available for create');
       return NextResponse.json(
         { 
           success: false,
@@ -51,106 +62,57 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-    
-    const { amount, contentId, userId } = await req.json();
-    
-    console.log('🔍 Request data:', { amount, contentId, userId });
-    
-    // Verificar que el userId del token coincida con el del request
-    if (userId !== decodedToken.userId) {
-      console.log('❌ UserId mismatch:', { requestUserId: userId, tokenUserId: decodedToken.userId });
-      return NextResponse.json(
-        { error: 'No autorizado para realizar esta transacción' },
-        { status: 403 }
-      );
-    }
-    
-    // Validar datos requeridos
-    if (!amount || amount <= 0) {
-      console.log('❌ Invalid amount:', amount);
-      return NextResponse.json(
-        { error: 'Monto inválido' },
-        { status: 400 }
-      );
-    }
-
-    if (!contentId || !userId) {
-      console.log('❌ Missing required fields:', { contentId, userId });
-      return NextResponse.json(
-        { error: 'Datos de compra incompletos' },
-        { status: 400 }
-      );
-    }
 
     // Generar identificadores únicos
-    const buyOrder = generateBuyOrder(contentId, userId);
+    const buyOrder = generateBuyOrder(contentId, decoded.userId);
     const sessionId = generateSessionId();
     const returnUrl = `${webpayConfig.baseUrl}/webpay/return`;
-
-    console.log('🔍 Webpay config:', {
-      commerceCode: webpayConfig.commerceCode,
-      apiKey: webpayConfig.apiKey ? '***' + webpayConfig.apiKey.slice(-4) : 'undefined',
-      baseUrl: webpayConfig.baseUrl,
-      buyOrder,
-      sessionId,
-      returnUrl,
-      amount
-    });
-
-    // Configurar transacción
+    
+    // Configurar transacción usando la API real de Transbank
     const tx = WebpayPlus.Transaction.buildForIntegration(
       webpayConfig.commerceCode,
       webpayConfig.apiKey
     );
 
-    console.log('🔍 Attempting to create Webpay transaction...');
-    // Crear transacción en Webpay
+    // Crear transacción real en Webpay (ambiente de integración)
     const response = await tx.create(buyOrder, sessionId, amount, returnUrl);
-    console.log('✅ Webpay transaction created successfully:', response);
 
-    // Guardar información de la transacción para referencia
-    // En una implementación real, esto se guardaría en la base de datos
-    const transactionData = {
-      buyOrder,
-      sessionId,
-      amount,
-      contentId,
-      userId,
-      token: response.token,
-      url: response.url,
-      createdAt: new Date().toISOString()
-    };
-
-    console.log('🔍 Webpay transaction created:', {
-      buyOrder,
-      amount,
-      contentId,
-      userId
-    });
+    // Guardar esta transacción real en nuestro almacenamiento local
+    try {
+      const paymentRepository = createPaymentRepository();
+      const createWebpayTransactionUseCase = new CreateWebpayTransactionUseCase(paymentRepository);
+      
+      const localTransaction = await createWebpayTransactionUseCase.execute({
+        amount,
+        currency: 'CLP',
+        userId: decoded.userId,
+        contentId,
+        buyOrder,
+        sessionId,
+        token: response.token, // Usar el token REAL de Transbank
+        url: response.url,     // Usar la URL REAL de Transbank
+        status: 'pending'
+      });
+      
+    } catch (error) {
+      console.error('❌ Error storing transaction locally:', error);
+      // Continuar aunque falle el guardado local
+    }
 
     return NextResponse.json({
       success: true,
       url: response.url,
       token: response.token,
       buyOrder,
-      sessionId
+      sessionId,
+      message: 'Transacción creada exitosamente con Transbank'
     });
 
   } catch (error) {
-    console.error('❌ Error creating Webpay transaction:', error);
-    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    console.error('❌ Error message:', error instanceof Error ? error.message : 'Unknown error');
-    
+    console.error('❌ Error creating webpay transaction:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return NextResponse.json(
-      { 
-        success: false,
-        error: 'Error al crear la transacción de pago',
-        details: process.env.NODE_ENV === 'development' ? {
-          message: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined,
-          type: typeof error
-        } : undefined
-      },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

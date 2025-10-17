@@ -1,93 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import User from '@/models/User';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
+import { RegisterUseCase } from '@/features/auth/domain/usecases/register.usecase';
+import { createAuthRepository } from '@/features/auth/data/repositories/auth.repository';
 
 export async function POST(request: NextRequest) {
   try {
     const { username, email, password, role } = await request.json();
 
-    // Validaciones básicas
-    if (!username || !email || !password) {
-      return NextResponse.json(
-        { error: 'Todos los campos son requeridos' },
-        { status: 400 }
-      );
-    }
+    console.log('🔍 Register API (Clean Architecture):', { username, email, role });
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'La contraseña debe tener al menos 6 caracteres' },
-        { status: 400 }
-      );
-    }
+    // Crear repository y usecase (Clean Architecture)
+    const repository = createAuthRepository();
+    const usecase = new RegisterUseCase(repository);
 
-    await connectToDatabase();
+    // Ejecutar caso de uso
+    const result = await usecase.execute(username, email, password, role);
 
-    // Verificar si el usuario ya existe
-    const existingUser = await User.findOne({
-      $or: [{ email }, { username }]
-    });
+    console.log('✅ Registro exitoso:', { userId: result.user.id, email: result.user.email });
 
-    if (existingUser) {
-      if (existingUser.email === email) {
-        return NextResponse.json(
-          { error: 'Ya existe una cuenta con este email' },
-          { status: 409 }
-        );
-      } else {
-        return NextResponse.json(
-          { error: 'El nombre de usuario ya está en uso' },
-          { status: 409 }
-        );
-      }
-    }
-
-    // Encriptar contraseña
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    // Crear nuevo usuario
-    const newUser = new User({
-      username,
-      email,
-      password: hashedPassword,
-      role: role || 'Explorer'
-    });
-
-    await newUser.save();
-
-    // Crear JWT token
-    const token = jwt.sign(
-      { userId: newUser._id, email: newUser.email },
-      config.jwt.secret,
-      { expiresIn: '7d' }
-    );
-
-    // Respuesta sin password
+    // Serializar user entity (sin password)
     const userResponse = {
-      _id: newUser._id,
-      username: newUser.username,
-      email: newUser.email,
-      role: newUser.role,
-      avatar: newUser.avatar,
-      bio: newUser.bio,
-      createdAt: newUser.createdAt
+      _id: result.user.id,
+      username: result.user.username,
+      email: result.user.email,
+      role: result.user.role,
+      avatar: result.user.avatar,
+      bio: result.user.bio,
+      createdAt: result.user.createdAt
     };
 
     return NextResponse.json({
-      message: 'Usuario creado exitosamente',
+      message: 'Usuario registrado exitosamente',
       user: userResponse,
-      token
-    }, { status: 201 });
+      token: result.token
+    });
 
   } catch (error) {
-    console.error('Register error:', error);
+    console.error('❌ Register error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
+    const statusCode = errorMessage.includes('ya está registrado') ? 409 : 
+                        errorMessage.includes('debe tener') ? 400 : 500;
+    
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
+      { error: errorMessage },
+      { status: statusCode }
     );
   }
 }

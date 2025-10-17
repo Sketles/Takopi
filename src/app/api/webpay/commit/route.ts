@@ -1,14 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
-import { WebpayPlus } from "transbank-sdk";
-import { webpayConfig } from "@/config/webpay";
-import { connectToDatabase } from "@/lib/mongodb";
-import Purchase from "@/models/Purchase";
-import Content from "@/models/Content";
-import User from "@/models/User";
+import { NextRequest, NextResponse } from 'next/server';
+import { CommitWebpayTransactionUseCase } from '@/features/payment/domain/usecases/commit-webpay-transaction.usecase';
+import { createPaymentRepository } from '@/features/payment/data/repositories/payment.repository';
+import { CreatePurchaseUseCase } from '@/features/purchase/domain/usecases/create-purchase.usecase';
+import { createPurchaseRepository } from '@/features/purchase/data/repositories/purchase.repository';
+import { webpayConfig } from '@/config/webpay';
 
-export async function GET(req: NextRequest) {
+// Importar WebpayPlus de manera condicional para mejor manejo de errores
+let WebpayPlus: any;
+try {
+  WebpayPlus = require("transbank-sdk").WebpayPlus;
+  console.log('✅ Transbank SDK loaded successfully for commit');
+} catch (error) {
+  console.error('❌ Error loading Transbank SDK for commit:', error);
+}
+
+export async function GET(request: NextRequest) {
   try {
-    const token = req.nextUrl.searchParams.get("token_ws");
+    const token = request.nextUrl.searchParams.get("token_ws");
     
     if (!token) {
       return NextResponse.json(
@@ -17,146 +25,78 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Conectar a la base de datos
-    await connectToDatabase();
+    // Verificar si el SDK está disponible
+    if (!WebpayPlus) {
+      console.error('❌ Transbank SDK not available for commit');
+      const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
+      return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=sdk_error&details=${encodeURIComponent('SDK de Transbank no disponible')}`, 302);
+    }
 
-    // Configurar transacción
+    // Configurar transacción usando la API real de Transbank
     const tx = WebpayPlus.Transaction.buildForIntegration(
       webpayConfig.commerceCode,
       webpayConfig.apiKey
     );
 
-    // Confirmar transacción con Webpay
-    const response = await tx.commit(token);
+    // Confirmar transacción real con Transbank
+    let transbankResponse;
+    try {
+      transbankResponse = await tx.commit(token);
+      console.log('✅ Transbank commit response:', transbankResponse);
+    } catch (error) {
+      console.error('❌ Error committing with Transbank:', error);
+      const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
+      return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=transbank_error&details=${encodeURIComponent(error instanceof Error ? error.message : 'Error al confirmar con Transbank')}`, 302);
+    }
 
-    // Verificar si la transacción fue aprobada
-    const approved = response.response_code === 0 && response.status === "AUTHORIZED";
+    // Verificar si la transacción fue autorizada por Transbank
+    if (!transbankResponse || transbankResponse.status !== 'AUTHORIZED') {
+      console.log('❌ Transacción no autorizada por Transbank:', transbankResponse);
+      const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
+      return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=not_authorized&details=${encodeURIComponent('Transacción no autorizada')}`, 302);
+    }
 
-    console.log('🔍 Webpay transaction commit result:', {
-      approved,
-      response_code: response.response_code,
-      status: response.status,
-      amount: response.amount,
-      buy_order: response.buy_order
-    });
+    // Crear repositories y usecases (Clean Architecture)
+    const paymentRepository = createPaymentRepository();
+    const commitUseCase = new CommitWebpayTransactionUseCase(paymentRepository);
 
-    // Si la transacción fue aprobada, guardar en la base de datos
-    if (approved) {
+    // Ejecutar caso de uso para confirmar transacción local
+    const transaction = await commitUseCase.execute(token);
+
+    // Si la transacción fue exitosa, crear la compra
+    if (transaction.isCompleted) {
       try {
-        // Extraer información del buyOrder (formato: tk + timestamp + contentShort + userShort)
-        const buyOrderStr = response.buy_order;
-        console.log('🔍 Parsing buyOrder:', buyOrderStr);
-        
-        let content, buyer;
-        
-        // Intentar parsing con el nuevo formato (19+ caracteres)
-        if (buyOrderStr.startsWith('tk') && buyOrderStr.length >= 19) {
-          const contentShort = buyOrderStr.slice(-12, -6); // 6 caracteres del contentId
-          const userShort = buyOrderStr.slice(-6); // 6 caracteres del userId
-          
-          console.log('🔍 New format - Extracted parts:', { contentShort, userShort });
-          
-          // Buscar por los últimos caracteres del ID usando $where (para ObjectId)
-          try {
-            // Convertir los últimos 6 caracteres a regex para buscar en el string del ObjectId
-            const contentRegex = new RegExp(contentShort + '$');
-            const userRegex = new RegExp(userShort + '$');
-            
-            // Buscar todos los documentos y filtrar por los últimos caracteres del ID
-            const allContents = await Content.find({});
-            const allUsers = await User.find({});
-            
-            content = allContents.find(c => c._id.toString().match(contentRegex));
-            buyer = allUsers.find(u => u._id.toString().match(userRegex));
-            
-            console.log('🔍 Found content:', content ? content._id : 'null');
-            console.log('🔍 Found buyer:', buyer ? buyer._id : 'null');
-          } catch (searchError) {
-            console.log('❌ Error searching by regex:', searchError);
-            // Fallback: usar el método anterior
-            content = await Content.findOne({}).sort({ createdAt: -1 });
-            buyer = await User.findOne({}).sort({ createdAt: -1 });
-          }
-        } 
-        // Fallback para buyOrders antiguos (14 caracteres) - usar datos del request
-        else if (buyOrderStr.startsWith('tk') && buyOrderStr.length >= 10) {
-          console.log('🔍 Old format detected, using request data fallback');
-          
-          // Para buyOrders antiguos, vamos a buscar el contenido más reciente del usuario más reciente
-          // Esto es un fallback temporal hasta que todos los buyOrders usen el nuevo formato
-          content = await Content.findOne({}).sort({ createdAt: -1 });
-          buyer = await User.findOne({}).sort({ createdAt: -1 });
-          
-          if (content && buyer) {
-            console.log('🔍 Fallback - Using recent content and user:', {
-              contentId: content._id,
-              userId: buyer._id
-            });
-          }
-        }
+        const purchaseRepository = createPurchaseRepository();
+        const createPurchaseUseCase = new CreatePurchaseUseCase(purchaseRepository);
 
-        if (content && buyer) {
-          // Crear registro de compra
-          const purchase = new Purchase({
-            buyer: buyer._id,
-            content: content._id,
-            seller: content.author,
-            amount: response.amount,
-            currency: 'CLP',
-            status: 'completed',
-            webpayToken: token,
-            webpayBuyOrder: response.buy_order,
-            authorizationCode: response.authorization_code,
-            paymentTypeCode: response.payment_type_code,
-            responseCode: response.response_code,
-            installmentsNumber: response.installments_number,
-            transactionDate: response.transaction_date,
-            accountingDate: response.accounting_date,
-            vci: response.vci
-          });
+        const purchase = await createPurchaseUseCase.execute({
+          userId: transaction.userId,
+          contentId: transaction.contentId,
+          amount: transaction.amount,
+          currency: transaction.currency,
+          paymentMethod: 'webpay',
+          status: 'completed'
+        });
 
-          await purchase.save();
 
-          console.log('✅ Purchase saved successfully:', {
-            purchaseId: purchase._id,
-            buyer: buyer.username,
-            content: content.title,
-            amount: response.amount
-          });
-        } else {
-          console.log('❌ Content or buyer not found:', { content: !!content, buyer: !!buyer });
-        }
-      } catch (dbError) {
-        console.error('❌ Error saving purchase to database:', dbError);
-        // No fallar la transacción por errores de BD, pero logear el error
+        // Redirigir a la página de resultado exitoso
+        const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
+        return NextResponse.redirect(`${baseUrl}/payment/result?success=true&transactionId=${transaction.id}&purchaseId=${purchase.id}&amount=${transbankResponse.amount}&currency=CLP&buyOrder=${transbankResponse.buy_order}&authorizationCode=${transbankResponse.authorization_code}`, 302);
+
+      } catch (error) {
+        console.error('❌ Error creating purchase:', error);
+        const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
+        return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=purchase_error&details=${encodeURIComponent(error instanceof Error ? error.message : 'Error desconocido')}`, 302);
       }
     }
 
-    // Redirigir a la página de resultado
     const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
-    const resultUrl = `${baseUrl}/payment/result?success=${approved}`;
-    return NextResponse.redirect(resultUrl, 302);
+    return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=transaction_incomplete`, 302);
 
   } catch (error) {
-    console.error('❌ Error committing Webpay transaction:', error);
-    console.error('❌ Error message:', error instanceof Error ? error.message : 'Unknown error');
-    
-    // Manejar errores específicos de Transbank
-    let errorMessage = 'commit_error';
-    let redirectSuccess = false;
-    
-    if (error instanceof Error) {
-      if (error.message.includes('aborted') || error.message.includes('invalid finished state')) {
-        errorMessage = 'La transacción fue cancelada o abortada';
-        redirectSuccess = false;
-      } else if (error.message.includes('expired')) {
-        errorMessage = 'La transacción ha expirado';
-        redirectSuccess = false;
-      }
-    }
-    
+    console.error('❌ Error committing webpay transaction:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
-    const errorUrl = `${baseUrl}/payment/result?success=${redirectSuccess}&error=${encodeURIComponent(errorMessage)}`;
-    return NextResponse.redirect(errorUrl, 302);
+    return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=server_error&details=${encodeURIComponent(errorMessage)}`, 302);
   }
 }

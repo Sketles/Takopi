@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Layout from '@/components/shared/Layout';
 import ContentCard from '@/components/shared/ContentCard';
 import ProductModal from '@/components/product/ProductModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UserData {
   id: string;
@@ -43,6 +44,7 @@ export default function UserProfilePage() {
   const params = useParams();
   const router = useRouter();
   const userId = params.userId as string;
+  const { user } = useAuth();
   
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -401,14 +403,14 @@ export default function UserProfilePage() {
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-white mb-2">Contenido publicado</h2>
             <p className="text-gray-400">
-              {userData.content.length > 0
-                ? `${userData.content.length} ${userData.content.length === 1 ? 'creación' : 'creaciones'} publicadas`
+              {(userData.content?.length || 0) > 0
+                ? `${userData.content?.length || 0} ${(userData.content?.length || 0) === 1 ? 'creación' : 'creaciones'} publicadas`
                 : 'Aún no hay contenido publicado'
               }
             </p>
           </div>
 
-          {userData.content.length === 0 ? (
+          {(userData.content?.length || 0) === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📦</div>
               <h3 className="text-xl font-semibold text-white mb-2">No hay contenido</h3>
@@ -416,7 +418,7 @@ export default function UserProfilePage() {
             </div>
           ) : (() => {
             // Agrupar contenido por tipo
-            const groupedContent = userData.content.reduce((acc, item) => {
+            const groupedContent = (userData.content || []).reduce((acc, item) => {
               const type = item.contentType;
               if (!acc[type]) {
                 acc[type] = [];
@@ -480,7 +482,7 @@ export default function UserProfilePage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                       {category.content.map((item) => (
                         <ContentCard
-                          key={item.id}
+                          key={`${category.type}-${item.id}`}
                           content={{
                             id: item.id,
                             title: item.title,
@@ -517,6 +519,7 @@ export default function UserProfilePage() {
             isOpen={isModalOpen}
             onClose={closeModal}
             isOwner={false}
+            currentUserId={user?._id}
             onDelete={handleDeleteContent}
             source="user-profile"
           />

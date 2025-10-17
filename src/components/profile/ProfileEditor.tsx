@@ -95,7 +95,6 @@ export default function ProfileEditor({ userProfile, onSave, onCancel, isOpen }:
   };
 
   const handleSave = () => {
-    console.log('🔍 ProfileEditor - Datos a enviar:', formData);
     onSave(formData);
   };
 
