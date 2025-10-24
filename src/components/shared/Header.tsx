@@ -56,6 +56,13 @@ export default function Header() {
               Explorar
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-blue-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
+            <Link
+              href="/impresion-3d"
+              className="text-gray-300 hover:text-orange-400 transition-all duration-300 relative group"
+            >
+              Impresión 3D
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-orange-400 to-red-400 transition-all duration-300 group-hover:w-full"></span>
+            </Link>
           </div>
 
           {/* User Actions */}
@@ -225,6 +232,13 @@ export default function Header() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Explorar
+              </Link>
+              <Link
+                href="/impresion-3d"
+                className="text-gray-300 hover:text-orange-400 transition-colors py-2 px-4 rounded-lg hover:bg-orange-500/10"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Impresión 3D
               </Link>
               <div className="flex flex-col gap-2 pt-2 border-t border-purple-500/20">
                 {user ? (

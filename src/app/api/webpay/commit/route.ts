@@ -80,16 +80,16 @@ export async function GET(request: NextRequest) {
 
 
         // Redirigir a la página de resultado exitoso
-        const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
+    const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
         return NextResponse.redirect(`${baseUrl}/payment/result?success=true&transactionId=${transaction.id}&purchaseId=${purchase.id}&amount=${transbankResponse.amount}&currency=CLP&buyOrder=${transbankResponse.buy_order}&authorizationCode=${transbankResponse.authorization_code}`, 302);
 
-      } catch (error) {
+  } catch (error) {
         console.error('❌ Error creating purchase:', error);
         const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
         return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=purchase_error&details=${encodeURIComponent(error instanceof Error ? error.message : 'Error desconocido')}`, 302);
       }
     }
-
+    
     const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
     return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=transaction_incomplete`, 302);
 
