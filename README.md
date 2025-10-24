@@ -1,110 +1,210 @@
-# Takopi - Creative Digital Marketplace
+<div align="center">
 
-## 🚀 The Future of Digital Commerce
+# 🎨 Takopi
 
-Takopi is a revolutionary digital ecosystem that combines creative commerce, urban culture, and cutting-edge technology. We're building the next-generation marketplace for 3D models, digital assets, and creative communities.
+### Marketplace de Contenido Digital para Creadores
 
-## ✨ Key Features
+[![Next.js](https://img.shields.io/badge/Next.js-15.5-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 
-- **3D Model Marketplace**: Buy and sell models with clear licensing (Personal, Indie, Pro)
-- **Pinterest-Style Discovery**: Visual discovery with affinity algorithms
-- **Creator Profiles**: Role-based profiles (Artist, Explorer, Buyer, Maker)
-- **Cultural Mapping**: Community-driven mapping of urban tribes and events
-- **Mystery Orbs**: Surprise bundles that reveal after purchase
-- **AI Chatbot**: Intelligent assistant for queries and support
-- **3D Printing**: On-demand printing service with real-time tracking
+**Plataforma integral para comprar y vender contenido digital: modelos 3D, música, efectos de sonido, overlays para streaming, scripts, texturas, ilustraciones y más.**
 
-## 🛠️ Stack Tecnológico
-
-- **Frontend**: Next.js 15, React 19, TypeScript
-- **Styling**: TailwindCSS v4
-- **Base de Datos**: MongoDB Atlas (próximamente)
-- **Autenticación**: NextAuth.js (próximamente)
-- **IA**: OpenAI API (próximamente)
-
-## 📁 Estructura del Proyecto
-
-```
-src/
-├── app/                    # Páginas (App Router)
-│   ├── auth/              # Autenticación
-│   │   ├── login/         # Página de login
-│   │   └── register/      # Página de registro
-│   ├── feed/              # Feed principal
-│   ├── profile/           # Perfiles de usuario
-│   ├── explore/           # Página de exploración
-│   ├── cultural-map/      # Mapa cultural
-│   └── page.tsx           # Página principal
-├── components/            # Componentes reutilizables
-│   └── shared/            # Componentes compartidos
-│       ├── Header.tsx     # Navegación principal
-│       ├── Footer.tsx     # Pie de página
-│       └── Layout.tsx     # Layout global
-├── lib/                   # Utilidades y configuraciones
-├── types/                 # Tipos de TypeScript
-└── hooks/                 # Custom hooks (próximamente)
-```
-
-## 🏃‍♂️ Cómo Ejecutar
-
-1. **Instalar dependencias**:
-   ```bash
-   npm install
-   ```
-
-2. **Ejecutar en modo desarrollo**:
-   ```bash
-   npm run dev
-   ```
-
-3. **Abrir en el navegador**:
-   ```
-   http://localhost:3000
-   ```
-
-## 📄 Páginas Disponibles
-
-- **`/`** - Página principal con información del proyecto
-- **`/feed`** - Feed principal con modelos 3D
-- **`/auth/login`** - Página de inicio de sesión
-- **`/auth/register`** - Página de registro
-- **`/profile`** - Perfil de usuario
-- **`/explore`** - Explorar contenido
-- **`/cultural-map`** - Mapa cultural
-
-## 🎯 Estado Actual (Fase 1-2)
-
-### ✅ Completado
-- [x] Estructura básica del proyecto
-- [x] Componentes de navegación (Header, Footer, Layout)
-- [x] Páginas de autenticación (Login, Register)
-- [x] Página principal con información del proyecto
-- [x] Feed principal con grid de modelos
-- [x] Página de perfil de usuario
-- [x] Página de exploración
-- [x] Página del mapa cultural
-- [x] Diseño responsivo y moderno
-- [x] Sin errores de linting
-
-### 🔄 Próximos Pasos
-- [ ] Configurar MongoDB Atlas
-- [ ] Implementar autenticación real
-- [ ] Agregar visor 3D con `<model-viewer>`
-- [ ] Implementar sistema de checkout
-- [ ] Integrar chatbot con OpenAI
-- [ ] Implementar mapa interactivo con Leaflet
-- [ ] Agregar sistema de orbes
-
-## 📚 Documentación Adicional
-
-- [Plan APT](./NEURONAL/PLAN_APT.md) - Planificación del proyecto de tesis
-- [Guía de Implementación](./NEURONAL/takopi_guia_corta_para_cursor_gpt_5_generacion_por_fases_escalable.md)
-- [Contexto del Proyecto](./NEURONAL/neuronal.md)
-
-## 🌟 Vision
-
-Takopi is revolutionizing how creators, makers, and digital artists connect, collaborate, and commercialize their work in the digital age.
+</div>
 
 ---
 
-*Built with ❤️ by the Takopi Team - 2025*
+## 🎯 ¿Qué es Takopi?
+
+**Takopi** es un marketplace digital que conecta creadores de contenido con quienes necesitan recursos creativos de calidad. Desde streamers buscando overlays hasta modeladores 3D necesitando assets, Takopi centraliza todo en una plataforma moderna y fácil de usar.
+
+### 🌟 Para Quién
+
+- **🎮 Streamers**: Overlays, alertas, música, efectos de sonido, widgets para OBS
+- **🎬 Editores**: LUTs, presets, scripts para Adobe/DaVinci, efectos, transiciones
+- **🗿 Artistas 3D**: Modelos, texturas PBR, rigs, HDRIs, brushes
+- **🎵 Músicos**: Samples, loops, presets, MIDI packs, stems
+- **🎨 Diseñadores**: Ilustraciones, brushes, mockups, iconos, UI kits
+- **🎮 Game Devs**: Assets 3D, sprites, música, shaders, animaciones
+
+---
+
+## 💼 Modelo de Negocio
+
+1. **Comisión por Venta** (10-15% sobre transacciones)
+2. **Comisiones Personalizadas**: Los creadores ofrecen trabajo a medida
+3. **Suscripciones Premium**: Planes Indie, Pro y Studio para creadores
+4. **Impresión 3D Local**: Impresión física de modelos con despacho a domicilio
+5. **Publicidad**: Destacados y promoción de contenido
+
+---
+
+## ✨ Características Principales
+
+### 🛒 Marketplace
+- Exploración visual con filtros avanzados
+- Previsualización 3D interactiva, reproductor de música, visor de texturas
+- Carrito de compras inteligente con persistencia
+- Pagos seguros con Transbank Webpay Plus
+- Descarga inmediata post-compra
+
+### 🎨 Para Creadores
+- Upload fácil de múltiples tipos de contenido
+- Dashboard con estadísticas de ventas
+- Sistema de licencias flexible (Personal, Indie, Pro)
+- Perfil público con portfolio
+- Control total sobre precios
+
+### 💳 Sistema de Pagos
+- Integración con Transbank (Chile)
+- Soporte para contenido gratuito
+- Compras múltiples en un solo pago
+- Historial completo de transacciones
+
+---
+
+## 🎭 Tipos de Contenido Soportados
+
+| Tipo | Formatos | Uso |
+|------|----------|-----|
+| 🗿 **Modelos 3D** | GLB, GLTF, FBX, OBJ | Blender, Unity, Unreal |
+| 🎵 **Audio** | MP3, WAV, FLAC | Música, SFX, loops, stems |
+| 🖼️ **Texturas** | PNG, JPG, EXR | PBR, HDRIs, ilustraciones |
+| 🎮 **Streaming** | HTML, CSS, PNG | Overlays, alertas, widgets OBS |
+| 🎬 **Scripts** | JS, JSX, Python | Adobe, Blender, DaVinci |
+| 🎨 **Diseño** | ABR, XMP, CUBE | Brushes, presets, LUTs |
+
+---
+
+## 🛠️ Stack Tecnológico
+
+```typescript
+Frontend:  Next.js 15 + React 19 + TypeScript + TailwindCSS
+Backend:   Next.js API Routes + Clean Architecture
+Pagos:     Transbank Webpay Plus
+Storage:   File System (dev) / MongoDB (producción)
+3D Viewer: @google/model-viewer
+Auth:      JWT + bcrypt
+```
+
+---
+
+## 🚀 Instalación
+
+```bash
+# Instalar dependencias
+npm install
+
+# Configurar .env.local
+STORAGE_MODE=local
+JWT_SECRET=tu-secret-key
+TRANSBANK_COMMERCE_CODE=tu-codigo
+TRANSBANK_API_KEY=tu-api-key
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+# Ejecutar
+npm run dev
+```
+
+Abre [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 🗺️ Roadmap
+
+### ✅ Fase 1 - MVP (Completado)
+- [x] Autenticación y perfiles de usuario
+- [x] Marketplace con visualizadores integrados
+- [x] Sistema de pagos con Transbank
+- [x] Carrito de compras
+- [x] Upload y gestión de contenido
+
+### 🔄 Fase 2 - Comunidad (En Progreso)
+- [x] Clean Architecture
+- [x] Sistema de likes y comentarios
+- [ ] Seguimiento entre usuarios
+- [ ] Notificaciones en tiempo real
+- [ ] Búsqueda avanzada
+
+### 🎨 Fase 3 - Comisiones (Q2 2025)
+- [ ] Solicitud de trabajos personalizados
+- [ ] Sistema de cotización y chat
+- [ ] Pago protegido (escrow)
+- [ ] Gestión de proyectos con hitos
+- [ ] Portfolio de comisiones
+
+### 🖨️ Fase 4 - Impresión 3D (Q3 2025)
+- [ ] Servicio de impresión local
+  - Múltiples materiales (PLA, ABS, PETG, Resina)
+  - Cotización automática por volumen
+  - Configuración de calidad y relleno
+- [ ] Seguimiento en tiempo real con fotos
+- [ ] Panel de administración de impresoras
+- [ ] Despacho a domicilio o retiro en tienda
+
+### 🌟 Fase 5 - Expansión (Q4 2025+)
+- [ ] App móvil (React Native)
+- [ ] Plugins para Blender/Adobe/OBS
+- [ ] API pública para desarrolladores
+- [ ] Suscripciones premium
+- [ ] Internacionalización (EN, PT)
+
+---
+
+## 📖 Uso Rápido
+
+### Para Creadores
+1. Registrarse en `/auth/register`
+2. Completar perfil (rol, biografía, ubicación)
+3. Subir contenido en `/upload`
+4. Configurar precio y licencia
+5. Publicar y compartir
+
+### Para Compradores
+1. Explorar catálogo en `/explore`
+2. Previsualizar contenido (3D, audio, imágenes)
+3. Agregar al carrito (`/box`)
+4. Pagar con Transbank
+5. Descargar desde "Mis Compras"
+
+---
+
+## 🏗️ Arquitectura
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── api/               # Backend (auth, content, payments)
+│   ├── explore/           # Marketplace
+│   ├── profile/           # Dashboard de usuario
+│   ├── box/               # Carrito
+│   └── checkout/          # Proceso de pago
+├── components/            # Componentes React
+├── contexts/              # Estado global (Auth, Cart)
+├── hooks/                 # Custom hooks
+├── features/              # Clean Architecture
+│   ├── auth/
+│   ├── content/
+│   └── user/
+└── types/                 # TypeScript interfaces
+```
+
+**Clean Architecture**: Domain → Application → Infrastructure
+
+---
+
+## 📞 Contacto
+
+- **Email**: contacto@takopi.cl
+- **Soporte**: soporte@takopi.cl
+
+---
+
+<div align="center">
+
+**Hecho con 💜 en Chile 🇨🇱**
+
+[⬆ Volver arriba](#-takopi)
+
+</div>
