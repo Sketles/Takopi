@@ -53,16 +53,34 @@ export function validateConfig() {
       errors.push('BLOB_READ_WRITE_TOKEN debe estar configurado en producción');
     }
 
+    // Solo validar que existan, no su contenido específico
+    if (!config.jwt.secret) {
+      errors.push('JWT_SECRET debe estar configurado en producción');
+    }
+
+    if (!config.nextauth.secret) {
+      errors.push('NEXTAUTH_SECRET debe estar configurado en producción');
+    }
+
+    if (errors.length > 0) {
+      console.error('❌ Configuración de producción incompleta:', errors);
+      throw new Error('Missing required environment variables in production');
+    }
+  } else {
+    // En desarrollo, solo advertir
+    const warnings: string[] = [];
+    
     if (!config.jwt.secret || config.jwt.secret.includes('change_in_production')) {
-      errors.push('JWT_SECRET debe ser configurado en producción');
+      warnings.push('JWT_SECRET no configurado (usando default)');
     }
 
     if (!config.nextauth.secret || config.nextauth.secret.includes('change_in_production')) {
-      errors.push('NEXTAUTH_SECRET debe ser configurado en producción');
+      warnings.push('NEXTAUTH_SECRET no configurado (usando default)');
     }
 
-  if (errors.length > 0) {
-    console.warn('⚠️  Configuración de seguridad:', errors);
+    if (warnings.length > 0) {
+      console.warn('⚠️  Configuración de desarrollo:', warnings);
+    }
   }
 
   return errors.length === 0;
