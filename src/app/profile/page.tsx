@@ -257,9 +257,14 @@ function ProfileContent() {
         location: user.location || ''
       }));
       
-      loadUserProfile();
-      loadUserStats();
-      loadUserCreations();
+      // Load all data in parallel for better performance
+      Promise.all([
+        loadUserProfile(),
+        loadUserStats(),
+        loadUserCreations()
+      ]).catch(error => {
+        console.error('Error loading user data:', error);
+      });
     }
   }, [user]);
 
