@@ -45,8 +45,39 @@ export function validateConfig() {
     errors.push('NEXTAUTH_SECRET debe ser configurado en producción');
   }
 
+<<<<<<< Updated upstream
   if (errors.length > 0) {
     console.warn('⚠️  Configuración de seguridad:', errors);
+=======
+    // Solo validar que existan, no su contenido específico
+    if (!config.jwt.secret) {
+      errors.push('JWT_SECRET debe estar configurado en producción');
+    }
+
+    if (!config.nextauth.secret) {
+      errors.push('NEXTAUTH_SECRET debe estar configurado en producción');
+    }
+
+    if (errors.length > 0) {
+      console.error('❌ Configuración de producción incompleta:', errors);
+      throw new Error('Missing required environment variables in production');
+    }
+  } else {
+    // En desarrollo, solo advertir
+    const warnings: string[] = [];
+    
+    if (!config.jwt.secret || config.jwt.secret.includes('change_in_production')) {
+      warnings.push('JWT_SECRET no configurado (usando default)');
+    }
+
+    if (!config.nextauth.secret || config.nextauth.secret.includes('change_in_production')) {
+      warnings.push('NEXTAUTH_SECRET no configurado (usando default)');
+    }
+
+    if (warnings.length > 0) {
+      console.warn('⚠️  Configuración de desarrollo:', warnings);
+    }
+>>>>>>> Stashed changes
   }
 
   return errors.length === 0;
