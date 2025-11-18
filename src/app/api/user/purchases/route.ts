@@ -3,7 +3,7 @@ import { GetUserPurchasesUseCase } from '@/features/user/domain/usecases/get-use
 import { createUserRepository } from '@/features/user/data/repositories/user.repository';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config/env';
-import { fileStorageService } from '@/shared/infrastructure/storage/file-storage.service';
+import prisma from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,42 +33,40 @@ export async function GET(request: NextRequest) {
     const purchases = await usecase.execute(userId);
 
 
-    // Serializar compras con información del contenido y vendedor
+    // Serializar compras con información del contenido y vendedor usando Prisma
     const serializedPurchases = await Promise.all(purchases.map(async (purchase) => {
-      // Obtener información del contenido
+      // Obtener información del contenido y vendedor con Prisma
       let content = null;
       let seller = null;
       
       try {
-        content = await fileStorageService.findById('content', purchase.contentId);
+        content = await prisma.content.findUnique({
+          where: { id: purchase.contentId },
+          include: { author: true }
+        });
         
-        // Si el contenido existe, obtener información del vendedor/creador
-        if (content && typeof content === 'object' && 'author' in content && typeof content.author === 'string') {
-          try {
-            seller = await fileStorageService.findById('users', content.author);
-          } catch (error) {
-            console.log('⚠️ Seller not found for content:', content.author);
-          }
+        if (content) {
+          seller = content.author;
         }
       } catch (error) {
         console.log('⚠️ Content not found for purchase:', purchase.contentId);
       }
       
       return {
-        id: (purchase as any)._id,
+        id: purchase.id,
         contentId: purchase.contentId,
         content: content ? {
-          id: (content as any)._id,
-          title: (content as any).title,
-          coverImage: (content as any).coverImage,
-          category: (content as any).category,
-          price: (content as any).price,
-          files: (content as any).files || []
+          id: content.id,
+          title: content.title,
+          coverImage: content.coverImage,
+          category: content.category,
+          price: content.price,
+          files: content.files || []
         } : null,
         seller: seller ? {
-          id: (seller as any)._id,
-          username: (seller as any).username,
-          email: (seller as any).email
+          id: seller.id,
+          username: seller.username,
+          email: seller.email
         } : null,
         amount: purchase.amount,
         currency: purchase.currency,
