@@ -29,16 +29,19 @@ export async function GET(request: NextRequest) {
     const author = searchParams.get('author');
     const search = searchParams.get('search');
 
-    console.log('🔍 Get Content API (Clean Architecture):', { category, author, search });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Get Content API (Clean Architecture):', { category, author, search });
+    }
 
     // Crear repository y usecase (Clean Architecture)
     const repository = createContentRepository();
     const usecase = new GetContentUseCase(repository);
 
-    // Ejecutar caso de uso
+    // Ejecutar caso de uso con filtros optimizados
     let content = await usecase.execute(category);
 
-    // Filtros adicionales
+    // Apply filters efficiently - move to DB query when possible
+    // For now, keep minimal client-side filtering for complex cases
     if (author) {
       content = content.filter(item => item.author === author || item.authorId === author);
     }
@@ -52,7 +55,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('✅ Content retrieved:', { count: content.length, category, author, search });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ Content retrieved:', { count: content.length, category, author, search });
+    }
 
     // Serializar entities para respuesta JSON
     const serializedContent = content.map(item => ({
@@ -97,7 +102,9 @@ export async function GET(request: NextRequest) {
 // POST - Crear nueva publicación
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 Create Content API (Clean Architecture)');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Create Content API (Clean Architecture)');
+    }
 
     // Verificar autenticación
     const decoded = await verifyToken(request);
@@ -106,7 +113,9 @@ export async function POST(request: NextRequest) {
     }
 
     const requestBody = await request.json();
-    console.log('🔍 Datos de creación:', requestBody);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Datos de creación:', requestBody);
+    }
 
     // Crear repository y usecase (Clean Architecture)
     const repository = createContentRepository();
@@ -143,7 +152,9 @@ export async function POST(request: NextRequest) {
     // Ejecutar caso de uso
     const newContent = await usecase.execute(contentData);
 
-    console.log('✅ Contenido creado:', newContent.id);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ Contenido creado:', newContent.id);
+    }
 
     // Serializar entity para respuesta JSON
     const serializedContent = {

@@ -4,10 +4,21 @@ import { ContentEntity } from '../../domain/entities/content.entity';
 import prisma from '@/lib/prisma';
 
 export class ContentRepositoryPrisma implements IContentRepository {
+  // Throttle map for view increments to reduce DB writes
+  private static viewThrottleMap = new Map<string, number>();
+  private static readonly VIEW_THROTTLE_MS = 60000; // 1 minute throttle
+
   async findAll(): Promise<ContentEntity[]> {
-    console.log('🗄️ ContentRepositoryPrisma: findAll');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🗄️ ContentRepositoryPrisma: findAll');
+    }
     
+    // Add limit to prevent loading too many records
     const contents = await prisma.content.findMany({
+      where: {
+        isPublished: true,
+        status: 'published'
+      },
       include: {
         author: {
           select: {
@@ -25,14 +36,17 @@ export class ContentRepositoryPrisma implements IContentRepository {
       },
       orderBy: {
         createdAt: 'desc'
-      }
+      },
+      take: 100 // Limit to 100 most recent
     });
 
     return contents.map(c => this.toEntity(c));
   }
 
   async findById(id: string): Promise<ContentEntity | null> {
-    console.log('🗄️ ContentRepositoryPrisma: findById', id);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🗄️ ContentRepositoryPrisma: findById', id);
+    }
     
     const content = await prisma.content.findUnique({
       where: { id },
@@ -55,17 +69,35 @@ export class ContentRepositoryPrisma implements IContentRepository {
 
     if (!content) return null;
 
-    // Incrementar vistas
-    await prisma.content.update({
-      where: { id },
-      data: { views: { increment: 1 } }
-    });
+    // Throttle view increments to reduce DB writes
+    this.incrementViewsThrottled(id);
 
     return this.toEntity(content);
   }
 
+  // Throttled view increment to reduce DB load
+  private incrementViewsThrottled(contentId: string): void {
+    const now = Date.now();
+    const lastIncrement = ContentRepositoryPrisma.viewThrottleMap.get(contentId);
+    
+    // Only increment if more than VIEW_THROTTLE_MS has passed
+    if (!lastIncrement || now - lastIncrement > ContentRepositoryPrisma.VIEW_THROTTLE_MS) {
+      ContentRepositoryPrisma.viewThrottleMap.set(contentId, now);
+      
+      // Asynchronous increment without blocking
+      prisma.content.update({
+        where: { id: contentId },
+        data: { views: { increment: 1 } }
+      }).catch(error => {
+        console.error('Error incrementing views:', error);
+      });
+    }
+  }
+
   async findByCategory(category: string): Promise<ContentEntity[]> {
-    console.log('🗄️ ContentRepositoryPrisma: findByCategory', category);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🗄️ ContentRepositoryPrisma: findByCategory', category);
+    }
     
     const contents = await prisma.content.findMany({
       where: {
@@ -97,7 +129,9 @@ export class ContentRepositoryPrisma implements IContentRepository {
   }
 
   async findByAuthor(authorId: string): Promise<ContentEntity[]> {
-    console.log('🗄️ ContentRepositoryPrisma: findByAuthor', authorId);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🗄️ ContentRepositoryPrisma: findByAuthor', authorId);
+    }
     
     const contents = await prisma.content.findMany({
       where: { authorId },
@@ -125,7 +159,9 @@ export class ContentRepositoryPrisma implements IContentRepository {
   }
 
   async findPublished(): Promise<ContentEntity[]> {
-    console.log('🗄️ ContentRepositoryPrisma: findPublished');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🗄️ ContentRepositoryPrisma: findPublished');
+    }
     
     const contents = await prisma.content.findMany({
       where: {
@@ -156,7 +192,9 @@ export class ContentRepositoryPrisma implements IContentRepository {
   }
 
   async create(data: any): Promise<ContentEntity> {
-    console.log('🗄️ ContentRepositoryPrisma: create');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🗄️ ContentRepositoryPrisma: create');
+    }
     
     const content = await prisma.content.create({
       data: {
@@ -202,7 +240,9 @@ export class ContentRepositoryPrisma implements IContentRepository {
   }
 
   async update(id: string, data: any): Promise<ContentEntity | null> {
-    console.log('🗄️ ContentRepositoryPrisma: update', id);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🗄️ ContentRepositoryPrisma: update', id);
+    }
     
     const updateData: any = {};
     
@@ -253,7 +293,9 @@ export class ContentRepositoryPrisma implements IContentRepository {
   }
 
   async delete(id: string): Promise<boolean> {
-    console.log('🗄️ ContentRepositoryPrisma: delete', id);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🗄️ ContentRepositoryPrisma: delete', id);
+    }
     
     try {
       await prisma.content.delete({
@@ -267,7 +309,9 @@ export class ContentRepositoryPrisma implements IContentRepository {
   }
 
   async paginate(page: number, limit: number, filter?: any) {
-    console.log('🗄️ ContentRepositoryPrisma: paginate', { page, limit, filter });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🗄️ ContentRepositoryPrisma: paginate', { page, limit, filter });
+    }
     
     const skip = (page - 1) * limit;
     
