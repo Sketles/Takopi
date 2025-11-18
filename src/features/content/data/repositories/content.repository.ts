@@ -1,8 +1,8 @@
 // Content Repository Factory
 import { IContentRepository } from '../../domain/repositories/content.repository.interface';
-import { ContentRepositoryLocal } from './content.repository.local';
+import { ContentRepositoryPrisma } from './content.repository.prisma';
 
 export function createContentRepository(): IContentRepository {
-  return new ContentRepositoryLocal();
+  return new ContentRepositoryPrisma();
 }
 

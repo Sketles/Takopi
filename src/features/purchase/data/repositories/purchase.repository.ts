@@ -1,8 +1,8 @@
 // Purchase Repository Factory
 import { IPurchaseRepository } from '../../domain/repositories/purchase.repository.interface';
-import { PurchaseRepositoryLocal } from './purchase.repository.local';
+import { PurchaseRepositoryPrisma } from './purchase.repository.prisma';
 
 export function createPurchaseRepository(): IPurchaseRepository {
-  return new PurchaseRepositoryLocal();
+  return new PurchaseRepositoryPrisma();
 }
 
