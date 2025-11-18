@@ -1,0 +1,258 @@
+// Prisma Schema para Takopi
+// Base de datos: Vercel Postgres
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+}
+
+// ============================================
+// USUARIOS Y AUTENTICACIÓN
+// ============================================
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  role      String   @default("Explorer") // Explorer, Artist, Buyer, Maker
+  
+  // Perfil
+  avatar    String?
+  banner    String?
+  bio       String?
+  location  String?
+  
+  // Metadata
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relaciones
+  contents     Content[]
+  comments     Comment[]
+  likes        Like[]
+  purchases    Purchase[]
+  transactions Transaction[]
+  
+  // Follows
+  following Follow[] @relation("UserFollowing")
+  followers Follow[] @relation("UserFollowers")
+  
+  @@map("users")
+}
+
+// ============================================
+// CONTENIDO
+// ============================================
+
+model Content {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  shortDescription String?
+  
+  // Tipo y categoría
+  contentType String   // avatares, modelos3d, musica, texturas, animaciones, OBS, colecciones
+  category    String
+  
+  // Archivos (Vercel Blob URLs)
+  files       Json     // Array de {name, url, type, size, previewUrl}
+  coverImage  String?  // URL de Vercel Blob
+  additionalImages Json? // Array de URLs
+  
+  // Monetización
+  price       Int      @default(0) // en CLP
+  currency    String   @default("CLP")
+  isFree      Boolean  @default(false)
+  
+  // Licencia
+  license     String   @default("personal") // personal, commercial, streaming, etc
+  customLicense String?
+  
+  // Visibilidad y estado
+  visibility  String   @default("public") // public, private, unlisted
+  status      String   @default("draft") // draft, published, archived
+  isPublished Boolean  @default(false)
+  
+  // Tags
+  tags        String[] // Array de strings
+  customTags  String[] // Array de strings personalizados
+  
+  // Estadísticas
+  views       Int      @default(0)
+  downloads   Int      @default(0)
+  
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  publishedAt DateTime?
+  
+  // Autor
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  // Relaciones
+  comments    Comment[]
+  likes       Like[]
+  purchases   Purchase[]
+  
+  @@index([authorId])
+  @@index([contentType])
+  @@index([status])
+  @@index([isPublished])
+  @@map("contents")
+}
+
+// ============================================
+// INTERACCIONES SOCIALES
+// ============================================
+
+model Comment {
+  id        String   @id @default(cuid())
+  text      String   @db.Text
+  
+  // Relaciones
+  contentId String
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Likes en comentarios
+  likeCount Int      @default(0)
+  likedBy   String[] // Array de user IDs
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([contentId])
+  @@index([userId])
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  
+  // Relaciones
+  contentId String
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  
+  @@unique([contentId, userId]) // Un usuario solo puede dar like una vez
+  @@index([contentId])
+  @@index([userId])
+  @@map("likes")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  
+  // Usuario que sigue
+  followerId  String
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  
+  // Usuario seguido
+  followingId String
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+  
+  // Metadata
+  createdAt   DateTime @default(now())
+  
+  @@unique([followerId, followingId]) // No seguir dos veces al mismo usuario
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+// ============================================
+// COMPRAS Y PAGOS
+// ============================================
+
+model Purchase {
+  id              String   @id @default(cuid())
+  
+  // Relaciones
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  contentId       String
+  content         Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  
+  // Detalles de compra
+  price           Int      // Precio al momento de la compra
+  currency        String   @default("CLP")
+  
+  // Estado
+  status          String   @default("pending") // pending, completed, failed, refunded
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  completedAt     DateTime?
+  
+  // Relación con transacción de pago
+  transactionId   String?  @unique
+  transaction     Transaction? @relation(fields: [transactionId], references: [id])
+  
+  @@index([userId])
+  @@index([contentId])
+  @@index([status])
+  @@map("purchases")
+}
+
+model Transaction {
+  id              String   @id @default(cuid())
+  
+  // Transbank/Webpay
+  token           String?  @unique // Token de Transbank
+  buyOrder        String   @unique // Orden de compra
+  sessionId       String   // ID de sesión
+  
+  // Montos
+  amount          Int      // Monto total
+  currency        String   @default("CLP")
+  
+  // Estado
+  status          String   @default("pending") // pending, approved, rejected, failed
+  
+  // Respuesta de Transbank
+  authorizationCode String?
+  responseCode      Int?
+  paymentTypeCode   String?
+  accountingDate    String?
+  transactionDate   DateTime?
+  
+  // URLs
+  url             String?  // URL de redirección de Transbank
+  returnUrl       String?  // URL de retorno
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relaciones
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  contentIds      String[] // Array de IDs de contenido comprado
+  
+  purchase        Purchase?
+  
+  @@index([userId])
+  @@index([token])
+  @@index([buyOrder])
+  @@index([status])
+  @@map("transactions")
+}

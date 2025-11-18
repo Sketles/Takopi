@@ -1,8 +1,8 @@
 // Payment Repository Factory
 import { IPaymentRepository } from '../../domain/repositories/payment.repository.interface';
-import { PaymentRepositoryLocal } from './payment.repository.local';
+import { PaymentRepositoryPrisma } from './payment.repository.prisma';
 
 export function createPaymentRepository(): IPaymentRepository {
-  return new PaymentRepositoryLocal();
+  return new PaymentRepositoryPrisma();
 }
 

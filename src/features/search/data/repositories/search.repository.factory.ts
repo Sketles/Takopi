@@ -1,11 +1,10 @@
 // Search Repository Factory - Crea instancias de repositorios según configuración
 import { ISearchRepository } from '../../domain/repositories/search.repository.interface';
-import { SearchRepositoryLocalSimple } from './search.repository.local.simple';
-// import { config } from '@/config/env';
+import { SearchRepositoryPrisma } from './search.repository.prisma';
 
 export function createSearchRepository(): ISearchRepository {
   console.log('🏭 SearchRepositoryFactory: Creando repository');
   
-  console.log('📁 Usando SearchRepositoryLocalSimple');
-  return new SearchRepositoryLocalSimple();
+  console.log('🗄️ Usando SearchRepositoryPrisma');
+  return new SearchRepositoryPrisma();
 }
