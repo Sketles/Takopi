@@ -76,8 +76,8 @@ export async function GET(request: NextRequest) {
       likes: item.likes || 0,
       views: item.views || 0,
       downloads: item.downloads || 0,
-      createdAt: item.createdAt?.toISOString(),
-      updatedAt: item.updatedAt?.toISOString()
+      createdAt: item.createdAt instanceof Date ? item.createdAt.toISOString() : item.createdAt,
+      updatedAt: item.updatedAt instanceof Date ? item.updatedAt.toISOString() : item.updatedAt
     }));
 
     return NextResponse.json({
@@ -116,15 +116,28 @@ export async function POST(request: NextRequest) {
     const contentData = {
       title: requestBody.title,
       description: requestBody.description,
+      shortDescription: requestBody.shortDescription,
       author: decoded.userId,
+      authorId: decoded.userId, // ✅ Agregar authorId para Prisma
       authorUsername: decoded.email?.split('@')[0] || 'Usuario', // Temporal
-      price: requestBody.price || 0,
+      price: parseInt(requestBody.price) || 0, // ✅ Convertir a Int
       currency: requestBody.currency || 'CLP',
+      isFree: requestBody.isFree || false,
       contentType: requestBody.contentType,
       category: requestBody.category,
+      subcategory: requestBody.subcategory,
       tags: requestBody.tags || [],
+      customTags: requestBody.customTags || [],
       coverImage: requestBody.coverImage,
-      files: requestBody.files || []
+      additionalImages: requestBody.additionalImages || [],
+      files: requestBody.files || [],
+      license: requestBody.license || 'personal',
+      customLicense: requestBody.customLicense,
+      visibility: requestBody.visibility || 'public',
+      status: 'published', // ✅ Cambiar a published para que aparezca
+      isPublished: true, // ✅ Publicar automáticamente
+      allowTips: requestBody.allowTips || false,
+      allowCommissions: requestBody.allowCommissions || false
     };
 
     // Ejecutar caso de uso
@@ -147,8 +160,8 @@ export async function POST(request: NextRequest) {
       tags: newContent.tags,
       coverImage: newContent.coverImage,
       files: newContent.files,
-      createdAt: newContent.createdAt?.toISOString(),
-      updatedAt: newContent.updatedAt?.toISOString()
+      createdAt: newContent.createdAt instanceof Date ? newContent.createdAt.toISOString() : newContent.createdAt,
+      updatedAt: newContent.updatedAt instanceof Date ? newContent.updatedAt.toISOString() : newContent.updatedAt
     };
 
     return NextResponse.json({

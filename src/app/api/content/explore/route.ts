@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
       likes: item.likes || 0,
       views: item.views || 0,
       downloads: item.downloads || 0,
-      createdAt: item.createdAt?.toISOString(),
-      updatedAt: item.updatedAt?.toISOString()
+      createdAt: item.createdAt instanceof Date ? item.createdAt.toISOString() : item.createdAt,
+      updatedAt: item.updatedAt instanceof Date ? item.updatedAt.toISOString() : item.updatedAt
     }));
 
     return NextResponse.json({

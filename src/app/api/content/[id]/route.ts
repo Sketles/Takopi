@@ -70,8 +70,8 @@ export async function GET(
       likes: content.likes || 0,
       views: content.views || 0,
       downloads: content.downloads || 0,
-      createdAt: content.createdAt?.toISOString(),
-      updatedAt: content.updatedAt?.toISOString()
+      createdAt: content.createdAt instanceof Date ? content.createdAt.toISOString() : content.createdAt,
+      updatedAt: content.updatedAt instanceof Date ? content.updatedAt.toISOString() : content.updatedAt
     };
 
     return NextResponse.json({
@@ -108,6 +108,11 @@ export async function PUT(
     const requestBody = await request.json();
     console.log('🔍 Datos de actualización:', requestBody);
 
+    // Convertir price a Int si existe
+    if (requestBody.price !== undefined) {
+      requestBody.price = parseInt(requestBody.price);
+    }
+
     // Crear repository y usecase (Clean Architecture)
     const repository = createContentRepository();
     const usecase = new UpdateContentUseCase(repository);
@@ -127,8 +132,8 @@ export async function PUT(
       currency: updatedContent.currency,
       contentType: updatedContent.contentType,
       tags: updatedContent.tags,
-      createdAt: updatedContent.createdAt?.toISOString(),
-      updatedAt: updatedContent.updatedAt?.toISOString()
+      createdAt: updatedContent.createdAt instanceof Date ? updatedContent.createdAt.toISOString() : updatedContent.createdAt,
+      updatedAt: updatedContent.updatedAt instanceof Date ? updatedContent.updatedAt.toISOString() : updatedContent.updatedAt
     };
 
     return NextResponse.json({

@@ -44,11 +44,14 @@ export async function uploadFile(
  * Sube múltiples archivos a Vercel Blob
  */
 export async function uploadMultipleFiles(
-  files: Array<{ file: File | Buffer; pathname: string; contentType?: string }>
+  files: File[],
+  folder: string,
+  userId?: string
 ): Promise<UploadResult[]> {
-  const uploads = files.map(({ file, pathname, contentType }) =>
-    uploadFile(file, pathname, { contentType })
-  );
+  const uploads = files.map((file) => {
+    const pathname = generatePathname(folder, file.name, userId);
+    return uploadFile(file, pathname, { contentType: file.type });
+  });
 
   return Promise.all(uploads);
 }
