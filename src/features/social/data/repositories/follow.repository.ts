@@ -1,8 +1,8 @@
 // Follow Repository Factory
 import { IFollowRepository } from '../../domain/repositories/follow.repository.interface';
-import { FollowRepositoryLocal } from './follow.repository.local';
+import { FollowRepositoryPrisma } from './follow.repository.prisma';
 
 export function createFollowRepository(): IFollowRepository {
-  return new FollowRepositoryLocal();
+  return new FollowRepositoryPrisma();
 }
 

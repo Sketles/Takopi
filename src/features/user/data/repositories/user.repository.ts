@@ -1,8 +1,8 @@
 // User Repository Factory
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
-import { UserRepositoryLocal } from './user.repository.local';
+import { UserRepositoryPrisma } from './user.repository.prisma';
 
 export function createUserRepository(): IUserRepository {
-  return new UserRepositoryLocal();
+  return new UserRepositoryPrisma();
 }
 
