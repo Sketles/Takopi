@@ -1,4 +1,4 @@
-// Purchase Model - Estructura exacta como viene de Storage/MongoDB
+// Purchase Model - Estructura de datos para compras
 export interface PurchaseModel {
   _id: string;
   userId: string;

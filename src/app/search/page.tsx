@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Layout from '@/components/shared/Layout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +9,9 @@ import TagCloud from '@/components/search/TagCloud';
 import SearchFilters from '@/components/search/SearchFilters';
 import SearchResults from '@/components/search/SearchResults';
 import EmptyState from '@/components/search/EmptyState';
+
+// Evitar pre-render estático
+export const dynamic = 'force-dynamic';
 
 // Interfaces
 interface SearchQuery {
@@ -49,7 +52,7 @@ interface SearchState {
   suggestions: Array<{ type: string; value: string }>;
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -417,5 +420,13 @@ export default function SearchPage() {
         </div>
       </div>
     </Layout>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }

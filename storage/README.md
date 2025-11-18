@@ -1,13 +1,13 @@
 # 📁 Sistema de Storage Local - Takopi
 
-## 🎯 ¿Por qué usar Storage Local?
+## 🎯 Almacenamiento Local
 
-Este sistema te permite **desarrollar sin base de datos** y migrar fácilmente después. Es perfecto para:
+El proyecto usa almacenamiento local basado en archivos JSON para desarrollo. Esto permite:
 
-- ✅ **Prototipos rápidos** sin configuración compleja
-- ✅ **Testing fácil** sin dependencias externas  
-- ✅ **Desarrollo offline** sin necesidad de MongoDB
-- ✅ **Migración simple** a base de datos después
+- ✅ **Desarrollo rápido** sin configuración de bases de datos
+- ✅ **Testing simple** sin dependencias externas  
+- ✅ **Portabilidad** - los datos están en el repositorio
+- ✅ **Migración fácil** cuando implementes un backend escalable
 
 ## 📂 Estructura de Carpetas
 
@@ -18,37 +18,15 @@ storage/
 ├── purchases/       # Compras realizadas
 ├── likes/           # Likes de usuarios
 ├── follows/         # Relaciones de seguimiento
-└── uploads/         # Archivos subidos
+├── comments/        # Comentarios
+└── webpay_transactions/  # Transacciones de pago
 ```
 
-## 🔧 Configuración
+## 🚀 Uso
 
-### Modo Storage Local (Recomendado para desarrollo)
-```bash
-# En .env.local
-STORAGE_MODE=local
-```
-
-### Modo MongoDB (Para producción)
-```bash
-# En .env.local
-STORAGE_MODE=mongodb
-MONGODB_URI=mongodb://localhost:27017/takopi_dev
-```
-
-## 🚀 Uso del Sistema
-
-### 1. APIs Disponibles
-
-#### Storage Local:
-- `POST /api/auth/login-storage` - Login con archivos
-- `GET /api/content/explore-storage` - Explorar contenido
-
-#### MongoDB (original):
-- `POST /api/auth/login` - Login con MongoDB
-- `GET /api/content/explore` - Explorar contenido
-
-### 2. Ejemplo de Uso
+Todo el sistema usa storage local automáticamente. Los archivos se guardan en:
+- **Datos JSON**: `storage/<entidad>/` (usuarios, contenido, etc.)
+- **Archivos subidos**: `public/uploads/` (imágenes, modelos 3D, etc.)
 
 ```typescript
 import { userStorage, contentStorage } from '@/lib/storage';
@@ -70,46 +48,33 @@ const { data, pagination } = await contentStorage.paginate(1, 10);
 
 ## 📊 Datos de Ejemplo
 
-El sistema incluye datos de ejemplo:
+
+## 💾 Datos de Ejemplo
+
+El sistema incluye datos de prueba:
 
 - **3 usuarios**: admin, creador1, usuario1
 - **3 contenidos**: modelo 3D, texturas, música gratuita
 - **Likes y follows** de ejemplo
 - **1 compra** de ejemplo
 
-## 🔄 Migración a MongoDB
+## 🔄 Próximos Pasos (Backend Escalable)
 
-Cuando estés listo para usar MongoDB:
+Cuando implementes un backend real:
 
-1. **Cambiar configuración**:
-   ```bash
-   STORAGE_MODE=mongodb
-   ```
+1. **Reemplazar implementaciones locales** por servicios HTTP/APIs
+2. **Las interfaces ya están definidas** - solo cambia la implementación
+3. **Arquitectura limpia** permite migrar fácilmente
+4. **Considera usar**: PostgreSQL, MongoDB, Supabase, Firebase, o tu backend custom
 
-2. **Las APIs se cambian automáticamente**:
-   - `/api/auth/login-storage` → `/api/auth/login`
-   - `/api/content/explore-storage` → `/api/content/explore`
+## 🎯 Ventajas del Sistema Actual
 
-3. **Los datos se mantienen** en MongoDB
+- ✅ **Sin configuración** de base de datos
+- ✅ **Datos visibles** en archivos JSON  
+- ✅ **Fácil debugging** y testing
+- ✅ **Desarrollo rápido** sin dependencias externas
+- ✅ **Arquitectura preparada** para escalar
 
-## 🎨 Ventajas del Sistema
+---
 
-### ✅ Para Desarrollo:
-- **Sin configuración** de base de datos
-- **Datos visibles** en archivos JSON
-- **Fácil debugging** y testing
-- **Desarrollo rápido**
-
-### ✅ Para Producción:
-- **Migración automática** a MongoDB
-- **Misma interfaz** de programación
-- **Escalabilidad** real
-- **Backup** automático
-
-## 🔍 Flujo Típico de Desarrollo
-
-1. **Prototipo** → Storage Local (archivos)
-2. **Testing** → Storage Local (fácil)
-3. **Producción** → MongoDB (escalable)
-
-¡Perfecto para el desarrollo ágil! 🚀
+**Nota**: Este es un sistema de desarrollo. Para producción, implementa un backend con base de datos real y autenticación segura.

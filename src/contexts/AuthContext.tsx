@@ -137,17 +137,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ username, email, password, role }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        const userData = await response.json();
-        setUser(userData.user);
-        localStorage.setItem('takopi_user', JSON.stringify(userData.user));
-        localStorage.setItem('takopi_token', userData.token);
+        setUser(data.user);
+        localStorage.setItem('takopi_user', JSON.stringify(data.user));
+        localStorage.setItem('takopi_token', data.token);
         return true;
+      } else {
+        // Lanzar error con el mensaje del servidor
+        throw new Error(data.error || 'Error al registrarse');
       }
-      return false;
     } catch (error) {
       console.error('Register error:', error);
-      return false;
+      throw error; // Re-lanzar para que el componente pueda mostrarlo
     }
   };
 

@@ -1,4 +1,4 @@
-// Content Model - Estructura exacta como viene de Storage/MongoDB
+// Content Model - Estructura de datos para contenido
 export interface ContentModel {
   _id: string;
   title: string;

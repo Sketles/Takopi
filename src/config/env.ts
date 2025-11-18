@@ -1,10 +1,5 @@
 // Configuración de variables de entorno
 export const config = {
-  // MongoDB - Ahora usa el sistema dual
-  mongodb: {
-    uri: process.env.MONGODB_URI || 'mongodb+srv://takopi_app:Suicidesurrender603@cluster99.uzpzzow.mongodb.net/Takopi_BaseDatos?retryWrites=true&w=majority&appName=Cluster99',
-  },
-
   // JWT
   jwt: {
     secret: process.env.JWT_SECRET || 'takopi_jwt_secret_super_secreto_2025_change_in_production',
@@ -48,10 +43,6 @@ export function validateConfig() {
 
   if (!config.nextauth.secret || config.nextauth.secret.includes('change_in_production')) {
     errors.push('NEXTAUTH_SECRET debe ser configurado en producción');
-  }
-
-  if (config.app.environment === 'production' && config.mongodb.uri.includes('Suicidesurrender603')) {
-    errors.push('MONGODB_URI debe usar variables de entorno en producción');
   }
 
   if (errors.length > 0) {

@@ -1181,19 +1181,7 @@ export default function UploadPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Columna izquierda - Formulario */}
                 <div className="space-y-6">
-                  {/* Título de la creación */}
-                  <div>
-                    <label className="block text-white font-medium mb-3">Título</label>
-                    <input
-                      type="text"
-                      value={formData.provisionalName}
-                      onChange={(e) => setFormData({ ...formData, provisionalName: e.target.value })}
-                      onKeyDown={preventFormSubmit}
-                      className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-green-400 focus:outline-none"
-                      placeholder={getPlaceholderForCategory(formData.contentType)}
-                    />
-                  </div>
-                  {/* Campo de portada */}
+                  {/* Campo de portada - PRIMERO */}
                   <div>
                     <label className="block text-white font-medium mb-3">
                       Imagen de portada <span className="text-gray-400">(opcional)</span>
@@ -1259,7 +1247,20 @@ export default function UploadPage() {
                     )}
                   </div>
 
-                  {/* Descripción breve */}
+                  {/* Título de la creación - SEGUNDO */}
+                  <div>
+                    <label className="block text-white font-medium mb-3">Título</label>
+                    <input
+                      type="text"
+                      value={formData.provisionalName}
+                      onChange={(e) => setFormData({ ...formData, provisionalName: e.target.value })}
+                      onKeyDown={preventFormSubmit}
+                      className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-green-400 focus:outline-none"
+                      placeholder={getPlaceholderForCategory(formData.contentType)}
+                    />
+                  </div>
+
+                  {/* Descripción breve - TERCERO */}
                   <div>
                     <label className="block text-white font-medium mb-3">Descripción breve</label>
                     <textarea

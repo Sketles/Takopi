@@ -71,5 +71,39 @@
     "_id": "1760575627002e5n9n1vby",
     "createdAt": "2025-10-16T00:47:07.002Z",
     "updatedAt": "2025-10-16T00:47:07.002Z"
+  },
+  {
+    "title": "Pulpo Verde",
+    "description": "cdcdcdcd",
+    "author": "1763446626656f4jd07qxc",
+    "authorUsername": "sosakuneta",
+    "price": "2222",
+    "currency": "CLP",
+    "contentType": "modelos3d",
+    "category": "characters",
+    "tags": [
+      "modelo",
+      "escenario",
+      "maya",
+      "unity",
+      "unreal"
+    ],
+    "coverImage": "/uploads/covers/cover-1763447148952-397651553.jpeg",
+    "files": [
+      {
+        "name": "file-1763447148949-486042887.glb",
+        "originalName": "file-1759291001045-427927227.glb",
+        "size": 1459892,
+        "type": "application/octet-stream",
+        "url": "/uploads/content/modelos3d/file-1763447148949-486042887.glb"
+      }
+    ],
+    "isPublished": true,
+    "likes": 0,
+    "views": 0,
+    "downloads": 0,
+    "_id": "1763447149663gh3vl2llf",
+    "createdAt": "2025-11-18T06:25:49.663Z",
+    "updatedAt": "2025-11-18T06:25:49.663Z"
   }
 ]

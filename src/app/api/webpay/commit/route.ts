@@ -74,9 +74,8 @@ export async function GET(request: NextRequest) {
           contentId: transaction.contentId,
           amount: transaction.amount,
           currency: transaction.currency,
-          paymentMethod: 'webpay',
-          status: 'completed'
-        });
+          paymentMethod: 'webpay'
+        } as any);
 
 
         // Redirigir a la página de resultado exitoso

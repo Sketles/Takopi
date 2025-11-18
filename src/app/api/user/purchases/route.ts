@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
         content = await fileStorageService.findById('content', purchase.contentId);
         
         // Si el contenido existe, obtener información del vendedor/creador
-        if (content && content.author) {
+        if (content && typeof content === 'object' && 'author' in content && typeof content.author === 'string') {
           try {
             seller = await fileStorageService.findById('users', content.author);
           } catch (error) {
@@ -55,20 +55,20 @@ export async function GET(request: NextRequest) {
       }
       
       return {
-        id: purchase._id,
+        id: (purchase as any)._id,
         contentId: purchase.contentId,
         content: content ? {
-          id: content._id,
-          title: content.title,
-          coverImage: content.coverImage,
-          category: content.category,
-          price: content.price,
-          files: content.files || []
+          id: (content as any)._id,
+          title: (content as any).title,
+          coverImage: (content as any).coverImage,
+          category: (content as any).category,
+          price: (content as any).price,
+          files: (content as any).files || []
         } : null,
         seller: seller ? {
-          id: seller._id,
-          username: seller.username,
-          email: seller.email
+          id: (seller as any)._id,
+          username: (seller as any).username,
+          email: (seller as any).email
         } : null,
         amount: purchase.amount,
         currency: purchase.currency,

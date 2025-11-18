@@ -1,4 +1,4 @@
-// Comment Model - Estructura exacta como viene de Storage/MongoDB
+// Comment Model - Estructura de datos para comentarios
 export interface CommentModel {
   _id: string;
   contentId: string;

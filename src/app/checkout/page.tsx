@@ -1,10 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/components/shared/Layout';
+import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/hooks/useCart';
+
+// Evitar pre-render estático
+export const dynamic = 'force-dynamic';
 
 interface CheckoutItem {
   id: string;
@@ -16,8 +19,8 @@ interface CheckoutItem {
   coverImage?: string;
 }
 
-export default function CheckoutPage() {
-  const { user } = useAuth();
+function CheckoutContent() {
+  const { user, isLoading: authLoading } = useAuth();
   const { clearCart } = useCart();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -213,6 +216,20 @@ export default function CheckoutPage() {
     router.push('/box');
   };
 
+  // Mostrar loading mientras se verifica la autenticación
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+          <div className="text-center text-white">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mx-auto mb-4"></div>
+            <div className="text-xl">Verificando sesión...</div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   if (!user) {
     return (
       <Layout>
@@ -356,5 +373,13 @@ export default function CheckoutPage() {
         </div>
       </div>
     </Layout>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <CheckoutContent />
+    </Suspense>
   );
 }

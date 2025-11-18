@@ -23,6 +23,19 @@ export default function RegisterPage() {
     setIsLoading(true);
     setError('');
 
+    // Validaciones frontend
+    if (formData.username.trim().length < 3) {
+      setError('El nombre de usuario debe tener al menos 3 caracteres');
+      setIsLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      setIsLoading(false);
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Las contraseñas no coinciden');
       setIsLoading(false);
@@ -34,10 +47,10 @@ export default function RegisterPage() {
       if (success) {
         router.push('/explore');
       } else {
-        setError('Error al crear la cuenta');
+        setError('Error al crear la cuenta. Verifica tus datos.');
       }
-    } catch (err) {
-      setError('Error al registrarse');
+    } catch (err: any) {
+      setError(err.message || 'Error al registrarse');
     } finally {
       setIsLoading(false);
     }
@@ -91,6 +104,9 @@ export default function RegisterPage() {
                 className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
                 placeholder="Elige tu nombre de usuario"
               />
+              <p className="mt-1 text-xs text-gray-400">
+                Mínimo 3 caracteres
+              </p>
             </div>
 
             <div>
@@ -143,6 +159,9 @@ export default function RegisterPage() {
                 className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
                 placeholder="Crea una contraseña"
               />
+              <p className="mt-1 text-xs text-gray-400">
+                Mínimo 6 caracteres
+              </p>
             </div>
 
             <div>

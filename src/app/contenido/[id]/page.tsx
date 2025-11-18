@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { Suspense, useState, useEffect, use } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProductPage from '@/components/product/ProductPage';
 import ProductModal from '@/components/product/ProductModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/shared/Toast';
+
+// Evitar pre-render estático
+export const dynamic = 'force-dynamic';
 
 interface Product {
   id: string;
@@ -43,7 +46,7 @@ interface Product {
   updatedAt: string;
 }
 
-export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+function ProductDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -140,8 +143,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       // Agregar al carrito
       const result = addProductToCart({
         ...product,
-        author: product.author?.username || 'Usuario',
-        authorUsername: product.author?.username || 'Usuario',
+        author: product.author || 'Usuario',
+        authorUsername: product.author || 'Usuario',
         coverImage: product.coverImage || '/placeholder-content.jpg'
       });
 
@@ -267,5 +270,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       onSave={handleSave}
       onShare={handleShare}
     />
+  );
+}
+
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={<div>Cargando producto...</div>}>
+      <ProductDetailContent params={params} />
+    </Suspense>
   );
 }

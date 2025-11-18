@@ -4,10 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:local": "cross-env DB_MODE=local next dev",
-    "dev:atlas": "cross-env DB_MODE=atlas next dev",
-    "dev:auto": "cross-env DB_MODE=auto next dev",
-    "dev:debug": "cross-env NODE_OPTIONS=--inspect next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -19,8 +15,6 @@
     "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.2",
     "jsonwebtoken": "^9.0.2",
-    "mongodb": "^6.20.0",
-    "mongoose": "^8.18.1",
     "multer": "^2.0.2",
     "next": "15.5.3",
     "react": "19.1.0",
@@ -36,7 +30,6 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
-    "cross-env": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
     "postcss": "^8.5.6",

@@ -113,27 +113,25 @@ export function generateFileUrl(file: Express.Multer.File, contentType?: string)
   return `${basePath}/${file.filename}`;
 }
 
-// Función para limpiar archivos temporales
-export function cleanupTempFiles(files: Express.Multer.File[]) {
-  const fs = require('fs');
+// Función para limpiar archivos temporales (async)
+export async function cleanupTempFiles(files: Express.Multer.File[]) {
+  const fs = require('fs/promises');
   const path = require('path');
 
-  files.forEach(file => {
+  for (const file of files) {
     const filePath = path.join(process.cwd(), file.path);
     try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        console.log(`🗑️ Archivo temporal eliminado: ${filePath}`);
-      }
+      await fs.unlink(filePath);
+      console.log(`🗑️ Archivo temporal eliminado: ${filePath}`);
     } catch (error) {
       console.error(`❌ Error eliminando archivo temporal ${filePath}:`, error);
     }
-  });
+  }
 }
 
-// Función para mover archivo de temp a destino final
-export function moveFileToFinalDestination(tempFile: Express.Multer.File, contentType: string) {
-  const fs = require('fs');
+// Función para mover archivo de temp a destino final (async)
+export async function moveFileToFinalDestination(tempFile: Express.Multer.File, contentType: string) {
+  const fs = require('fs/promises');
   const path = require('path');
 
   const tempPath = tempFile.path;
@@ -142,12 +140,10 @@ export function moveFileToFinalDestination(tempFile: Express.Multer.File, conten
 
   try {
     // Crear directorio si no existe
-    if (!fs.existsSync(finalDir)) {
-      fs.mkdirSync(finalDir, { recursive: true });
-    }
+    await fs.mkdir(finalDir, { recursive: true });
 
     // Mover archivo
-    fs.renameSync(tempPath, finalPath);
+    await fs.rename(tempPath, finalPath);
 
     // Generar nueva URL
     const newUrl = `/uploads/content/${contentType}/${tempFile.filename}`;

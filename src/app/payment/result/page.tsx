@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/components/shared/Layout';
 
-export default function PaymentResultPage() {
+// Evitar pre-render estático
+export const dynamic = 'force-dynamic';
+
+function PaymentResultContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [paymentResult, setPaymentResult] = useState<any>(null);
@@ -242,5 +245,13 @@ export default function PaymentResultPage() {
         </div>
       </div>
     </Layout>
+  );
+}
+
+export default function PaymentResultPage() {
+  return (
+    <Suspense fallback={<div>Cargando resultado...</div>}>
+      <PaymentResultContent />
+    </Suspense>
   );
 }

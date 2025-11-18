@@ -1,4 +1,4 @@
-// User Model - Estructura exacta como viene de Storage/MongoDB
+// User Model - Estructura de datos para usuarios
 export interface UserModel {
   _id: string;
   username: string;

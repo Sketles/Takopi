@@ -222,27 +222,10 @@ public/uploads/users/
     └── avatar.jpg
 ```
 
-## 🔄 Migración a MongoDB
-
-Cuando cambies a `LOCAL=false`:
-- ✅ Los archivos **siguen en `/public/uploads`**
-- ✅ Solo las **rutas** se guardan en MongoDB
-- ✅ **No cambia nada** en el manejo de archivos
-
-```json
-// MongoDB document
-{
-  "_id": ObjectId("..."),
-  "title": "Modelo 3D",
-  "files": [
-    "/uploads/content/modelos3d/casa.glb"  // ← Misma ruta
-  ]
-}
-```
-
 ## 💾 Backup de Archivos
 
-### Archivos a respaldar:
+Para producción, respalda:
+
 ```bash
 # Datos (JSON)
 /storage/

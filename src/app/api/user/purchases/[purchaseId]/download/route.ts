@@ -34,7 +34,7 @@ export async function POST(
 
     // Verificar que la compra existe y pertenece al usuario (usando Clean Architecture)
     const purchaseRepository = createPurchaseRepository();
-    const purchases = await purchaseRepository.findByUserId(userId);
+    const purchases = await purchaseRepository.findByUser(userId);
     const purchase = purchases.find(p => p.id === purchaseId);
 
     if (!purchase || purchase.status !== 'completed') {
@@ -56,7 +56,7 @@ export async function POST(
     console.log('✅ Compra verificada, generando enlace de descarga');
 
     // Generar enlace de descarga temporal (por ahora devolvemos la URL directa)
-    const downloadLinks = content.files.map(filePath => ({
+    const downloadLinks = (content.files || []).map(filePath => ({
       filename: path.basename(filePath),
       url: `/api/files/${filePath}`,
       type: path.extname(filePath).toLowerCase()
@@ -70,9 +70,7 @@ export async function POST(
       data: {
         purchaseId: purchase.id,
         contentTitle: content.title,
-        downloadLinks: downloadLinks,
-        downloadCount: purchase.downloadCount || 0,
-        lastDownloadDate: purchase.lastDownloadDate
+        downloadLinks: downloadLinks
       }
     });
 

@@ -1,7 +1,7 @@
 'use client';
 
 import Layout from '@/components/shared/Layout';
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'next/navigation';
 import ProfileEditor from '@/components/profile/ProfileEditor';
@@ -11,6 +11,9 @@ import ContentCard, { useContentCard } from '@/components/shared/ContentCard';
 import ProductModal from '@/components/product/ProductModal';
 import ProductEditModal from '@/components/product/ProductEditModal';
 import PurchasesSection from '@/components/profile/PurchasesSection';
+
+// Evitar pre-render estático
+export const dynamic = 'force-dynamic';
 
 // Datos de ejemplo para el perfil (solo para estadísticas por defecto)
 const defaultStats = {
@@ -22,7 +25,7 @@ const defaultStats = {
   pinsCreated: 0
 };
 
-export default function ProfilePage() {
+function ProfileContent() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentProfile, setCurrentProfile] = useState({
@@ -932,5 +935,13 @@ export default function ProfilePage() {
       />
 
     </Layout>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div>Cargando perfil...</div>}>
+      <ProfileContent />
+    </Suspense>
   );
 }

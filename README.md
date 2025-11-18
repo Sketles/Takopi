@@ -80,10 +80,10 @@
 ## 🛠️ Stack Tecnológico
 
 ```typescript
-Frontend:  Next.js 15 + React 19 + TypeScript + TailwindCSS
+Frontend:  Next.js 15 + React 19 + TypeScript + TailwindCSS v4
 Backend:   Next.js API Routes + Clean Architecture
 Pagos:     Transbank Webpay Plus
-Storage:   File System (dev) / MongoDB (producción)
+Storage:   Local JSON Files (almacenamiento en archivo)
 3D Viewer: @google/model-viewer
 Auth:      JWT + bcrypt
 ```
@@ -96,15 +96,19 @@ Auth:      JWT + bcrypt
 # Instalar dependencias
 npm install
 
-# Configurar .env.local
-STORAGE_MODE=local
+# Configurar .env.local (opcional para producción)
 JWT_SECRET=tu-secret-key
-TRANSBANK_COMMERCE_CODE=tu-codigo
-TRANSBANK_API_KEY=tu-api-key
+NEXTAUTH_SECRET=tu-nextauth-secret
+TRANSBANK_COMMERCE_CODE=597055555532
+TRANSBANK_API_KEY=579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
-# Ejecutar
+# Ejecutar desarrollo
 npm run dev
+
+# Build de producción
+npm run build
+npm start
 ```
 
 Abre [http://localhost:3000](http://localhost:3000)
@@ -119,13 +123,17 @@ Abre [http://localhost:3000](http://localhost:3000)
 - [x] Sistema de pagos con Transbank
 - [x] Carrito de compras
 - [x] Upload y gestión de contenido
+- [x] Sistema de almacenamiento local (JSON)
+- [x] Clean Architecture implementada
+- [x] Sistema de likes y comentarios
+- [x] Búsqueda y filtros básicos
 
 ### 🔄 Fase 2 - Comunidad (En Progreso)
-- [x] Clean Architecture
-- [x] Sistema de likes y comentarios
-- [ ] Seguimiento entre usuarios
+- [ ] Sistema de seguimiento entre usuarios mejorado
 - [ ] Notificaciones en tiempo real
-- [ ] Búsqueda avanzada
+- [ ] Búsqueda semántica avanzada
+- [ ] Sistema de reviews y valoraciones
+- [ ] Estadísticas detalladas para creadores
 
 ### 🎨 Fase 3 - Comisiones (Q2 2025)
 - [ ] Solicitud de trabajos personalizados

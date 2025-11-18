@@ -23,7 +23,7 @@ async function verifyToken(request: NextRequest) {
 // POST - Toggle like en comentario
 export async function POST(
   request: NextRequest,
-  { params }: { params: { commentId: string } }
+  { params }: { params: Promise<{ commentId: string }> }
 ) {
   try {
     // Verificar autenticación
@@ -32,7 +32,7 @@ export async function POST(
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    const { commentId } = params;
+    const { commentId } = await params;
 
     // Validaciones
     if (!commentId) {
