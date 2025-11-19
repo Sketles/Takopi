@@ -17,6 +17,7 @@ interface AuthContextType {
   register: (username: string, email: string, password: string, role: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
+  updateUser?: (user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -167,8 +168,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = '/';
   };
 
+  const updateUser = (newUser: User) => {
+    setUser(newUser);
+    localStorage.setItem('takopi_user', JSON.stringify(newUser));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, isLoading, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

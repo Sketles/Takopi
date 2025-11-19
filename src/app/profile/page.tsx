@@ -49,11 +49,11 @@ function ProfileContent() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<'creations' | 'purchases'>('creations');
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { createCardProps } = useContentCard();
   const searchParams = useSearchParams();
 
-  const isOwnProfile = user?.username === currentProfile.username;
+  const isOwnProfile = user?._id === (currentProfile as any).id || user?._id === (currentProfile as any)._id;
 
   // Manejar parámetro de pestaña desde la URL
   useEffect(() => {
@@ -215,9 +215,9 @@ function ProfileContent() {
         }));
 
         // Actualizar el usuario en el contexto
-        if (user) {
+        if (user && updateUser) {
           const updatedUser = { ...user, ...data.user };
-          localStorage.setItem('takopi_user', JSON.stringify(updatedUser));
+          updateUser(updatedUser as any);
         }
 
         setIsEditing(false);

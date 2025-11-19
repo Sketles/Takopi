@@ -518,7 +518,7 @@ export default function UserProfilePage() {
             product={selectedContent}
             isOpen={isModalOpen}
             onClose={closeModal}
-            isOwner={false}
+            isOwner={user?._id === userData.id}
             currentUserId={user?._id}
             onDelete={handleDeleteContent}
             source="user-profile"

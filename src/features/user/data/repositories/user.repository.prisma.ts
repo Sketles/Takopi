@@ -32,23 +32,22 @@ export class UserRepositoryPrisma implements IUserRepository {
 
     if (!user) return null;
 
-    return {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      avatar: user.avatar,
-      banner: user.banner,
-      bio: user.bio,
-      location: user.location,
-      createdAt: user.createdAt.toISOString(),
-      stats: {
+    // Return a proper UserProfileEntity instance so methods like isCreator/isAdmin are available
+    return new UserProfileEntity(
+      user.id,
+      user.username,
+      user.avatar,
+      user.bio,
+      user.role,
+      user.createdAt,
+      {
         contentCount: user._count.contents,
         purchaseCount: user._count.purchases,
         followersCount: user._count.followers,
         followingCount: user._count.following
-      }
-    } as UserProfileEntity;
+      },
+      []
+    );
   }
 
   async getUserStats(userId: string) {
