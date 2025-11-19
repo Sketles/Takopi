@@ -83,7 +83,7 @@ export default function PrintingConfigPage() {
       const supportsMultiplier = config.supports ? 1.2 : 1;
 
       const price = baseMaterial * qualityMultiplier * infillMultiplier * scaleMultiplier * supportsMultiplier * config.copies;
-      
+
       setEstimatedPrice(Math.round(price));
       setEstimatedTime(qualities.find(q => q.id === config.quality)?.time || '4-8h');
       setIsCalculating(false);
@@ -225,11 +225,10 @@ export default function PrintingConfigPage() {
                         <button
                           key={material.id}
                           onClick={() => setConfig({ ...config, material: material.id })}
-                          className={`p-4 rounded-xl border-2 transition-all ${
-                            config.material === material.id
+                          className={`p-4 rounded-xl border-2 transition-all ${config.material === material.id
                               ? 'border-purple-500 bg-purple-500/20'
                               : 'border-gray-700 hover:border-gray-600'
-                          }`}
+                            }`}
                         >
                           <div className={`w-full h-2 bg-gradient-to-r ${material.color} rounded-full mb-2`}></div>
                           <p className="text-white font-semibold text-sm">{material.name}</p>
@@ -247,9 +246,8 @@ export default function PrintingConfigPage() {
                         <button
                           key={color}
                           onClick={() => setConfig({ ...config, color })}
-                          className={`w-12 h-12 rounded-xl transition-all ${
-                            config.color === color ? 'ring-4 ring-purple-500 scale-110' : 'hover:scale-105'
-                          }`}
+                          className={`w-12 h-12 rounded-xl transition-all ${config.color === color ? 'ring-4 ring-purple-500 scale-110' : 'hover:scale-105'
+                            }`}
                           style={{ backgroundColor: color }}
                         />
                       ))}
@@ -264,11 +262,10 @@ export default function PrintingConfigPage() {
                         <button
                           key={quality.id}
                           onClick={() => setConfig({ ...config, quality: quality.id })}
-                          className={`p-4 rounded-xl border-2 transition-all ${
-                            config.quality === quality.id
+                          className={`p-4 rounded-xl border-2 transition-all ${config.quality === quality.id
                               ? 'border-purple-500 bg-purple-500/20'
                               : 'border-gray-700 hover:border-gray-600'
-                          }`}
+                            }`}
                         >
                           <p className="text-white font-semibold mb-1">{quality.name}</p>
                           <p className="text-gray-400 text-xs mb-1">{quality.desc}</p>
@@ -331,11 +328,10 @@ export default function PrintingConfigPage() {
                       <label className="block text-white font-semibold mb-3">Soportes</label>
                       <button
                         onClick={() => setConfig({ ...config, supports: !config.supports })}
-                        className={`w-full px-4 py-3 rounded-xl border-2 transition-all ${
-                          config.supports
+                        className={`w-full px-4 py-3 rounded-xl border-2 transition-all ${config.supports
                             ? 'border-purple-500 bg-purple-500/20 text-white'
                             : 'border-gray-700 text-gray-400 hover:border-gray-600'
-                        }`}
+                          }`}
                       >
                         {config.supports ? '✓ Activado' : 'Desactivado'}
                       </button>

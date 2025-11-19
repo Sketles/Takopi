@@ -471,7 +471,7 @@ export default function UploadPage() {
       });
 
       const uploadResult = await uploadResponse.json();
-      
+
 
       if (!uploadResponse.ok) {
         // Si es error de autenticación, limpiar localStorage y redirigir
@@ -1022,7 +1022,7 @@ export default function UploadPage() {
 
               <div className="max-w-2xl mx-auto space-y-6">
                 <div>
-                   <label className="block text-white font-medium mb-3">Descripción *</label>
+                  <label className="block text-white font-medium mb-3">Descripción *</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => {
@@ -1311,8 +1311,8 @@ export default function UploadPage() {
             </div>
           )}
 
-           {/* Step 5: Precio y licencia */}
-           {currentStep === 5 && (
+          {/* Step 5: Precio y licencia */}
+          {currentStep === 5 && (
             <div className="bg-black/40 backdrop-blur-md rounded-2xl border border-purple-500/20 p-8">
               <h2 className="text-3xl font-bold text-white mb-2 text-center">
                 {getStepTitle()}
@@ -1435,8 +1435,8 @@ export default function UploadPage() {
             </div>
           )}
 
-           {/* Step 6: Resumen final y publicación */}
-           {currentStep === 6 && (
+          {/* Step 6: Resumen final y publicación */}
+          {currentStep === 6 && (
             <div className="bg-black/40 backdrop-blur-md rounded-2xl border border-purple-500/20 p-8">
               <h2 className="text-3xl font-bold text-white mb-2 text-center">
                 {getStepTitle()}

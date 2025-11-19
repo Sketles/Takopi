@@ -65,7 +65,7 @@ function ProductDetailContent({ params }: { params: Promise<{ id: string }> }) {
       try {
         setLoading(true);
         const response = await fetch(`/api/content/${resolvedParams.id}`);
-        
+
         if (!response.ok) {
           if (response.status === 404) {
             setError('Producto no encontrado');

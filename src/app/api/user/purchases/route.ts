@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.split(' ')[1];
-    
+
     // Verificar token
     let userId;
     try {
@@ -38,20 +38,20 @@ export async function GET(request: NextRequest) {
       // Obtener información del contenido y vendedor con Prisma
       let content = null;
       let seller = null;
-      
+
       try {
         content = await prisma.content.findUnique({
           where: { id: purchase.contentId },
           include: { author: true }
         });
-        
+
         if (content) {
           seller = content.author;
         }
       } catch (error) {
         console.log('⚠️ Content not found for purchase:', purchase.contentId);
       }
-      
+
       return {
         id: purchase.id,
         contentId: purchase.contentId,

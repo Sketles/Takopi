@@ -178,17 +178,17 @@ function ProfileContent() {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('takopi_token');
-      
+
       if (!token) {
         alert('No hay token de autenticación. Por favor, inicia sesión nuevamente.');
         return;
       }
 
       console.log('🔄 Enviando datos al servidor:', updatedProfile);
-      
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos timeout
-      
+
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: {
@@ -205,7 +205,7 @@ function ProfileContent() {
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Datos recibidos del servidor:', data);
-        
+
         setCurrentProfile(prev => ({
           ...prev,
           ...data.user,
@@ -213,15 +213,14 @@ function ProfileContent() {
           location: data.user.location || '',
           stats: prev.stats,
         }));
-        
+
         // Actualizar el usuario en el contexto
         if (user) {
           const updatedUser = { ...user, ...data.user };
           localStorage.setItem('takopi_user', JSON.stringify(updatedUser));
         }
-        
+
         setIsEditing(false);
-        alert('Perfil actualizado exitosamente');
       } else {
         console.error('❌ Error del servidor:', response.status, response.statusText);
         const errorData = await response.json().catch(() => ({ error: 'Error desconocido del servidor' }));
@@ -229,7 +228,7 @@ function ProfileContent() {
       }
     } catch (error) {
       console.error('❌ Error al actualizar perfil:', error);
-      
+
       if (error.name === 'AbortError') {
         alert('Error de conexión: La solicitud tardó demasiado tiempo. Verifica tu conexión a internet.');
       } else if (error instanceof TypeError && error.message === 'Failed to fetch') {
@@ -256,7 +255,7 @@ function ProfileContent() {
         bio: user.bio || '',
         location: user.location || ''
       }));
-      
+
       // Load all data in parallel for better performance
       Promise.all([
         loadUserProfile(),
@@ -324,13 +323,13 @@ function ProfileContent() {
           ...prev,
           banner: data.user.banner
         }));
-        
+
         // Actualizar el usuario en el contexto
         if (user) {
           const updatedUser = { ...user, banner: data.user.banner };
           localStorage.setItem('takopi_user', JSON.stringify(updatedUser));
         }
-        
+
         setEditingType(null);
       } else {
         const errorData = await response.json();
@@ -381,14 +380,14 @@ function ProfileContent() {
     // Asegurar que el ID sea un string válido
     const contentId = creation.id || creation._id;
     const validId = typeof contentId === 'string' ? contentId : contentId?.toString();
-    
+
     console.log('🔍 Transformando creación:', {
       originalId: creation.id,
       mongoId: creation._id,
       finalId: validId,
       type: typeof validId
     });
-    
+
     return {
       id: validId,
       title: creation.title || creation.provisionalName,
@@ -441,11 +440,11 @@ function ProfileContent() {
   const handleDeleteProduct = async (product: any, source?: string) => {
     try {
       const token = localStorage.getItem('takopi_token');
-      
+
       // Debug: verificar el ID que se está enviando
       console.log('🔍 Eliminando producto con ID:', product.id);
       console.log('🔍 Fuente:', source);
-      
+
       const response = await fetch(`/api/content/${product.id}`, {
         method: 'DELETE',
         headers: {
@@ -460,14 +459,14 @@ function ProfileContent() {
             prev.filter(creation => creation.id !== product.id)
           );
         }
-        
+
         // No mostrar alert - eliminación silenciosa y profesional
         // El modal se cerrará automáticamente por el ProductModal
         return { success: true };
       } else {
         console.error('❌ Error response status:', response.status);
         console.error('❌ Error response statusText:', response.statusText);
-        
+
         let errorMessage = 'Error desconocido';
         try {
           const errorData = await response.json();
@@ -477,7 +476,7 @@ function ProfileContent() {
           console.error('❌ Error parsing JSON:', jsonError);
           errorMessage = `Error ${response.status}: ${response.statusText}`;
         }
-        
+
         // Solo mostrar error en caso de fallo
         alert(`Error: ${errorMessage}`);
         throw new Error(errorMessage);
@@ -531,8 +530,9 @@ function ProfileContent() {
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         {/* Banner Section */}
-        <div className="relative h-80 overflow-hidden">
-          {/* Banner Background */}
+        <div className="relative h-80 overflow-hidden bg-gradient-to-br from-purple-600 via-blue-600 to-pink-600">
+
+          {/* Banner Background Mejorado */}
           <div
             className={`absolute inset-0 ${isOwnProfile ? 'cursor-pointer group' : ''}`}
             onClick={() => isOwnProfile && setEditingType('banner')}
@@ -541,13 +541,15 @@ function ProfileContent() {
               <img
                 src={currentProfile.banner}
                 alt="Banner"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-center"
+                style={{ objectPosition: 'center', minHeight: '100%', minWidth: '100%', maxHeight: 'none', maxWidth: 'none' }}
+                draggable={false}
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-purple-600 via-blue-600 to-pink-600"></div>
             )}
-            <div className="absolute inset-0 bg-black/20"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+            <div className="absolute inset-0 bg-black/20 pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
 
             {/* Banner Edit Overlay */}
             {isOwnProfile && (
@@ -583,7 +585,9 @@ function ProfileContent() {
                       <img
                         src={currentProfile.avatar}
                         alt={currentProfile.username}
-                        className="w-full h-full rounded-full object-cover"
+                        className="w-full h-full rounded-full object-cover object-center"
+                        style={{ objectPosition: 'center', minHeight: '100%', minWidth: '100%', maxHeight: 'none', maxWidth: 'none' }}
+                        draggable={false}
                       />
                     ) : (
                       <span className="text-white text-4xl font-bold">
@@ -740,21 +744,19 @@ function ProfileContent() {
               <div className="flex space-x-1 bg-gray-800/50 rounded-lg p-1 mb-6">
                 <button
                   onClick={() => setActiveSection('creations')}
-                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    activeSection === 'creations'
+                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${activeSection === 'creations'
                       ? 'bg-purple-600 text-white shadow-lg'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                  }`}
+                    }`}
                 >
                   🎨 Mis Creaciones
                 </button>
                 <button
                   onClick={() => setActiveSection('purchases')}
-                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    activeSection === 'purchases'
+                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${activeSection === 'purchases'
                       ? 'bg-purple-600 text-white shadow-lg'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                  }`}
+                    }`}
                 >
                   🛒 Mis Compras
                 </button>
@@ -766,10 +768,10 @@ function ProfileContent() {
                   {activeSection === 'creations' ? 'Mis Creaciones' : 'Mis Compras'}
                 </h2>
                 <p className="text-gray-400">
-                  {activeSection === 'creations' 
+                  {activeSection === 'creations'
                     ? (userCreations.length > 0
-                    ? `${userCreations.length} ${userCreations.length === 1 ? 'creación' : 'creaciones'} publicadas`
-                        : 'Aún no tienes creaciones publicadas')
+                      ? `${userCreations.length} ${userCreations.length === 1 ? 'creación' : 'creaciones'} publicadas`
+                      : 'Aún no tienes creaciones publicadas')
                     : 'Contenido que has comprado y puedes descargar'
                   }
                 </p>
@@ -779,104 +781,104 @@ function ProfileContent() {
             {/* Contenido dinámico según la sección activa */}
             {activeSection === 'creations' ? (
               loadingCreations ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400"></div>
-                <span className="ml-3 text-gray-300">Cargando creaciones...</span>
-              </div>
-            ) : (() => {
-              // Agrupar creaciones por tipo de contenido
-              const groupedCreations = userCreations.reduce((acc, creation) => {
-                const type = creation.contentType;
-                if (!acc[type]) {
-                  acc[type] = [];
-                }
-                acc[type].push(creation);
-                return acc;
-              }, {});
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400"></div>
+                  <span className="ml-3 text-gray-300">Cargando creaciones...</span>
+                </div>
+              ) : (() => {
+                // Agrupar creaciones por tipo de contenido
+                const groupedCreations = userCreations.reduce((acc, creation) => {
+                  const type = creation.contentType;
+                  if (!acc[type]) {
+                    acc[type] = [];
+                  }
+                  acc[type].push(creation);
+                  return acc;
+                }, {});
 
-              // Mapeo de tipos de contenido a configuración de categorías - Categorías finales
-              const categoryConfig = {
-                'avatares': { title: 'Avatares', icon: '👤', description: 'Avatares y personajes' },
-                'modelos3d': { title: 'Modelos 3D', icon: '🧩', description: 'Modelos 3D y assets' },
-                'musica': { title: 'Música', icon: '🎵', description: 'Pistas y composiciones musicales' },
-                'texturas': { title: 'Texturas', icon: '✨', description: 'Texturas y materiales' },
-                'animaciones': { title: 'Animaciones', icon: '🎬', description: 'Animaciones y motion graphics' },
-                'OBS': { title: 'OBS', icon: '📺', description: 'Widgets para streaming' },
-                'colecciones': { title: 'Colecciones', icon: '📦', description: 'Colección de contenido creativo' }
-              };
+                // Mapeo de tipos de contenido a configuración de categorías - Categorías finales
+                const categoryConfig = {
+                  'avatares': { title: 'Avatares', icon: '👤', description: 'Avatares y personajes' },
+                  'modelos3d': { title: 'Modelos 3D', icon: '🧩', description: 'Modelos 3D y assets' },
+                  'musica': { title: 'Música', icon: '🎵', description: 'Pistas y composiciones musicales' },
+                  'texturas': { title: 'Texturas', icon: '✨', description: 'Texturas y materiales' },
+                  'animaciones': { title: 'Animaciones', icon: '🎬', description: 'Animaciones y motion graphics' },
+                  'OBS': { title: 'OBS', icon: '📺', description: 'Widgets para streaming' },
+                  'colecciones': { title: 'Colecciones', icon: '📦', description: 'Colección de contenido creativo' }
+                };
 
-              // Obtener solo las categorías que tienen contenido
-              const categoriesWithContent = Object.keys(groupedCreations).map(type => ({
-                type,
-                ...categoryConfig[type as keyof typeof categoryConfig],
-                creations: groupedCreations[type],
-                count: groupedCreations[type].length
-              }));
+                // Obtener solo las categorías que tienen contenido
+                const categoriesWithContent = Object.keys(groupedCreations).map(type => ({
+                  type,
+                  ...categoryConfig[type as keyof typeof categoryConfig],
+                  creations: groupedCreations[type],
+                  count: groupedCreations[type].length
+                }));
 
-              return categoriesWithContent.length > 0 ? (
-                <div className="space-y-12">
-                  {categoriesWithContent.map((category) => (
-                    <div key={category.type} className="bg-gradient-to-br from-gray-800/30 to-gray-900/30 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-8">
-                      {/* Header de la categoría */}
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-16 h-16 bg-gradient-to-br from-purple-500/30 to-blue-500/30 rounded-xl flex items-center justify-center backdrop-blur-sm border border-purple-500/30">
-                            {category.type === 'obs-widgets' || category.type === 'obs' || category.type === 'obs-widget' ? (
-                              <img
-                                src="/logos/OBS_Studio_logo.png"
-                                alt="OBS"
-                                className="w-10 h-10 object-contain filter brightness-0 invert"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                }}
-                              />
-                            ) : (
-                              <span className="text-3xl">{category.icon}</span>
-                            )}
-                            {/* Fallback emoji para OBS si falla la imagen */}
-                            {category.type === 'obs-widgets' || category.type === 'obs' || category.type === 'obs-widget' ? (
-                              <span className="text-3xl hidden">📺</span>
-                            ) : null}
+                return categoriesWithContent.length > 0 ? (
+                  <div className="space-y-12">
+                    {categoriesWithContent.map((category) => (
+                      <div key={category.type} className="bg-gradient-to-br from-gray-800/30 to-gray-900/30 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-8">
+                        {/* Header de la categoría */}
+                        <div className="flex items-center justify-between mb-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 bg-gradient-to-br from-purple-500/30 to-blue-500/30 rounded-xl flex items-center justify-center backdrop-blur-sm border border-purple-500/30">
+                              {category.type === 'obs-widgets' || category.type === 'obs' || category.type === 'obs-widget' ? (
+                                <img
+                                  src="/logos/OBS_Studio_logo.png"
+                                  alt="OBS"
+                                  className="w-10 h-10 object-contain filter brightness-0 invert"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                />
+                              ) : (
+                                <span className="text-3xl">{category.icon}</span>
+                              )}
+                              {/* Fallback emoji para OBS si falla la imagen */}
+                              {category.type === 'obs-widgets' || category.type === 'obs' || category.type === 'obs-widget' ? (
+                                <span className="text-3xl hidden">📺</span>
+                              ) : null}
+                            </div>
+                            <div>
+                              <h3 className="text-2xl font-bold text-white">{category.title}</h3>
+                              <p className="text-gray-400">{category.description}</p>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="text-2xl font-bold text-white">{category.title}</h3>
-                            <p className="text-gray-400">{category.description}</p>
+                          <div className="bg-black/40 rounded-lg px-3 py-1 backdrop-blur-sm border border-white/20">
+                            <span className="text-white text-sm font-medium">{category.count} {category.count === 1 ? 'creación' : 'creaciones'}</span>
                           </div>
                         </div>
-                        <div className="bg-black/40 rounded-lg px-3 py-1 backdrop-blur-sm border border-white/20">
-                          <span className="text-white text-sm font-medium">{category.count} {category.count === 1 ? 'creación' : 'creaciones'}</span>
+
+                        {/* Grid de tarjetas de creaciones usando ContentCard */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                          {category.creations.map((creation: any, idx: number) => (
+                            <ContentCard
+                              key={creation.id || creation._id || `${category.type}-${idx}`}
+                              {...createCardProps(creation, {
+                                onClick: () => handleProductClick(creation),
+                                variant: 'default',
+                                showPrice: true,
+                                showStats: true,
+                                showTags: false,
+                                showAuthor: false,
+                                showDescription: true
+                              })}
+                            />
+                          ))}
                         </div>
                       </div>
-
-                      {/* Grid de tarjetas de creaciones usando ContentCard */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {category.creations.map((creation: any) => (
-                          <ContentCard
-                              key={creation.id}
-                            {...createCardProps(creation, {
-                              onClick: () => handleProductClick(creation),
-                              variant: 'default',
-                              showPrice: true,
-                              showStats: true,
-                              showTags: false,
-                              showAuthor: false,
-                              showDescription: true
-                            })}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4">🎨</div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Aún no tienes creaciones</h3>
-                  <p className="text-gray-400">Comienza compartiendo tu primera creación con la comunidad</p>
-                </div>
-              );
-            })()
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">🎨</div>
+                    <h3 className="text-xl font-semibold text-white mb-2">Aún no tienes creaciones</h3>
+                    <p className="text-gray-400">Comienza compartiendo tu primera creación con la comunidad</p>
+                  </div>
+                );
+              })()
             ) : (
               // Sección de Mis Compras
               <PurchasesSection />
@@ -914,20 +916,20 @@ function ProfileContent() {
       {/* Product Modal */}
       {selectedProduct && (
         <ProductModal
-        product={selectedProduct}
-        isOpen={isProductModalOpen}
-        onClose={handleCloseProductModal}
+          product={selectedProduct}
+          isOpen={isProductModalOpen}
+          onClose={handleCloseProductModal}
           isOwner={isOwnProfile}
-        currentUserId={user?._id}
-        onEdit={handleEditProduct}
-        onDelete={handleDeleteProduct}
-          onBuy={() => {}}
-          onAddToBox={() => {}}
-          onLike={() => {}}
-          onSave={() => {}}
-          onShare={() => {}}
+          currentUserId={user?._id}
+          onEdit={handleEditProduct}
+          onDelete={handleDeleteProduct}
+          onBuy={() => { }}
+          onAddToBox={() => { }}
+          onLike={() => { }}
+          onSave={() => { }}
+          onShare={() => { }}
           source="profile"
-      />
+        />
       )}
 
       {/* Product Editor Modal */}

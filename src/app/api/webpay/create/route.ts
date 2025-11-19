@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     if (!WebpayPlus) {
       console.error('❌ Transbank SDK not available for create');
       return NextResponse.json(
-        { 
+        {
           success: false,
           error: 'SDK de Transbank no disponible',
           details: 'El SDK de Transbank no se pudo cargar correctamente'
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     const buyOrder = generateBuyOrder(contentId, decoded.userId);
     const sessionId = generateSessionId();
     const returnUrl = `${webpayConfig.baseUrl}/webpay/return`;
-    
+
     // Configurar transacción usando la API real de Transbank
     const tx = WebpayPlus.Transaction.buildForIntegration(
       webpayConfig.commerceCode,
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     try {
       const paymentRepository = createPaymentRepository();
       const createWebpayTransactionUseCase = new CreateWebpayTransactionUseCase(paymentRepository);
-      
+
       const localTransaction = await createWebpayTransactionUseCase.execute({
         amount,
         currency: 'CLP',
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
         url: response.url,     // Usar la URL REAL de Transbank
         status: 'pending'
       });
-      
+
     } catch (error) {
       console.error('❌ Error storing transaction locally:', error);
       // Continuar aunque falle el guardado local

@@ -45,7 +45,7 @@ export default function UserProfilePage() {
   const router = useRouter();
   const userId = params.userId as string;
   const { user } = useAuth();
-  
+
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +66,7 @@ export default function UserProfilePage() {
 
       if (result.success) {
         setUserData(result.data);
-        
+
         // Verificar estado de seguimiento
         const token = localStorage.getItem('takopi_token');
         if (token) {
@@ -110,7 +110,7 @@ export default function UserProfilePage() {
       customTags: [],
       updatedAt: content.createdAt
     };
-    
+
     setSelectedContent(transformedContent);
     setIsModalOpen(true);
   };
@@ -124,9 +124,9 @@ export default function UserProfilePage() {
   const handleDeleteContent = async (product: any, source?: string) => {
     try {
       const token = localStorage.getItem('takopi_token');
-      
+
       console.log('🔍 Eliminando contenido con ID:', product.id);
-      
+
       const response = await fetch(`/api/content/${product.id}`, {
         method: 'DELETE',
         headers: {
@@ -142,7 +142,7 @@ export default function UserProfilePage() {
             content: prev.content.filter(item => item.id !== product.id)
           } : null);
         }
-        
+
         // El modal se cerrará automáticamente por el ProductModal
         return { success: true };
       } else {
@@ -249,14 +249,15 @@ export default function UserProfilePage() {
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         {/* Banner Section */}
-        <div className="relative h-80 overflow-hidden">
+        <div className="relative h-80 overflow-hidden bg-gradient-to-br from-purple-600 via-blue-600 to-pink-600">
           {/* Banner Background */}
           <div className="absolute inset-0">
             {userData.banner ? (
               <img
                 src={userData.banner}
                 alt="Banner"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-center"
+                style={{ objectPosition: 'center' }}
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-purple-600 via-blue-600 to-pink-600"></div>
@@ -325,11 +326,10 @@ export default function UserProfilePage() {
                   <button
                     onClick={handleFollow}
                     disabled={isFollowLoading}
-                    className={`px-6 py-3 rounded-xl backdrop-blur-sm border transition-all font-medium ${
-                      isFollowing 
-                        ? 'bg-black/40 hover:bg-black/60 text-white border-white/20 hover:border-white/30' 
+                    className={`px-6 py-3 rounded-xl backdrop-blur-sm border transition-all font-medium ${isFollowing
+                        ? 'bg-black/40 hover:bg-black/60 text-white border-white/20 hover:border-white/30'
                         : 'bg-purple-600/80 hover:bg-purple-600 text-white border-purple-500/50 hover:border-purple-400'
-                    } ${isFollowLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      } ${isFollowLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     {isFollowLoading ? (
                       <div className="flex items-center gap-2">

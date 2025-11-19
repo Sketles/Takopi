@@ -34,12 +34,12 @@ function CheckoutContent() {
     try {
       const itemsParam = searchParams.get('items');
       const totalParam = searchParams.get('total');
-      
+
       if (itemsParam) {
         // Formato JSON (para compatibilidad con compras individuales)
         const parsedItems = JSON.parse(decodeURIComponent(itemsParam));
         setItems(parsedItems);
-        
+
         // Use total from URL or calculate from items
         if (totalParam) {
           setTotal(parseInt(totalParam));
@@ -50,14 +50,14 @@ function CheckoutContent() {
         // Formato múltiple parámetros (desde Box/carrito)
         const parsedItems: CheckoutItem[] = [];
         let index = 0;
-        
+
         while (true) {
           const contentId = searchParams.get(`items[${index}][contentId]`);
           const title = searchParams.get(`items[${index}][title]`);
           const price = searchParams.get(`items[${index}][price]`);
-          
+
           if (!contentId || !title || !price) break;
-          
+
           parsedItems.push({
             id: contentId,
             title: title,
@@ -67,10 +67,10 @@ function CheckoutContent() {
             author: 'Usuario',
             coverImage: '/placeholder-content.jpg'
           });
-          
+
           index++;
         }
-        
+
         if (parsedItems.length > 0) {
           setItems(parsedItems);
           setTotal(parsedItems.reduce((sum, item) => sum + item.price, 0));
@@ -112,7 +112,7 @@ function CheckoutContent() {
       // Por simplicidad, procesamos solo el primer item
       // En una implementación real, se procesarían todos los items
       const firstItem = items[0];
-      
+
       // Si el total es 0, es un producto gratuito
       if (total === 0) {
         // Para productos gratuitos, crear directamente la compra sin Webpay
@@ -320,11 +320,10 @@ function CheckoutContent() {
                     <button
                       onClick={handlePayment}
                       disabled={loading || items.length === 0}
-                      className={`w-full px-6 py-4 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
-                        total === 0 
-                          ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700' 
+                      className={`w-full px-6 py-4 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${total === 0
+                          ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
                           : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
-                      }`}
+                        }`}
                     >
                       {loading ? (
                         <div className="flex items-center justify-center">
@@ -348,20 +347,17 @@ function CheckoutContent() {
                 </div>
 
                 {/* Información de seguridad */}
-                <div className={`mt-6 p-4 rounded-lg ${
-                  total === 0 
-                    ? 'bg-green-500/20 border border-green-500/50' 
+                <div className={`mt-6 p-4 rounded-lg ${total === 0
+                    ? 'bg-green-500/20 border border-green-500/50'
                     : 'bg-blue-500/20 border border-blue-500/50'
-                }`}>
-                  <h3 className={`font-semibold mb-2 ${
-                    total === 0 ? 'text-green-300' : 'text-blue-300'
                   }`}>
+                  <h3 className={`font-semibold mb-2 ${total === 0 ? 'text-green-300' : 'text-blue-300'
+                    }`}>
                     {total === 0 ? '🎁 Producto Gratuito' : '🔒 Pago Seguro'}
                   </h3>
-                  <p className={`text-sm ${
-                    total === 0 ? 'text-green-200' : 'text-blue-200'
-                  }`}>
-                    {total === 0 
+                  <p className={`text-sm ${total === 0 ? 'text-green-200' : 'text-blue-200'
+                    }`}>
+                    {total === 0
                       ? 'Este producto es completamente gratuito. No se requiere pago ni información de tarjeta.'
                       : 'Tu pago será procesado de forma segura por Transbank. No almacenamos información de tarjetas de crédito.'
                     }

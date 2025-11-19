@@ -84,12 +84,12 @@ export default function ExplorePage() {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         if (result.success && Array.isArray(result.data)) {
           const likesMap: { [key: string]: { isLiked: boolean; likesCount: number } } = {};
-          
+
           result.data.forEach((item: any) => {
             likesMap[item.contentId] = {
               isLiked: item.isLiked,
@@ -112,7 +112,7 @@ export default function ExplorePage() {
   const getCardProps = (item: ContentItem, options: any = {}) => {
     // Usar datos de likes ya cargados
     const likeInfo = likesData[item.id] || { isLiked: false, likesCount: item.likes || 0 };
-    
+
     return {
       id: item.id,
       title: item.title,
@@ -177,7 +177,7 @@ export default function ExplorePage() {
 
       if (result.success) {
         setContent(result.data);
-        
+
         // Cargar likes después de cargar el contenido
         loadAllLikes(result.data);
       } else {
@@ -209,13 +209,13 @@ export default function ExplorePage() {
     try {
       setIsSearching(true);
       setLoading(true);
-      
+
       const params = new URLSearchParams();
       params.set('q', searchQuery);
-      
+
       const response = await fetch(`/api/search?${params}`);
       const data = await response.json();
-      
+
       if (data.success) {
         setSearchResults(data.data.items);
       } else {
@@ -238,11 +238,11 @@ export default function ExplorePage() {
 
   const handleSuggestions = async (partial: string) => {
     if (partial.length < 2) return;
-    
+
     try {
       const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(partial)}&limit=8`);
       const data = await response.json();
-      
+
       if (data.success) {
         const suggestions = [
           ...data.data.tags.map((tag: string) => ({ type: 'tag', value: tag })),
@@ -322,9 +322,9 @@ export default function ExplorePage() {
   const handleDeleteContent = async (product: any, source?: string) => {
     try {
       const token = localStorage.getItem('takopi_token');
-      
+
       console.log('🔍 Eliminando contenido con ID:', product.id);
-      
+
       const response = await fetch(`/api/content/${product.id}`, {
         method: 'DELETE',
         headers: {
@@ -337,7 +337,7 @@ export default function ExplorePage() {
         if (source === 'explore') {
           setContent(prev => prev.filter(item => item.id !== product.id));
         }
-        
+
         // El modal se cerrará automáticamente por el ProductModal
         return { success: true };
       } else {
@@ -355,7 +355,7 @@ export default function ExplorePage() {
 
   // Función para transformar ContentItem a formato de ProductModal
   const transformContentItem = (item: ContentItem) => {
-    
+
     const transformed = {
       id: item.id,
       title: item.title,
@@ -383,7 +383,7 @@ export default function ExplorePage() {
       createdAt: item.createdAt,
       updatedAt: item.createdAt
     };
-    
+
     return transformed;
   };
 
@@ -471,7 +471,7 @@ export default function ExplorePage() {
               loading={loading}
               placeholder="Buscar contenido... (ej: música streaming, modelo 3D casa, texturas metal)"
             />
-            
+
             {/* Indicador de búsqueda activa */}
             {isSearching && (
               <div className="mt-4 flex items-center justify-between bg-purple-900/20 backdrop-blur-sm border border-purple-500/30 rounded-lg p-4">
@@ -536,8 +536,8 @@ export default function ExplorePage() {
                   />
                   <div className="absolute top-3 right-3 z-10">
                     <span className="px-3 py-1.5 bg-gradient-to-r from-purple-600/90 to-blue-600/90 backdrop-blur-sm text-white text-xs font-medium rounded-full border border-purple-400/50 shadow-lg">
-                        Recomendado
-                      </span>
+                      Recomendado
+                    </span>
                   </div>
                 </div>
               ))}
@@ -716,13 +716,13 @@ export default function ExplorePage() {
             return user?.username === selectedItem.author;
           })()}
           currentUserId={user?._id}
-          onEdit={() => {}}
+          onEdit={() => { }}
           onDelete={handleDeleteContent}
-          onBuy={() => {}}
+          onBuy={() => { }}
           onAddToBox={handleAddToBox}
-          onLike={() => {}}
-          onSave={() => {}}
-          onShare={() => {}}
+          onLike={() => { }}
+          onSave={() => { }}
+          onShare={() => { }}
           source="explore"
         />
       )}

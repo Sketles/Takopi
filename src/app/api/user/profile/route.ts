@@ -120,9 +120,9 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error('❌ Error al actualizar perfil:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
-    const statusCode = errorMessage.includes('ya está en uso') ? 409 : 
-                        errorMessage.includes('debe tener') ? 400 : 500;
-    
+    const statusCode = errorMessage.includes('ya está en uso') ? 409 :
+      errorMessage.includes('debe tener') ? 400 : 500;
+
     return NextResponse.json({ error: errorMessage }, { status: statusCode });
   }
 }

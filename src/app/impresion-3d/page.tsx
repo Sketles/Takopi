@@ -46,11 +46,11 @@ export default function Printing3DLandingPage() {
           {/* Background Animated */}
           <div className="absolute inset-0">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(147,51,234,0.4),transparent_50%)] animate-pulse"></div>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(59,130,246,0.3),transparent_50%)] animate-pulse" style={{animationDelay: '1s'}}></div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(59,130,246,0.3),transparent_50%)] animate-pulse" style={{ animationDelay: '1s' }}></div>
           </div>
 
           {/* Floating 3D Printer Icon */}
-          <div className="absolute top-1/4 right-10 text-8xl opacity-10 animate-bounce" style={{animationDuration: '3s'}}>
+          <div className="absolute top-1/4 right-10 text-8xl opacity-10 animate-bounce" style={{ animationDuration: '3s' }}>
             🖨️
           </div>
 
@@ -73,7 +73,7 @@ export default function Printing3DLandingPage() {
               </h1>
 
               <p className="text-xl sm:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                Convierte tus modelos digitales en piezas físicas de alta calidad. 
+                Convierte tus modelos digitales en piezas físicas de alta calidad.
                 <span className="text-purple-400 font-semibold"> Elige, configura y recibe en tu casa.</span>
               </p>
 
@@ -140,7 +140,7 @@ export default function Printing3DLandingPage() {
                 >
                   {/* Glow effect */}
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-blue-600/0 group-hover:from-purple-600/10 group-hover:to-blue-600/10 rounded-2xl transition-all duration-500"></div>
-                  
+
                   <div className="relative z-10">
                     <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">
                       {feature.icon}
@@ -183,7 +183,7 @@ export default function Printing3DLandingPage() {
                 >
                   {/* Material color indicator */}
                   <div className={`w-full h-2 bg-gradient-to-r ${material.color} rounded-full mb-4`}></div>
-                  
+
                   <h3 className="text-2xl font-bold text-white mb-2">{material.name}</h3>
                   <p className="text-gray-400 text-sm leading-relaxed">{material.uses}</p>
 
@@ -242,7 +242,7 @@ export default function Printing3DLandingPage() {
             <div className="relative overflow-hidden p-12 bg-gradient-to-br from-purple-900/60 to-blue-900/60 backdrop-blur-xl rounded-3xl border border-purple-500/30 shadow-2xl">
               {/* Animated background */}
               <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 animate-pulse"></div>
-              
+
               <div className="relative z-10 text-center space-y-6">
                 <div className="text-6xl mb-4 animate-bounce">🚀</div>
                 <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
