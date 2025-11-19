@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, memo, useMemo, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import DefaultCover from './DefaultCover';
 
@@ -65,6 +66,7 @@ const ContentCard = memo(function ContentCard({
   author,
   authorId,
   authorAvatar,
+  authorId,
   contentType,
   category,
   price = 0,
@@ -209,6 +211,11 @@ const ContentCard = memo(function ContentCard({
     return coverImage || image;
   }, [coverImage, image]);
 
+  const { user } = useAuth();
+  const currentUserId = user?._id;
+  const displayAuthor = author || (authorId && currentUserId && authorId === currentUserId ? user.username : 'Anónimo');
+  const authorProfileLink = authorId ? `/user/${authorId}` : (currentUserId && author === user?.username ? '/profile' : undefined);
+
   return (
     <div
       className={`group relative flex flex-col bg-[#0f0f0f] border border-white/5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(168,85,247,0.2)] hover:border-purple-500/30 ${className}`}
@@ -281,8 +288,8 @@ const ContentCard = memo(function ContentCard({
         <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between gap-4">
           {/* Autor */}
           <div className="flex items-center gap-2 min-w-0">
-            {authorId ? (
-              <Link href={`/user/${authorId}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-2 min-w-0">
+            {authorProfileLink ? (
+              <Link href={authorProfileLink} onClick={(e) => e.stopPropagation()} className="flex items-center gap-2 min-w-0">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
                   <div className="w-full h-full rounded-full overflow-hidden bg-[#0f0f0f]">
                     {authorAvatar ? (

@@ -54,7 +54,7 @@ export async function GET(
       title: content.title,
       description: content.description,
       shortDescription: content.shortDescription,
-      author: content.authorUsername,
+      author: content.author || content.authorUsername,
       authorAvatar: content.authorAvatar,
       authorId: content.authorId,
       type: content.typeDisplay,

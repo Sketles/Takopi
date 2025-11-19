@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import ProductMediaTabs from './ProductMediaTabs';
 import PurchasePanel from './PurchasePanel';
@@ -120,6 +121,10 @@ export default function ProductModal({
     }
   };
 
+  const { user } = useAuth();
+  const currentUserId = user?._id;
+  const authorProfileLink = product?.authorId ? `/user/${product.authorId}` : (product?.author && currentUserId && product.author === user?.username ? '/profile' : undefined);
+
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -180,13 +185,11 @@ export default function ProductModal({
                     <h1 className="text-3xl font-bold text-white leading-tight">{product.title}</h1>
 
                     <div className="flex items-center gap-3 pb-4 border-b border-white/5">
-                      <Link
-                        href={product.authorId ? `/user/${product.authorId}` : `/user/${product.author}`}
-                        className="flex items-center gap-3"
-                        onClick={() => onClose()}
-                        title={product.author || 'Usuario'}
-                      >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
+                      {authorProfileLink ? (
+                        <Link href={authorProfileLink} onClick={() => onClose()} title={product.author || 'Usuario'}>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
+                              <div className="w-full h-full rounded-full overflow-hidden bg-black">
                           <div className="w-full h-full rounded-full overflow-hidden bg-black">
                             {product.authorAvatar ? (
                               <img src={product.authorAvatar} alt={product.author} className="w-full h-full object-cover" />
@@ -202,8 +205,37 @@ export default function ProductModal({
                           <span className="text-sm font-medium text-white hover:text-purple-400 transition-colors cursor-pointer">
                             {product.author || 'Usuario'}
                           </span>
+                              </div>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-sm text-white/40 leading-none mb-1">Creado por</span>
+                              <span className="text-sm font-medium text-white hover:text-purple-400 transition-colors cursor-pointer">
+                                {product.author}
+                              </span>
+                            </div>
+                          </div>
+                        </Link>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
+                            <div className="w-full h-full rounded-full overflow-hidden bg-black">
+                              {product.authorAvatar ? (
+                                <img src={product.authorAvatar} alt={product.author} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">
+                                  {product.author?.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm text-white/40 leading-none mb-1">Creado por</span>
+                            <span className="text-sm font-medium text-white hover:text-purple-400 transition-colors cursor-pointer">
+                              {product.author}
+                            </span>
+                          </div>
                         </div>
-                      </Link>
+                      )}
                     </div>
                   </div>
 

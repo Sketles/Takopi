@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       title: item.title,
       description: item.description,
       shortDescription: item.shortDescription || item.description?.substring(0, 100) + '...',
-      author: item.authorUsername,
+      author: item.author || item.authorUsername,
       authorAvatar: item.authorAvatar,
       authorId: item.authorId,
       type: item.typeDisplay,
