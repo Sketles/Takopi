@@ -125,7 +125,9 @@ export default function ProductModal({
   const { user } = useAuth();
   const router = useRouter();
   const authUserId = user?._id;
-  const authorProfileLink = product?.authorId ? `/user/${product.authorId}` : (product?.author && authUserId && product.author === user?.username ? '/profile' : undefined);
+  const authorProfileLink = product?.authorId
+    ? (authUserId && product.authorId === authUserId ? '/profile' : `/user/${product.authorId}`)
+    : (product?.author && authUserId && product.author === user?.username ? '/profile' : undefined);
 
   const handleAuthorClick = async (e: React.MouseEvent) => {
     e.stopPropagation();

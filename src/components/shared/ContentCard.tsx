@@ -215,7 +215,9 @@ const ContentCard = memo(function ContentCard({
   const currentUserId = user?._id;
   const displayAuthor = author || (authorId && currentUserId && authorId === currentUserId ? user.username : 'Anónimo');
   const router = useRouter();
-  const authorProfileLink = authorId ? `/user/${authorId}` : (currentUserId && author === user?.username ? '/profile' : undefined);
+  const authorProfileLink = authorId
+    ? (currentUserId && authorId === currentUserId ? '/profile' : `/user/${authorId}`)
+    : (currentUserId && author === user?.username ? '/profile' : undefined);
 
   const handleAuthorClick = async (e: React.MouseEvent) => {
     e.stopPropagation();

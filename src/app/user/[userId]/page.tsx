@@ -1,9 +1,9 @@
-'use client';
+ 'use client';
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Layout from '@/components/shared/Layout';
-import ContentCard from '@/components/shared/ContentCard';
+import ContentCard, { useContentCard } from '@/components/shared/ContentCard';
 import ProductModal from '@/components/product/ProductModal';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -45,6 +45,7 @@ export default function UserProfilePage() {
   const router = useRouter();
   const userId = params.userId as string;
   const { user } = useAuth();
+  const { createCardProps } = useContentCard();
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -483,7 +484,7 @@ export default function UserProfilePage() {
                       {category.content.map((item) => (
                         <ContentCard
                           key={`${category.type}-${item.id}`}
-                          content={{
+                          {...createCardProps({
                             id: item.id,
                             title: item.title,
                             description: item.description,
@@ -500,8 +501,7 @@ export default function UserProfilePage() {
                             createdAt: item.createdAt,
                             image: item.coverImage,
                             files: item.files
-                          }}
-                          onClick={() => openContentModal(item)}
+                          }, { onClick: () => openContentModal(item), showPrice: true, showStats: true })}
                         />
                       ))}
                     </div>
