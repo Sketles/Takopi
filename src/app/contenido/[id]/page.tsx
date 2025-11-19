@@ -58,7 +58,11 @@ function ProductDetailContent({ params }: { params: Promise<{ id: string }> }) {
   // Desenvolver params con React.use()
   const resolvedParams = use(params);
   const isModal = searchParams.get('modal') === '1';
-  const isOwner = user && product ? user.username === product.author : false;
+  // Prefer stable authorId for ownership checks, fall back to username for legacy content
+  const isOwner =
+    user && product
+      ? (product.authorId ? user._id === product.authorId : user.username === product.author)
+      : false;
 
   useEffect(() => {
     const fetchProduct = async () => {
