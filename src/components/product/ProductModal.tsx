@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import ProductMediaTabs from './ProductMediaTabs';
@@ -122,8 +123,37 @@ export default function ProductModal({
   };
 
   const { user } = useAuth();
+  const router = useRouter();
   const currentUserId = user?._id;
   const authorProfileLink = product?.authorId ? `/user/${product.authorId}` : (product?.author && currentUserId && product.author === user?.username ? '/profile' : undefined);
+
+  const handleAuthorClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!product) return;
+    if (authorProfileLink) {
+      router.push(authorProfileLink);
+      onClose();
+      return;
+    }
+    if (!product.author) return;
+    try {
+      const resp = await fetch(`/api/user/lookup?username=${encodeURIComponent(product.author)}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.success && data.data?.id) {
+          onClose();
+          router.push(`/user/${data.data.id}`);
+        } else {
+          alert('Usuario no encontrado');
+        }
+      } else {
+        alert('Usuario no encontrado');
+      }
+    } catch (error) {
+      console.error('Error looking up user by username:', error);
+      alert('Error buscando usuario');
+    }
+  };
 
   return (
     <>
@@ -186,7 +216,7 @@ export default function ProductModal({
 
                     <div className="flex items-center gap-3 pb-4 border-b border-white/5">
                       {authorProfileLink ? (
-                        <Link href={authorProfileLink} onClick={() => onClose()} title={product.author || 'Usuario'}>
+                        <button onClick={handleAuthorClick} title={product.author || 'Usuario'} className="flex items-center gap-3">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
                               <div className="w-full h-full rounded-full overflow-hidden bg-black">
@@ -214,9 +244,9 @@ export default function ProductModal({
                               </span>
                             </div>
                           </div>
-                        </Link>
+                        </button>
                       ) : (
-                        <div className="flex items-center gap-3">
+                        <button onClick={handleAuthorClick} className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
                             <div className="w-full h-full rounded-full overflow-hidden bg-black">
                               {product.authorAvatar ? (
@@ -234,7 +264,7 @@ export default function ProductModal({
                               {product.author}
                             </span>
                           </div>
-                        </div>
+                        </button>
                       )}
                     </div>
                   </div>

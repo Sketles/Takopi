@@ -3,6 +3,7 @@
 import { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import DefaultCover from './DefaultCover';
 
 // Interfaces para tipado
@@ -214,7 +215,33 @@ const ContentCard = memo(function ContentCard({
   const { user } = useAuth();
   const currentUserId = user?._id;
   const displayAuthor = author || (authorId && currentUserId && authorId === currentUserId ? user.username : 'Anónimo');
+  const router = useRouter();
   const authorProfileLink = authorId ? `/user/${authorId}` : (currentUserId && author === user?.username ? '/profile' : undefined);
+
+  const handleAuthorClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (authorProfileLink) {
+      router.push(authorProfileLink);
+      return;
+    }
+    if (!author) return;
+    try {
+      const resp = await fetch(`/api/user/lookup?username=${encodeURIComponent(author)}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.success && data.data?.id) {
+          router.push(`/user/${data.data.id}`);
+        } else {
+          alert('Usuario no encontrado');
+        }
+      } else {
+        alert('Usuario no encontrado');
+      }
+    } catch (error) {
+      console.error('Error looking up user by username:', error);
+      alert('Error buscando usuario');
+    }
+  };
 
   return (
     <div
@@ -289,7 +316,7 @@ const ContentCard = memo(function ContentCard({
           {/* Autor */}
           <div className="flex items-center gap-2 min-w-0">
             {authorProfileLink ? (
-              <Link href={authorProfileLink} onClick={(e) => e.stopPropagation()} className="flex items-center gap-2 min-w-0">
+              <button onClick={handleAuthorClick} className="flex items-center gap-2 min-w-0" title={displayAuthor}>
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
                   <div className="w-full h-full rounded-full overflow-hidden bg-[#0f0f0f]">
                     {authorAvatar ? (
@@ -307,9 +334,9 @@ const ContentCard = memo(function ContentCard({
                     {author || 'Anónimo'}
                   </span>
                 </div>
-              </Link>
+              </button>
             ) : (
-              <>
+              <button onClick={handleAuthorClick} className="flex items-center gap-2 min-w-0" title={displayAuthor}>
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
                   <div className="w-full h-full rounded-full overflow-hidden bg-[#0f0f0f]">
                     {authorAvatar ? (
@@ -324,10 +351,10 @@ const ContentCard = memo(function ContentCard({
                 <div className="flex flex-col truncate">
                   <span className="text-xs text-gray-400">Creado por</span>
                   <span className="text-xs font-medium text-white truncate hover:text-purple-400 transition-colors">
-                    {author || 'Anónimo'}
+                    {displayAuthor}
                   </span>
                 </div>
-              </>
+              </button>
             )}
           </div>
 
