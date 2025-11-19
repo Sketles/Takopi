@@ -72,8 +72,7 @@ export default function ProductModal({
   onShare
 }: ProductModalProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+  const [activeSection, setActiveSection] = useState<'details' | 'comments'>('details');
 
   // Cerrar modal con tecla Escape
   useEffect(() => {
@@ -108,7 +107,6 @@ export default function ProductModal({
       onClose();
     } catch (error) {
       console.error('Error in handleDelete:', error);
-      // No cerrar el modal si hay error
     }
   };
 
@@ -121,175 +119,186 @@ export default function ProductModal({
     }
   };
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    onLike?.(product);
-  };
-
-  const handleSave = () => {
-    setIsSaved(!isSaved);
-    onSave?.(product);
-  };
-
-  const handleShare = () => {
-    onShare?.(product);
-  };
-
-  const handleBuy = () => {
-    onBuy?.(product);
-  };
-
-  const handleAddToBox = () => {
-    onAddToBox?.(product);
-  };
-
-
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* Backdrop */}
-        <div 
-          className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+        {/* Backdrop con blur intenso */}
+        <div
+          className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300"
           onClick={onClose}
         />
-        
-        {/* Modal */}
-        <div className="relative w-full max-w-6xl bg-gradient-to-br from-gray-900/95 to-purple-900/95 backdrop-blur-xl rounded-2xl border border-purple-500/30 shadow-2xl max-h-[90vh] overflow-hidden flex flex-col custom-scrollbar">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-purple-500/20">
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold text-white truncate">{product.title || 'Sin título'}</h1>
-              <span className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs rounded-full border border-purple-500/30">
-                {product.contentType || 'Sin tipo'}
-              </span>
+
+        {/* Modal Container */}
+        <div className="relative w-full max-w-7xl bg-[#0f0f0f] rounded-3xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col border border-white/5 animate-scale-in">
+
+          {/* Header Minimalista */}
+          <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-6 pointer-events-none">
+            <div className="pointer-events-auto">
+              {/* Espacio para breadcrumbs o back button si fuera necesario */}
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 bg-gray-500/20 hover:bg-gray-500/30 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-300 transition-colors"
+              className="pointer-events-auto w-10 h-10 bg-black/50 hover:bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white/70 hover:text-white transition-all duration-300 border border-white/5 hover:border-white/20 group"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          {/* Content */}
+          {/* Content Grid */}
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4">
-              {/* Columna izquierda - Media */}
-              <div className="lg:col-span-2 space-y-4">
-                <ProductMediaTabs product={product} isOwner={isOwner} />
-                
-                {/* Descripción */}
-                <div className="bg-gradient-to-br from-gray-800/40 to-purple-900/40 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
-                  <h3 className="text-base font-semibold text-white mb-3">Descripción</h3>
-                  <DescriptionClamp
-                    description={product.description || 'Sin descripción'}
-                    shortDescription={product.shortDescription || product.description || 'Sin descripción'}
-                    maxLines={3}
-                    showViewMore={true}
-                  />
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 min-h-full">
 
-                {/* Archivos */}
-                {product.files && product.files.length > 0 && (
-                  <div className="bg-gradient-to-br from-gray-800/40 to-purple-900/40 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
-                    <h3 className="text-base font-semibold text-white mb-3">Archivos incluidos</h3>
-                    <div className="space-y-2">
-                      {product.files.slice(0, 3).map((file, index) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-gray-700/30 rounded-lg">
-                          <span className="text-sm">
-                            {file.type?.startsWith('image/') ? '🖼️' : 
-                             file.type?.startsWith('video/') ? '🎬' :
-                             file.type?.startsWith('audio/') ? '🎵' :
-                             file.type?.includes('gltf') || file.type?.includes('glb') ? '🧩' : '📁'}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-white text-xs font-medium truncate">{file.name}</div>
-                            <div className="text-gray-400 text-xs">
-                              {file.type?.split('/')[1]?.toUpperCase()} • {file.size ? (file.size / 1024 / 1024).toFixed(1) : '0'} MB
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Comentarios */}
-                <div className="bg-gradient-to-br from-gray-800/40 to-purple-900/40 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
-                  <h3 className="text-base font-semibold text-white mb-3">Comentarios</h3>
-                  <CommentsSection
-                    productId={product.id || ''}
-                    isOwner={isOwner}
-                    currentUserId={currentUserId}
-                    onAddComment={(text) => console.log('Agregar comentario:', text)}
-                    onLikeComment={(commentId) => console.log('Like comentario:', commentId)}
-                  />
-                </div>
-
-                {/* Resumen compacto */}
-                <div className="bg-gradient-to-br from-gray-800/40 to-purple-900/40 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
-                  <h3 className="text-base font-semibold text-white mb-3">Detalles</h3>
-                  <div className="space-y-3">
-                    {/* Tags */}
-                    {((product.tags && product.tags.length > 0) || (product.customTags && product.customTags.length > 0)) && (
-                      <div>
-                        <h4 className="text-xs font-medium text-gray-400 mb-2">Etiquetas</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {[...(product.tags || []), ...(product.customTags || [])].slice(0, 6).map((tag, index) => (
-                            <span
-                              key={index}
-                              className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs rounded-full border border-purple-500/30"
-                            >
-                              #{tag}
-                            </span>
-                          ))}
-                          {([...(product.tags || []), ...(product.customTags || [])].length > 6) && (
-                            <span className="px-2 py-1 bg-gray-500/20 text-gray-400 text-xs rounded-full">
-                              +{([...(product.tags || []), ...(product.customTags || [])].length - 6)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Información adicional */}
-                    <div className="grid grid-cols-2 gap-3 text-xs">
-                      <div>
-                        <span className="text-gray-400">Creado:</span>
-                        <span className="text-white ml-1">
-                          {product.createdAt ? new Date(product.createdAt).toLocaleDateString('es-CL') : 'No disponible'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Actualizado:</span>
-                        <span className="text-white ml-1">
-                          {product.updatedAt ? new Date(product.updatedAt).toLocaleDateString('es-CL') : 'No disponible'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+              {/* Columna Izquierda: Media (7 columnas) */}
+              <div className="lg:col-span-8 bg-[#050505] relative flex flex-col">
+                <div className="flex-1 relative min-h-[400px] lg:min-h-[600px]">
+                  <ProductMediaTabs product={product} isOwner={isOwner} className="h-full border-none rounded-none bg-transparent" />
                 </div>
               </div>
 
-              {/* Columna derecha - Panel de compra */}
-              <div className="lg:col-span-1">
-                <div className="sticky top-4">
+              {/* Columna Derecha: Info & Actions (5 columnas) */}
+              <div className="lg:col-span-4 bg-[#0f0f0f] border-l border-white/5 flex flex-col h-full max-h-[90vh] overflow-y-auto custom-scrollbar">
+
+                {/* Scrollable Content */}
+                <div className="p-6 space-y-8">
+
+                  {/* Título y Autor */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="px-3 py-1 bg-white/5 text-white/60 text-xs font-medium rounded-full border border-white/5 uppercase tracking-wider">
+                        {product.contentType}
+                      </span>
+                      {product.isFree && (
+                        <span className="px-3 py-1 bg-green-500/10 text-green-400 text-xs font-medium rounded-full border border-green-500/20 uppercase tracking-wider">
+                          Gratis
+                        </span>
+                      )}
+                    </div>
+
+                    <h1 className="text-3xl font-bold text-white leading-tight">{product.title}</h1>
+
+                    <div className="flex items-center gap-3 pb-4 border-b border-white/5">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
+                        <div className="w-full h-full rounded-full overflow-hidden bg-black">
+                          {product.authorAvatar ? (
+                            <img src={product.authorAvatar} alt={product.author} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">
+                              {product.author.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm text-white/40 leading-none mb-1">Creado por</span>
+                        <span className="text-sm font-medium text-white hover:text-purple-400 transition-colors cursor-pointer">
+                          {product.author}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Purchase Panel (Mobile/Desktop integrated) */}
                   <PurchasePanel
                     product={product}
                     isOwner={isOwner}
                     onEdit={handleEdit}
-                    onViewStats={() => console.log('Ver estadísticas')}
-                    onManageFiles={() => console.log('Gestionar archivos')}
-                    onBuy={handleBuy}
-                    onAddToBox={handleAddToBox}
-                    onLike={handleLike}
-                    onSave={handleSave}
-                    onShare={handleShare}
+                    onBuy={onBuy}
+                    onAddToBox={onAddToBox}
+                    onLike={onLike}
+                    onSave={onSave}
+                    onShare={onShare}
+                    className="bg-white/5 border border-white/5 rounded-2xl p-5 shadow-xl"
                   />
+
+                  {/* Tabs: Detalles / Comentarios */}
+                  <div className="space-y-4">
+                    <div className="flex border-b border-white/10">
+                      <button
+                        onClick={() => setActiveSection('details')}
+                        className={`pb-3 text-sm font-medium transition-colors relative ${activeSection === 'details' ? 'text-white' : 'text-white/40 hover:text-white/70'
+                          }`}
+                      >
+                        Detalles
+                        {activeSection === 'details' && (
+                          <div className="absolute bottom-0 left-0 w-full h-0.5 bg-purple-500 rounded-full"></div>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setActiveSection('comments')}
+                        className={`ml-6 pb-3 text-sm font-medium transition-colors relative ${activeSection === 'comments' ? 'text-white' : 'text-white/40 hover:text-white/70'
+                          }`}
+                      >
+                        Comentarios
+                        {activeSection === 'comments' && (
+                          <div className="absolute bottom-0 left-0 w-full h-0.5 bg-purple-500 rounded-full"></div>
+                        )}
+                      </button>
+                    </div>
+
+                    {activeSection === 'details' ? (
+                      <div className="space-y-6 animate-fade-in">
+                        {/* Descripción */}
+                        <div className="prose prose-invert prose-sm max-w-none text-gray-300">
+                          <DescriptionClamp
+                            description={product.description}
+                            shortDescription={product.shortDescription || product.description}
+                            maxLines={6}
+                            showViewMore={true}
+                          />
+                        </div>
+
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-2">
+                          {[...(product.tags || []), ...(product.customTags || [])].map((tag, i) => (
+                            <span key={i} className="text-xs text-white/50 hover:text-white/80 transition-colors cursor-pointer">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* File Info */}
+                        {product.files && product.files.length > 0 && (
+                          <div className="bg-black/20 rounded-xl p-4 border border-white/5">
+                            <h3 className="text-xs font-bold text-white/40 uppercase tracking-wider mb-3">Archivos Incluidos</h3>
+                            <div className="space-y-2">
+                              {product.files.slice(0, 3).map((file, idx) => (
+                                <div key={idx} className="flex items-center justify-between text-sm">
+                                  <div className="flex items-center gap-2 text-white/80 truncate">
+                                    <span className="opacity-50">📄</span>
+                                    <span className="truncate">{file.name}</span>
+                                  </div>
+                                  <span className="text-white/30 text-xs whitespace-nowrap">
+                                    {(file.size / 1024 / 1024).toFixed(1)} MB
+                                  </span>
+                                </div>
+                              ))}
+                              {product.files.length > 3 && (
+                                <div className="text-xs text-white/30 pt-1">
+                                  + {product.files.length - 3} archivos más
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="animate-fade-in">
+                        <CommentsSection
+                          productId={product.id}
+                          isOwner={isOwner}
+                          currentUserId={currentUserId}
+                          onAddComment={(text) => console.log('Comment:', text)}
+                          onLikeComment={(id) => console.log('Like:', id)}
+                        />
+                      </div>
+                    )}
+                  </div>
+
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -300,7 +309,8 @@ export default function ProductModal({
         <ProductEditModal
           product={{
             ...product,
-            files: (product.files || []) as any[]
+            files: (product.files || []) as any[],
+            customTags: product.customTags || []
           }}
           isOpen={isEditModalOpen}
           onSave={handleSaveProduct}

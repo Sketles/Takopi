@@ -17,22 +17,22 @@ interface ContentCardProps {
   currency?: string;
   image?: string;
   coverImage?: string;
-  
+
   // Metadatos
   description?: string;
   shortDescription?: string;
   tags?: string[];
-  
+
   // Estadísticas
   likes?: number;
   views?: number;
   downloads?: number;
   favorites?: number;
-  
+
   // Fechas
   createdAt?: string | Date;
   updatedAt?: string | Date;
-  
+
   // Configuración de la tarjeta
   variant?: 'default' | 'compact' | 'featured';
   showPrice?: boolean;
@@ -40,18 +40,18 @@ interface ContentCardProps {
   showTags?: boolean;
   showAuthor?: boolean;
   showDescription?: boolean;
-  
+
   // Eventos
   onClick?: () => void;
   onLike?: () => void;
   onSave?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
-  
+
   // Estados
   isLiked?: boolean;
   isSaved?: boolean;
-  
+
   // Estilos personalizados
   className?: string;
   imageClassName?: string;
@@ -84,18 +84,18 @@ const ContentCard = memo(function ContentCard({
   showTags = true,
   showAuthor = true,
   showDescription = false,
-      onClick,
-      onLike,
-      onSave,
-      onEdit,
-      onDelete,
-      isLiked = false,
-      isSaved = false,
+  onClick,
+  onLike,
+  onSave,
+  onEdit,
+  onDelete,
+  isLiked = false,
+  isSaved = false,
   className = '',
   imageClassName = ''
 }: ContentCardProps) {
   const [imageError, setImageError] = useState(false);
-  
+
   // Estados para el sistema de likes
   const [currentLikes, setCurrentLikes] = useState(likes);
   const [currentIsLiked, setCurrentIsLiked] = useState(isLiked);
@@ -104,7 +104,7 @@ const ContentCard = memo(function ContentCard({
   // Función para manejar el like
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Evitar que se abra el modal
-    
+
     const token = localStorage.getItem('takopi_token');
     if (!token) {
       alert('Debes iniciar sesión para dar like');
@@ -130,7 +130,7 @@ const ContentCard = memo(function ContentCard({
       if (result.success) {
         setCurrentIsLiked(!currentIsLiked);
         setCurrentLikes(prev => currentIsLiked ? prev - 1 : prev + 1);
-        
+
         // Llamar al callback si existe
         if (onLike) {
           onLike();
@@ -149,17 +149,17 @@ const ContentCard = memo(function ContentCard({
   // Función para obtener el icono del tipo de contenido
   const getContentTypeIcon = (type: string) => {
     if (type === 'OBS') {
-        return (
-          <img
-            src="/logos/OBS_Studio_logo.svg"
-            alt="OBS"
-            className="w-4 h-4 object-contain filter brightness-0 invert"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-            }}
-          />
-        );
+      return (
+        <img
+          src="/logos/OBS_Studio_logo.svg"
+          alt="OBS"
+          className="w-4 h-4 object-contain filter brightness-0 invert"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+          }}
+        />
+      );
     }
 
     const icons: { [key: string]: string } = {
@@ -168,6 +168,7 @@ const ContentCard = memo(function ContentCard({
       'musica': '🎵',
       'texturas': '🖼️',
       'animaciones': '🎬',
+      'OBS': 'OBS',
       'colecciones': '📦'
     };
     return icons[type] || '📁';
@@ -190,13 +191,13 @@ const ContentCard = memo(function ContentCard({
   // Función para formatear precio simple y elegante (memoizada)
   const formatPrice = useCallback((price: string | number, isFree: boolean, currency: string = 'CLP') => {
     if (isFree) return 'GRATIS';
-    
+
     const numPrice = typeof price === 'string' ? parseFloat(price) : Number(price);
-    
+
     if (isNaN(numPrice) || numPrice <= 0) {
       return 'Consultar';
     }
-    
+
     return `$${numPrice.toLocaleString('es-CL')}`;
   }, []);
 
@@ -205,177 +206,107 @@ const ContentCard = memo(function ContentCard({
     return coverImage || image;
   }, [coverImage, image]);
 
-  // Configuración de variantes
-  const variantClasses = {
-    default: {
-      container: 'group bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-md rounded-2xl border border-gray-700/40 hover:border-purple-500/60 transition-all duration-300 overflow-hidden hover:shadow-xl hover:shadow-purple-500/20 cursor-pointer',
-      image: 'aspect-square',
-      padding: 'p-4'
-    },
-    compact: {
-      container: 'group bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-md rounded-xl border border-gray-700/30 hover:border-purple-500/50 transition-all duration-300 overflow-hidden hover:shadow-lg hover:shadow-purple-500/15 cursor-pointer',
-      image: 'aspect-video',
-      padding: 'p-3'
-    },
-    featured: {
-      container: 'group bg-gradient-to-br from-purple-900/30 to-blue-900/30 backdrop-blur-lg rounded-2xl border border-purple-500/40 hover:border-purple-400/60 transition-all duration-300 overflow-hidden hover:shadow-2xl hover:shadow-purple-500/30 cursor-pointer transform hover:scale-105',
-      image: 'aspect-video',
-      padding: 'p-4'
-    }
-  };
-
-  const currentVariant = variantClasses[variant];
-
   return (
     <div
-      className={`group ${currentVariant.container} flex flex-col ${className}`}
+      className={`group relative flex flex-col bg-[#0f0f0f] border border-white/5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(168,85,247,0.2)] hover:border-purple-500/30 ${className}`}
       onClick={onClick}
     >
       {/* Imagen de la creación */}
-      <div className={`${currentVariant.image} relative overflow-hidden ${imageClassName}`}>
+      <div className={`relative aspect-[4/3] overflow-hidden ${imageClassName}`}>
+        {/* Overlay gradiente al hacer hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
+
         {/* Imagen principal o fallback */}
         {getMainImage && !imageError && !getMainImage?.includes('/placeholder-') ? (
           <img
             src={getMainImage}
             alt={title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             onError={() => setImageError(true)}
           />
         ) : (
           <DefaultCover
             contentType={contentType || 'modelos3d'}
-            className="w-full h-full group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full transition-transform duration-700 group-hover:scale-110"
           />
         )}
 
-        {/* Overlay superior izquierdo - Tipo de contenido */}
-        <div className="absolute top-3 left-3 px-3 py-1.5 bg-black/80 backdrop-blur-md rounded-xl text-white text-xs font-medium flex items-center gap-1.5 shadow-lg border border-white/10">
-          <span>{getContentTypeIcon(contentType)}</span>
-          <span>{getContentTypeName(contentType)}</span>
+        {/* Badge de Tipo de Contenido (Flotante) */}
+        <div className="absolute top-4 left-4 z-20">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-md border border-white/10 rounded-full shadow-lg">
+            <span className="text-sm">{getContentTypeIcon(contentType)}</span>
+            <span className="text-xs font-medium text-white/90 capitalize">{contentType}</span>
+          </div>
         </div>
 
-        {/* Overlay inferior - Estadísticas (solo si showStats es true) */}
-        {showStats && (
-          <div className="absolute bottom-3 left-3 right-3">
-            <div className="flex items-center justify-between text-white text-xs">
-              <div className="flex items-center gap-4 bg-black/80 backdrop-blur-md rounded-xl px-3 py-2 shadow-lg border border-white/10">
-                <div className="flex items-center gap-1">
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
-                  </svg>
-                  <span>{currentLikes}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  <span>0</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  <span>{views}</span>
-                </div>
-              </div>
-              
-              {/* Botón de corazón estilo Pinterest */}
-              <button
-                onClick={handleLike}
-                disabled={isLikeLoading}
-                className={`p-2 rounded-full transition-all duration-200 ${
-                  currentIsLiked 
-                    ? 'bg-red-500 hover:bg-red-600 text-white' 
-                    : 'bg-black/80 hover:bg-black/90 text-white hover:text-red-400'
-                } ${isLikeLoading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'}`}
-                title={currentIsLiked ? 'Quitar like' : 'Dar like'}
-              >
-                {isLikeLoading ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  <svg 
-                    className={`w-4 h-4 transition-all duration-200 ${
-                      currentIsLiked ? 'fill-current scale-110' : 'fill-none stroke-current stroke-2'
-                    }`} 
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
-
+        {/* Botón de Like (Flotante) */}
+        <button
+          onClick={handleLike}
+          disabled={isLikeLoading}
+          className={`absolute top-4 right-4 z-20 p-2 rounded-full backdrop-blur-md border transition-all duration-300 ${currentIsLiked
+              ? 'bg-red-500/20 border-red-500/50 text-red-500'
+              : 'bg-black/40 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
+            }`}
+        >
+          {isLikeLoading ? (
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          ) : (
+            <svg
+              className={`w-5 h-5 transition-transform duration-300 ${currentIsLiked ? 'fill-current scale-110' : 'fill-none stroke-current'}`}
+              viewBox="0 0 24 24" strokeWidth="2"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+            </svg>
+          )}
+        </button>
       </div>
 
-      {/* Información de la creación */}
-      <div className={`${currentVariant.padding} flex flex-col flex-1`}>
+      {/* Contenido de la tarjeta */}
+      <div className="flex flex-col flex-1 p-5 relative">
         {/* Título */}
-        <h3 className="text-white font-semibold text-lg mb-3 group-hover:text-purple-300 transition-colors duration-300 flex-shrink-0 overflow-hidden" style={{
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical'
-        }}>
+        <h3 className="text-lg font-bold text-white mb-2 line-clamp-1 group-hover:text-purple-400 transition-colors">
           {title || 'Sin título'}
         </h3>
 
-        {/* Descripción breve opcional */}
-        {showDescription && shortDescription && (
-          <p className="text-gray-300 text-sm mb-2 flex-shrink-0 overflow-hidden" style={{
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical'
-          }}>
-            {shortDescription}
+        {/* Descripción */}
+        {showDescription && (
+          <p className="text-sm text-gray-400 line-clamp-2 mb-4 leading-relaxed">
+            {description || shortDescription || 'Sin descripción disponible.'}
           </p>
         )}
 
-        {/* Spacer para empujar el precio hacia abajo */}
-        <div className="flex-1"></div>
-
-            {/* Información mínima - autor y precio (siempre en la parte inferior) */}
-            <div className="flex items-center justify-between text-xs text-gray-400 flex-shrink-0">
-              {/* Información del autor */}
-              <div className="flex items-center gap-2">
-                {/* Avatar del autor */}
-                <div className="w-6 h-6 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                  {authorAvatar ? (
-                    <img
-                      src={authorAvatar}
-                      alt={author || 'Autor'}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        // Si falla la imagen, mostrar la inicial
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                  ) : null}
-                  {author ? (
-                    <span className={`text-white text-xs font-bold ${authorAvatar ? 'hidden' : ''}`}>
-                      {author.charAt(0).toUpperCase()}
-                    </span>
-                  ) : (
-                    <span className={`text-white text-xs font-bold ${authorAvatar ? 'hidden' : ''}`}>?</span>
-                  )}
-                </div>
-                {/* Nombre de usuario */}
-                <span className="text-gray-300 font-medium text-xs">
-                  {author || 'Anónimo'}
-                </span>
+        <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between gap-4">
+          {/* Autor */}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
+              <div className="w-full h-full rounded-full overflow-hidden bg-[#0f0f0f]">
+                {authorAvatar ? (
+                  <img src={authorAvatar} alt={author} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">
+                    {author?.[0]?.toUpperCase() || '?'}
+                  </div>
+                )}
               </div>
-              
-              {/* Precio simple y elegante */}
-              {showPrice && (
-                <div className="px-3 py-1.5 bg-black/80 backdrop-blur-sm rounded-lg border border-white/20 shadow-lg">
-                  <span className="text-white font-semibold text-sm">
-                    {formatPrice(price, isFree, currency)}
-                  </span>
-                </div>
-              )}
             </div>
+            <div className="flex flex-col truncate">
+              <span className="text-xs text-gray-400">Creado por</span>
+              <span className="text-xs font-medium text-white truncate hover:text-purple-400 transition-colors">
+                {author || 'Anónimo'}
+              </span>
+            </div>
+          </div>
+
+          {/* Precio (Espectacular) */}
+          {showPrice && (
+            <div className={`flex-shrink-0 px-4 py-1.5 rounded-lg font-bold text-sm shadow-lg transition-all duration-300 ${isFree
+                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                : 'bg-white text-black group-hover:bg-purple-500 group-hover:text-white group-hover:shadow-[0_0_15px_rgba(168,85,247,0.4)]'
+              }`}>
+              {formatPrice(price, isFree, currency)}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -409,7 +340,7 @@ export const useContentCard = () => {
       updatedAt: data.updatedAt,
       isLiked: data.isLiked || false,
       ...options,
-      showDescription: options.showDescription ?? false
+      showDescription: options.showDescription ?? true // Default to showing description in new design
     };
   }, []);
 

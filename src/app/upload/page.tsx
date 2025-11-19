@@ -597,7 +597,7 @@ export default function UploadPage() {
 
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-4 pt-32 pb-8">
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold mb-4">

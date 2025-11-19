@@ -6,283 +6,331 @@ import { useState } from 'react';
 
 export default function Printing3DLandingPage() {
   const [activeFeature, setActiveFeature] = useState(0);
+  const [activeMaterial, setActiveMaterial] = useState(0);
 
   const features = [
     {
       icon: '🖨️',
       title: 'Impresión Profesional',
-      description: 'Tecnología FDM y Resina de última generación para acabados perfectos'
+      description: 'Tecnología FDM y Resina de última generación. Calibración láser para tolerancias de ±0.1mm.',
+      detail: 'Utilizamos granjas de impresoras Bambu Lab X1 Carbon y Formlabs para asegurar consistencia industrial.'
     },
     {
       icon: '🎨',
       title: 'Múltiples Materiales',
-      description: 'PLA, ABS, PETG, Resina, TPU y más opciones para tu proyecto'
+      description: 'PLA, ABS, PETG, Resina, TPU, Nylon-CF y más. Asesoría experta para tu aplicación.',
+      detail: 'Desde prototipos visuales hasta piezas finales de ingeniería con fibra de carbono.'
     },
     {
       icon: '📐',
       title: 'Sin Límites de Tamaño',
-      description: 'Desde miniaturas hasta piezas de 30cm, imprimimos cualquier tamaño'
+      description: 'Volumen de construcción hasta 300x300x400mm en una pieza. Ensamblaje para gran formato.',
+      detail: 'Técnicas avanzadas de corte y unión para proyectos de escala humana.'
     },
     {
       icon: '🚚',
       title: 'Envío a Domicilio',
-      description: 'Despacho a todo Chile o retira en nuestra ubicación'
+      description: 'Despacho a todo Chile en 24-48hrs. Empaque seguro anti-impacto.',
+      detail: 'Seguimiento en tiempo real de tu pedido desde la producción hasta tu puerta.'
     }
   ];
 
   const materials = [
-    { name: 'PLA', color: 'from-green-400 to-emerald-600', uses: 'Decoración, prototipos, miniaturas' },
-    { name: 'ABS', color: 'from-blue-400 to-cyan-600', uses: 'Piezas funcionales, resistencia térmica' },
-    { name: 'PETG', color: 'from-purple-400 to-pink-600', uses: 'Durabilidad, uso exterior' },
-    { name: 'Resina', color: 'from-orange-400 to-red-600', uses: 'Alta precisión, joyería, miniaturas' },
-    { name: 'TPU', color: 'from-yellow-400 to-amber-600', uses: 'Piezas flexibles, protección' }
+    { 
+      name: 'PLA+', 
+      type: 'Estándar',
+      description: 'El estándar de oro para prototipos y figuras. Biodegradable, rígido y con excelente acabado superficial.',
+      finish: 'Semi-brillante',
+      techSpecs: { temp: '60°C', strength: 7, flexibility: 3, detail: 9 },
+      bestFor: ['Prototipos rápidos', 'Figuras decorativas', 'Maquetas arquitectónicas'],
+      color: 'from-green-400 to-emerald-600',
+      sphereStyle: 'bg-gradient-to-br from-green-400 via-emerald-500 to-green-900 shadow-[inset_-10px_-10px_20px_rgba(0,0,0,0.5),0_10px_20px_rgba(0,0,0,0.3)]'
+    },
+    { 
+      name: 'PETG', 
+      type: 'Ingeniería',
+      description: 'Lo mejor de dos mundos: la facilidad del PLA con la resistencia del ABS. Resistente a químicos y humedad.',
+      finish: 'Brillante / Translucido',
+      techSpecs: { temp: '80°C', strength: 8, flexibility: 5, detail: 8 },
+      bestFor: ['Piezas mecánicas', 'Contenedores de líquidos', 'Uso exterior'],
+      color: 'from-blue-400 to-cyan-600',
+      sphereStyle: 'bg-gradient-to-br from-blue-300/80 via-cyan-500/80 to-blue-900/90 backdrop-blur-md shadow-[inset_-10px_-10px_20px_rgba(0,0,0,0.5),0_10px_20px_rgba(0,0,0,0.3)] border border-white/20'
+    },
+    { 
+      name: 'ABS+', 
+      type: 'Industrial',
+      description: 'Material robusto y duradero. Soporta altas temperaturas y puede ser post-procesado (lijado/pintado) fácilmente.',
+      finish: 'Mate',
+      techSpecs: { temp: '100°C', strength: 9, flexibility: 4, detail: 7 },
+      bestFor: ['Piezas automotrices', 'Carcasas electrónicas', 'Engranajes'],
+      color: 'from-red-400 to-orange-600',
+      sphereStyle: 'bg-gradient-to-br from-red-400 via-orange-500 to-red-900 shadow-[inset_-5px_-5px_15px_rgba(0,0,0,0.6),0_10px_20px_rgba(0,0,0,0.4)] brightness-90'
+    },
+    { 
+      name: 'TPU 95A', 
+      type: 'Flexible',
+      description: 'Elastómero termoplástico flexible y resistente a la abrasión. Ideal para piezas que necesitan absorber impactos.',
+      finish: 'Gomoso / Suave',
+      techSpecs: { temp: '50°C', strength: 6, flexibility: 10, detail: 6 },
+      bestFor: ['Fundas de celular', 'Sellos y juntas', 'Amortiguadores'],
+      color: 'from-yellow-400 to-amber-600',
+      sphereStyle: 'bg-gradient-to-br from-yellow-400 via-amber-500 to-yellow-900 shadow-[inset_-10px_-10px_20px_rgba(0,0,0,0.5),0_10px_20px_rgba(0,0,0,0.3)]'
+    },
+    { 
+      name: 'Resina 8K', 
+      type: 'Alta Precisión',
+      description: 'Fotopolímero curado por luz UV. Ofrece el nivel de detalle más alto posible, invisible al ojo humano.',
+      finish: 'Liso Perfecto',
+      techSpecs: { temp: '45°C', strength: 5, flexibility: 2, detail: 10 },
+      bestFor: ['Joyería', 'Miniaturas D&D', 'Odontología'],
+      color: 'from-purple-400 to-pink-600',
+      sphereStyle: 'bg-gradient-to-br from-purple-300 via-pink-500 to-purple-900 shadow-[inset_-10px_-10px_30px_rgba(255,255,255,0.2),0_15px_30px_rgba(0,0,0,0.4)] relative overflow-hidden after:content-[""] after:absolute after:top-2 after:left-4 after:w-8 after:h-4 after:bg-white/40 after:blur-md after:rotate-[-45deg] after:rounded-full'
+    }
   ];
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
-        {/* Hero Section con Animación */}
-        <div className="relative overflow-hidden">
-          {/* Background Animated */}
-          <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(147,51,234,0.4),transparent_50%)] animate-pulse"></div>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(59,130,246,0.3),transparent_50%)] animate-pulse" style={{ animationDelay: '1s' }}></div>
-          </div>
+      <div className="min-h-screen bg-[#0a0a0a] text-white selection:bg-purple-500/30">
+        {/* Hero Section */}
+        <div className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+          {/* Dynamic Background */}
+          <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a0a0a]/50 to-[#0a0a0a]"></div>
+          
+          {/* Orbs */}
+          <div className="absolute top-20 left-20 w-72 h-72 bg-purple-600/30 rounded-full blur-[100px] animate-pulse"></div>
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
 
-          {/* Floating 3D Printer Icon */}
-          <div className="absolute top-1/4 right-10 text-8xl opacity-10 animate-bounce" style={{ animationDuration: '3s' }}>
-            🖨️
-          </div>
+          <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 animate-fade-in-up">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <span className="text-sm font-medium text-gray-300">Servicio de Impresión Activo</span>
+            </div>
 
-          <div className="relative z-10 max-w-7xl mx-auto px-4 py-20 md:py-32">
-            <div className="text-center space-y-8">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 rounded-full backdrop-blur-sm">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
+            <h1 className="text-6xl md:text-8xl font-bold tracking-tighter mb-8 bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-gray-500 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+              Materializa tus<br />
+              <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Ideas Digitales</span>
+            </h1>
+
+            <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              Servicio de impresión 3D industrial al alcance de todos. 
+              Calidad premium, materiales de ingeniería y atención personalizada.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+              <Link
+                href="/impresion-3d/configurar"
+                className="group relative px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:bg-gray-100 transition-all duration-300 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-blue-400/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                <span className="relative flex items-center gap-2">
+                  Cotizar Ahora
+                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                 </span>
-                <span className="text-purple-300 text-sm font-semibold">Próximamente Q3 2025</span>
-              </div>
-
-              {/* Title */}
-              <h1 className="text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight">
-                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
-                  Impresión 3D
-                </span>
-              </h1>
-
-              <p className="text-xl sm:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                Convierte tus modelos digitales en piezas físicas de alta calidad.
-                <span className="text-purple-400 font-semibold"> Elige, configura y recibe en tu casa.</span>
-              </p>
-
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
-                <Link
-                  href="/impresion-3d/configurar"
-                  className="group px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-500 transform hover:scale-105 shadow-lg hover:shadow-purple-500/50 flex items-center gap-3"
-                >
-                  <span>Comenzar Impresión</span>
-                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </Link>
-                <button
-                  onClick={() => document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="px-8 py-4 border-2 border-purple-400 text-purple-400 rounded-xl font-semibold hover:bg-purple-400 hover:text-white transition-all duration-300 transform hover:scale-105"
-                >
-                  ¿Cómo Funciona?
-                </button>
-              </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-12 max-w-4xl mx-auto">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-purple-400 mb-1">5+</div>
-                  <div className="text-sm text-gray-400">Materiales</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-400 mb-1">24h</div>
-                  <div className="text-sm text-gray-400">Producción</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-pink-400 mb-1">100%</div>
-                  <div className="text-sm text-gray-400">Calidad</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-orange-400 mb-1">Chile</div>
-                  <div className="text-sm text-gray-400">Todo el país</div>
-                </div>
-              </div>
+              </Link>
+              <button 
+                onClick={() => document.getElementById('materiales')?.scrollIntoView({ behavior: 'smooth' })}
+                className="px-8 py-4 rounded-full border border-white/20 text-white hover:bg-white/5 transition-all font-medium backdrop-blur-sm"
+              >
+                Explorar Materiales
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Features Section */}
-        <section id="como-funciona" className="py-20 bg-gradient-to-b from-transparent to-gray-900/50">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl sm:text-5xl font-bold mb-4">
-                <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                  ¿Cómo Funciona?
-                </span>
-              </h2>
-              <p className="text-gray-300 text-lg">Simple, rápido y profesional</p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {features.map((feature, index) => (
-                <div
-                  key={index}
-                  className="group relative p-8 bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-xl rounded-2xl border border-purple-500/20 hover:border-purple-400/50 transition-all duration-500 transform hover:scale-105 cursor-pointer"
-                  onMouseEnter={() => setActiveFeature(index)}
-                >
-                  {/* Glow effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-blue-600/0 group-hover:from-purple-600/10 group-hover:to-blue-600/10 rounded-2xl transition-all duration-500"></div>
-
-                  <div className="relative z-10">
-                    <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">
-                      {feature.icon}
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-3 group-hover:text-purple-300 transition-colors">
-                      {feature.title}
-                    </h3>
-                    <p className="text-gray-400 leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
-
-                  {/* Step number */}
-                  <div className="absolute top-4 right-4 w-8 h-8 bg-purple-600/20 backdrop-blur-sm rounded-full flex items-center justify-center text-purple-400 font-bold text-sm border border-purple-500/30">
-                    {index + 1}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Materials Section */}
-        <section className="py-20">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl sm:text-5xl font-bold mb-4">
-                <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  Materiales Disponibles
-                </span>
-              </h2>
-              <p className="text-gray-300 text-lg">Elige el material perfecto para tu proyecto</p>
-            </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
-              {materials.map((material, index) => (
-                <div
-                  key={index}
-                  className="group relative p-6 bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm rounded-2xl border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 transform hover:scale-105"
-                >
-                  {/* Material color indicator */}
-                  <div className={`w-full h-2 bg-gradient-to-r ${material.color} rounded-full mb-4`}></div>
-
-                  <h3 className="text-2xl font-bold text-white mb-2">{material.name}</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">{material.uses}</p>
-
-                  {/* Hover badge */}
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="px-2 py-1 bg-purple-600 rounded-full text-xs text-white font-semibold">
-                      Disponible
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Process Timeline */}
-        <section className="py-20 bg-gradient-to-b from-gray-900/50 to-transparent">
-          <div className="max-w-5xl mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl sm:text-5xl font-bold mb-4">
-                <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  Proceso de Impresión
-                </span>
-              </h2>
-            </div>
-
-            <div className="space-y-8">
+        {/* Stats Bar */}
+        <div className="border-y border-white/5 bg-white/5 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {[
-                { step: '1', title: 'Sube tu Modelo', desc: 'Carga tu archivo 3D (.STL, .OBJ, .GLB)', icon: '📤' },
-                { step: '2', title: 'Configura', desc: 'Elige material, color, calidad y tamaño', icon: '⚙️' },
-                { step: '3', title: 'Cotización Automática', desc: 'Precio calculado en tiempo real según especificaciones', icon: '💰' },
-                { step: '4', title: 'Paga Seguro', desc: 'Pago con Transbank Webpay Plus', icon: '💳' },
-                { step: '5', title: 'Impresión', desc: 'Tu pieza se imprime con seguimiento en tiempo real', icon: '🖨️' },
-                { step: '6', title: 'Recibe', desc: 'Despacho a domicilio o retiro en tienda', icon: '📦' }
-              ].map((item, index) => (
-                <div key={index} className="flex items-start gap-6 group">
-                  <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg group-hover:scale-110 transition-transform">
-                    {item.step}
-                  </div>
-                  <div className="flex-1 p-6 bg-gradient-to-r from-gray-800/40 to-gray-900/40 backdrop-blur-sm rounded-2xl border border-gray-700/50 group-hover:border-purple-500/50 transition-all">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-3xl">{item.icon}</span>
-                      <h3 className="text-xl font-bold text-white">{item.title}</h3>
-                    </div>
-                    <p className="text-gray-400">{item.desc}</p>
-                  </div>
+                { label: 'Precisión', value: '±0.1mm' },
+                { label: 'Materiales', value: '12+' },
+                { label: 'Tiempo Entrega', value: '24h' },
+                { label: 'Envíos', value: 'Todo Chile' }
+              ].map((stat, i) => (
+                <div key={i} className="text-center border-r last:border-r-0 border-white/10">
+                  <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
+                  <div className="text-sm text-gray-500 uppercase tracking-wider">{stat.label}</div>
                 </div>
               ))}
             </div>
           </div>
-        </section>
+        </div>
 
-        {/* CTA Final */}
-        <section className="py-20">
-          <div className="max-w-4xl mx-auto px-4">
-            <div className="relative overflow-hidden p-12 bg-gradient-to-br from-purple-900/60 to-blue-900/60 backdrop-blur-xl rounded-3xl border border-purple-500/30 shadow-2xl">
-              {/* Animated background */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 animate-pulse"></div>
+        {/* Materials Section - The Core Update */}
+        <section id="materiales" className="py-32 relative">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="mb-20">
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">Catálogo de Materiales</h2>
+              <p className="text-xl text-gray-400 max-w-2xl">
+                Seleccionamos cuidadosamente los mejores polímeros para cada aplicación. 
+                Desde prototipado rápido hasta piezas de uso final.
+              </p>
+            </div>
 
-              <div className="relative z-10 text-center space-y-6">
-                <div className="text-6xl mb-4 animate-bounce">🚀</div>
-                <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
-                  ¿Listo para Imprimir?
-                </h2>
-                <p className="text-xl text-gray-200 mb-8">
-                  Transforma tus ideas digitales en realidad física
-                </p>
-                <Link
-                  href="/impresion-3d/configurar"
-                  className="inline-flex items-center gap-3 px-8 py-4 bg-white text-purple-600 rounded-xl font-bold text-lg hover:bg-purple-50 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-white/20"
-                >
-                  <span>Configurar Mi Impresión</span>
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </Link>
+            <div className="grid lg:grid-cols-12 gap-12">
+              {/* Material Selector List */}
+              <div className="lg:col-span-4 space-y-4">
+                {materials.map((material, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setActiveMaterial(index)}
+                    className={`w-full text-left p-6 rounded-2xl transition-all duration-300 border ${
+                      activeMaterial === index 
+                        ? 'bg-white/10 border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.15)]' 
+                        : 'bg-white/5 border-transparent hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className={`text-xl font-bold ${activeMaterial === index ? 'text-white' : 'text-gray-400'}`}>
+                        {material.name}
+                      </h3>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        activeMaterial === index ? 'bg-purple-500/20 text-purple-300' : 'bg-white/10 text-gray-500'
+                      }`}>
+                        {material.type}
+                      </span>
+                    </div>
+                    <p className={`text-sm line-clamp-2 ${activeMaterial === index ? 'text-gray-300' : 'text-gray-500'}`}>
+                      {material.description}
+                    </p>
+                  </button>
+                ))}
+              </div>
 
-                {/* Info adicional */}
-                <div className="flex flex-wrap justify-center gap-6 pt-8 text-sm text-gray-300">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Sin compromiso
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Cotización gratis
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Soporte 24/7
+              {/* Material Detail View */}
+              <div className="lg:col-span-8">
+                <div className="relative h-full bg-gradient-to-br from-gray-900 to-black rounded-3xl border border-white/10 p-8 md:p-12 overflow-hidden">
+                  {/* Background Glow */}
+                  <div className={`absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br ${materials[activeMaterial].color} opacity-10 blur-[100px] transition-all duration-700`}></div>
+
+                  <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center h-full">
+                    {/* 3D Sphere Representation */}
+                    <div className="flex justify-center items-center">
+                      <div className="relative w-64 h-64 md:w-80 md:h-80 transition-all duration-500">
+                        {/* The Sphere */}
+                        <div 
+                          className={`w-full h-full rounded-full transition-all duration-700 ${materials[activeMaterial].sphereStyle}`}
+                        ></div>
+                        
+                        {/* Floating Elements */}
+                        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-40 h-4 bg-black/50 blur-xl rounded-full"></div>
+                      </div>
+                    </div>
+
+                    {/* Specs & Info */}
+                    <div className="space-y-8">
+                      <div>
+                        <h3 className="text-3xl font-bold mb-2">{materials[activeMaterial].name}</h3>
+                        <p className="text-gray-400 leading-relaxed">
+                          {materials[activeMaterial].description}
+                        </p>
+                      </div>
+
+                      {/* Properties Bars */}
+                      <div className="space-y-4">
+                        {[
+                          { label: 'Resistencia', value: materials[activeMaterial].techSpecs.strength },
+                          { label: 'Flexibilidad', value: materials[activeMaterial].techSpecs.flexibility },
+                          { label: 'Detalle', value: materials[activeMaterial].techSpecs.detail }
+                        ].map((prop, i) => (
+                          <div key={i}>
+                            <div className="flex justify-between text-sm mb-1">
+                              <span className="text-gray-400">{prop.label}</span>
+                              <span className="text-gray-500">{prop.value}/10</span>
+                            </div>
+                            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full bg-gradient-to-r ${materials[activeMaterial].color} transition-all duration-1000 ease-out`}
+                                style={{ width: `${prop.value * 10}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Tech Specs Grid */}
+                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+                        <div>
+                          <div className="text-xs text-gray-500 uppercase">Acabado</div>
+                          <div className="font-medium">{materials[activeMaterial].finish}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 uppercase">Temp. Max</div>
+                          <div className="font-medium">{materials[activeMaterial].techSpecs.temp}</div>
+                        </div>
+                      </div>
+
+                      {/* Best For Tags */}
+                      <div className="flex flex-wrap gap-2">
+                        {materials[activeMaterial].bestFor.map((tag, i) => (
+                          <span key={i} className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-gray-300">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Process Section */}
+        <section className="py-32 bg-white/5">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-20">
+              <h2 className="text-4xl font-bold mb-6">Flujo de Trabajo</h2>
+              <p className="text-gray-400">De tu archivo digital a la pieza física en 3 pasos</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8 relative">
+              {/* Connecting Line */}
+              <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-500/30 to-transparent"></div>
+
+              {[
+                { title: 'Cotización Instantánea', desc: 'Sube tu STL/OBJ y obtén precio en segundos.', icon: '1' },
+                { title: 'Fabricación', desc: 'Nuestras granjas inician la producción 24/7.', icon: '2' },
+                { title: 'Entrega', desc: 'Control de calidad y despacho inmediato.', icon: '3' }
+              ].map((step, i) => (
+                <div key={i} className="relative z-10 text-center group">
+                  <div className="w-24 h-24 mx-auto bg-[#0a0a0a] border border-purple-500/30 rounded-full flex items-center justify-center text-2xl font-bold mb-6 group-hover:scale-110 group-hover:border-purple-500 transition-all duration-300 shadow-[0_0_30px_rgba(168,85,247,0.1)]">
+                    {step.icon}
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">{step.title}</h3>
+                  <p className="text-gray-400 max-w-xs mx-auto">{step.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-32 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-purple-900/20"></div>
+          <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
+            <h2 className="text-5xl md:text-6xl font-bold mb-8">¿Tienes un proyecto en mente?</h2>
+            <p className="text-xl text-gray-400 mb-12">
+              No importa si es una sola pieza o una producción en serie. 
+              Tenemos la capacidad para hacerlo realidad.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+              <Link
+                href="/impresion-3d/configurar"
+                className="px-10 py-5 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]"
+              >
+                Comenzar Proyecto
+              </Link>
+              <a
+                href="mailto:contacto@takopi.cl"
+                className="px-10 py-5 bg-transparent border border-white/20 text-white rounded-full font-bold text-lg hover:bg-white/10 transition-colors"
+              >
+                Contactar Soporte
+              </a>
             </div>
           </div>
         </section>

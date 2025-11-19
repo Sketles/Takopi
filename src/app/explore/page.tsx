@@ -2,13 +2,14 @@
 
 import Layout from '@/components/shared/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import ContentCard, { useContentCard } from '@/components/shared/ContentCard';
 import ProductModal from '@/components/product/ProductModal';
 import SearchBar from '@/components/search/SearchBar';
 import Link from 'next/link';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/shared/Toast';
+import { ChevronLeftIcon, ChevronRightIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 
 // Interfaces para los datos
 interface ContentItem {
@@ -40,24 +41,13 @@ interface ContentItem {
   coverImage?: string;
 }
 
-// Datos de ejemplo para explorar - Solo usuarios reales
-const marketplaceItems: ContentItem[] = [
-  // Solo mantener datos reales de usuarios existentes
-  // Estos se reemplazarán con datos reales de la API
-];
-
-// Datos de tendencias (para usuarios no autenticados)
-const trendingItems = marketplaceItems.slice(0, 6);
-
-// Datos personalizados (para usuarios autenticados)
-const personalizedItems = marketplaceItems.slice(1, 7);
-
 export default function ExplorePage() {
   const { user, isLoading } = useAuth();
   const { addProductToCart, isProductInCart } = useCart();
   const { addToast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState('Todo');
   const [content, setContent] = useState<ContentItem[]>([]);
+  const [trendingContent, setTrendingContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
@@ -65,11 +55,20 @@ export default function ExplorePage() {
   const [likesData, setLikesData] = useState<{ [key: string]: { isLiked: boolean; likesCount: number } }>({});
   const { createCardProps } = useContentCard();
 
-  // Estados para búsqueda
+  // Estados para búsqueda y filtros
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ContentItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState<Array<{ type: string; value: string }>>([]);
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Filtros Avanzados
+  const [priceFilter, setPriceFilter] = useState<'all' | 'free' | 'paid'>('all');
+  const [sortBy, setSortBy] = useState<'newest' | 'popular' | 'price_asc' | 'price_desc'>('newest');
+  const [licenseFilter, setLicenseFilter] = useState<'all' | 'personal' | 'commercial'>('all');
+
+  // Carousel Refs
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   // Función para cargar todos los likes de una vez usando batch endpoint
   const loadAllLikes = async (items: ContentItem[]) => {
@@ -77,7 +76,6 @@ export default function ExplorePage() {
     if (!token || items.length === 0) return;
 
     try {
-      // Use batch endpoint for better performance
       const contentIds = items.map(item => item.id).join(',');
       const response = await fetch(`/api/likes?contentIds=${contentIds}`, {
         headers: {
@@ -97,20 +95,18 @@ export default function ExplorePage() {
             };
           });
 
-          setLikesData(likesMap);
+          setLikesData(prev => ({ ...prev, ...likesMap }));
         }
       }
     } catch (error) {
-      // Error silencioso para carga de likes
       if (process.env.NODE_ENV !== 'production') {
         console.error('Error loading likes:', error);
       }
     }
   };
 
-  // Función para obtener las props de una tarjeta de manera síncrona (sin side effects)
+  // Función para obtener las props de una tarjeta
   const getCardProps = (item: ContentItem, options: any = {}) => {
-    // Usar datos de likes ya cargados
     const likeInfo = likesData[item.id] || { isLiked: false, likesCount: item.likes || 0 };
 
     return {
@@ -142,10 +138,10 @@ export default function ExplorePage() {
   // Componente optimizado para tarjetas
   const ContentCardWrapper = ({ item, options }: { item: ContentItem; options: any }) => {
     const cardProps = useMemo(() => getCardProps(item, options), [item, options, likesData]);
-    return <ContentCard {...cardProps} className="flex flex-col h-[420px]" />;
+    return <ContentCard {...cardProps} className="h-full" />;
   };
 
-  // Función para mapear categorías del frontend a tipos de contenido del backend
+  // Mapeo de categorías
   const mapCategoryToContentType = (category: string): string => {
     const categoryMap: { [key: string]: string } = {
       'Todo': 'all',
@@ -160,14 +156,20 @@ export default function ExplorePage() {
     return categoryMap[category] || 'all';
   };
 
-  // Función para cargar contenido desde la API
+  // Cargar contenido
   const fetchContent = async (category: string = 'Todo') => {
     try {
       setLoading(true);
       setError(null);
 
       const contentTypeParam = mapCategoryToContentType(category);
-      const response = await fetch(`/api/content/explore?category=${encodeURIComponent(contentTypeParam)}&limit=50`);
+      let url = `/api/content/explore?category=${encodeURIComponent(contentTypeParam)}&limit=50`;
+
+      // Añadir filtros a la URL (simulado por ahora si la API no lo soporta, pero preparado)
+      if (priceFilter !== 'all') url += `&price=${priceFilter}`;
+      if (sortBy !== 'newest') url += `&sort=${sortBy}`;
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error('Error al cargar contenido');
@@ -176,30 +178,52 @@ export default function ExplorePage() {
       const result = await response.json();
 
       if (result.success) {
-        setContent(result.data);
+        let filteredData = result.data;
 
-        // Cargar likes después de cargar el contenido
-        loadAllLikes(result.data);
+        // Filtrado en cliente si la API no lo soporta completamente
+        if (priceFilter === 'free') filteredData = filteredData.filter((item: ContentItem) => item.isFree);
+        if (priceFilter === 'paid') filteredData = filteredData.filter((item: ContentItem) => !item.isFree);
+
+        // Ordenamiento en cliente
+        if (sortBy === 'price_asc') {
+          filteredData.sort((a: ContentItem, b: ContentItem) => {
+            const priceA = parseFloat(a.price) || 0;
+            const priceB = parseFloat(b.price) || 0;
+            return priceA - priceB;
+          });
+        } else if (sortBy === 'price_desc') {
+          filteredData.sort((a: ContentItem, b: ContentItem) => {
+            const priceA = parseFloat(a.price) || 0;
+            const priceB = parseFloat(b.price) || 0;
+            return priceB - priceA;
+          });
+        }
+
+        setContent(filteredData);
+        loadAllLikes(filteredData);
+
+        // Cargar tendencias (simulado con los primeros 5 items o aleatorios)
+        if (trendingContent.length === 0 && result.data.length > 0) {
+          setTrendingContent(result.data.slice(0, 5));
+        }
       } else {
         throw new Error(result.error || 'Error al cargar contenido');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
-      // En caso de error, mostrar lista vacía
       setContent([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Cargar contenido cuando cambie la categoría
   useEffect(() => {
     if (!isLoading) {
       fetchContent(selectedCategory);
     }
-  }, [selectedCategory, isLoading]);
+  }, [selectedCategory, isLoading, priceFilter, sortBy]); // Recargar cuando cambian filtros
 
-  // Funciones para búsqueda
+  // Búsqueda
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       setIsSearching(false);
@@ -212,12 +236,15 @@ export default function ExplorePage() {
 
       const params = new URLSearchParams();
       params.set('q', searchQuery);
+      // Añadir filtros a la búsqueda
+      if (priceFilter !== 'all') params.set('price', priceFilter);
 
       const response = await fetch(`/api/search?${params}`);
       const data = await response.json();
 
       if (data.success) {
         setSearchResults(data.data.items);
+        loadAllLikes(data.data.items);
       } else {
         setSearchResults([]);
       }
@@ -255,30 +282,21 @@ export default function ExplorePage() {
     }
   };
 
-
-
-  // Filtrar por categoría (ahora se hace en el servidor)
   const filteredItems = content;
-
-  // Determinar qué contenido mostrar
   const displayItems = isSearching ? searchResults : filteredItems;
 
-  // Función para abrir el modal con los detalles
   const openItemModal = (item: ContentItem) => {
     setSelectedItem(item);
     setIsModalOpen(true);
   };
 
-  // Función para cerrar el modal
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedItem(null);
   };
 
-  // Función para manejar agregar al carrito
   const handleAddToBox = async (product: any) => {
     try {
-      // Verificar si ya está en el carrito
       if (isProductInCart(product.id)) {
         addToast({
           type: 'warning',
@@ -288,7 +306,6 @@ export default function ExplorePage() {
         return;
       }
 
-      // Agregar al carrito
       const result = addProductToCart({
         ...product,
         author: product.author || 'Usuario',
@@ -318,13 +335,9 @@ export default function ExplorePage() {
     }
   };
 
-  // Función para manejar eliminación de contenido
   const handleDeleteContent = async (product: any, source?: string) => {
     try {
       const token = localStorage.getItem('takopi_token');
-
-      console.log('🔍 Eliminando contenido con ID:', product.id);
-
       const response = await fetch(`/api/content/${product.id}`, {
         method: 'DELETE',
         headers: {
@@ -333,17 +346,12 @@ export default function ExplorePage() {
       });
 
       if (response.ok) {
-        // Remover el contenido de la lista si estamos en explore
         if (source === 'explore') {
           setContent(prev => prev.filter(item => item.id !== product.id));
         }
-
-        // El modal se cerrará automáticamente por el ProductModal
         return { success: true };
       } else {
-        console.error('❌ Error eliminando contenido:', response.status);
         const errorData = await response.json().catch(() => ({}));
-        alert(`Error: ${errorData.error || 'Error al eliminar el contenido'}`);
         throw new Error(errorData.error || 'Error al eliminar el contenido');
       }
     } catch (error) {
@@ -353,10 +361,8 @@ export default function ExplorePage() {
     }
   };
 
-  // Función para transformar ContentItem a formato de ProductModal
   const transformContentItem = (item: ContentItem) => {
-
-    const transformed = {
+    return {
       id: item.id,
       title: item.title,
       description: item.description || '',
@@ -375,7 +381,7 @@ export default function ExplorePage() {
       authorId: (item as any).authorId,
       likes: item.likes,
       views: item.views,
-      files: (item as any).files || [], // Usar los archivos reales de la API
+      files: (item as any).files || [],
       coverImage: item.image,
       additionalImages: [],
       tags: item.tags || [],
@@ -383,349 +389,282 @@ export default function ExplorePage() {
       createdAt: item.createdAt,
       updatedAt: item.createdAt
     };
-
-    return transformed;
   };
 
-  // Función para obtener el icono del tipo de contenido
-  const getContentTypeIcon = (type: string) => {
-    if (type === 'OBS') {
-      return (
-        <img
-          src="/logos/OBS_Studio_logo.png"
-          alt="OBS"
-          className="w-4 h-4 object-contain filter brightness-0 invert"
-          onError={(e) => {
-            e.currentTarget.style.display = 'none';
-            e.currentTarget.nextElementSibling?.classList.remove('hidden');
-          }}
-        />
-      );
+  const scrollCarousel = (direction: 'left' | 'right') => {
+    if (carouselRef.current) {
+      const scrollAmount = 350;
+      if (direction === 'left') {
+        carouselRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      } else {
+        carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
     }
-
-    const icons: { [key: string]: string } = {
-      'avatares': '👤',
-      'modelos3d': '🧩',
-      'musica': '🎵',
-      'texturas': '🖼️',
-      'animaciones': '🎬',
-      'colecciones': '📦'
-    };
-    return icons[type] || '📁';
   };
-
-  // Función para obtener el nombre del tipo de contenido
-  const getContentTypeName = (type: string) => {
-    const names: { [key: string]: string } = {
-      'avatares': 'Avatar',
-      'modelos3d': 'Modelo 3D',
-      'musica': 'Música',
-      'texturas': 'Textura',
-      'animaciones': 'Animación',
-      'OBS': 'OBS Widget',
-      'colecciones': 'Colección'
-    };
-    return names[type] || type;
-  };
-
 
   const categories = ['Todo', 'Avatares', 'Modelos 3D', 'Música', 'Texturas', 'Animaciones', 'OBS', 'Colecciones'];
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header de Explorar */}
-        <div className="mb-12 text-center">
-          <h1 className="text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-              {user ? 'Tu Explorar Personalizado' : 'Explorar Tendencias'}
-            </span>
-          </h1>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            {user
-              ? 'Contenido personalizado basado en tus intereses + tendencias populares'
-              : 'Descubre modelos 3D, packs de texturas, colecciones de artistas y juegos indie'
-            }
-          </p>
+      <div className="min-h-screen bg-[#0a0a0a] text-white">
+        {/* Hero Section Espectacular */}
+        <div className="relative pt-32 pb-16 px-4 overflow-hidden">
+          {/* Fondos Abstractos */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] animate-pulse"></div>
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px]"></div>
+          </div>
 
-          {/* Indicador de estado de autenticación */}
-          {user && (
-            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/30 rounded-full">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-green-400 text-sm font-medium">
-                Contenido personalizado activo
+          <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8">
+            <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-none">
+              Explorar
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-400 to-purple-600 drop-shadow-[0_0_30px_rgba(168,85,247,0.5)]">
+                Marketplace
               </span>
-            </div>
-          )}
-        </div>
+            </h1>
 
-        {/* SearchBar integrado */}
-        <div className="mb-12">
-          <div className="max-w-4xl mx-auto">
-            <SearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              onSearch={handleSearch}
-              onSuggestions={handleSuggestions}
-              suggestions={searchSuggestions}
-              loading={loading}
-              placeholder="Buscar contenido... (ej: música streaming, modelo 3D casa, texturas metal)"
-            />
-
-            {/* Indicador de búsqueda activa */}
-            {isSearching && (
-              <div className="mt-4 flex items-center justify-between bg-purple-900/20 backdrop-blur-sm border border-purple-500/30 rounded-lg p-4">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <span className="text-purple-300">
-                    Buscando: <strong className="text-white">{searchQuery}</strong>
-                  </span>
-                  <span className="text-gray-400 text-sm">
-                    ({isSearching ? searchResults.length : content.length} resultados)
-                  </span>
+            {/* Carousel de Tendencias */}
+            {trendingContent.length > 0 && (
+              <div className="relative mt-12 mb-16 text-left">
+                <div className="flex items-center justify-between mb-4 px-4">
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <span className="text-yellow-400">★</span> Tendencias para ti
+                  </h2>
+                  <div className="flex gap-2">
+                    <button onClick={() => scrollCarousel('left')} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
+                      <ChevronLeftIcon className="w-5 h-5" />
+                    </button>
+                    <button onClick={() => scrollCarousel('right')} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
+                      <ChevronRightIcon className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={handleClearSearch}
-                  className="px-4 py-2 bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 hover:text-white rounded-lg transition-colors text-sm"
+
+                <div
+                  ref={carouselRef}
+                  className="flex gap-6 overflow-x-auto pb-8 px-4 snap-x snap-mandatory scrollbar-hide"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                  Limpiar búsqueda
-                </button>
+                  {trendingContent.map((item) => (
+                    <div key={`trend-${item.id}`} className="min-w-[300px] md:min-w-[350px] snap-center">
+                      <ContentCardWrapper
+                        item={item}
+                        options={{
+                          onClick: () => openItemModal(item),
+                          showPrice: true,
+                          showStats: false,
+                          showDescription: false
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Enlace a búsqueda avanzada */}
-            <div className="text-center mt-4">
-              <Link
-                href="/search"
-                className="text-purple-400 hover:text-purple-300 text-sm transition-colors inline-flex items-center gap-1"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                </svg>
-                Búsqueda avanzada con filtros
-              </Link>
+            {/* Search Bar & Filtros */}
+            <div className="max-w-3xl mx-auto">
+              <div className="relative group z-20">
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                <div className="relative bg-[#0f0f0f] rounded-2xl shadow-2xl flex items-center p-2 gap-2">
+                  <div className="flex-1">
+                    <SearchBar
+                      value={searchQuery}
+                      onChange={setSearchQuery}
+                      onSearch={handleSearch}
+                      onSuggestions={handleSuggestions}
+                      suggestions={searchSuggestions}
+                      loading={loading}
+                      placeholder="Buscar productos, creadores, etiquetas..."
+                      className="w-full"
+                    />
+                  </div>
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className={`p-4 rounded-xl border transition-all duration-300 flex items-center gap-2 ${showFilters
+                      ? 'bg-purple-500 text-white border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.4)]'
+                      : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white'
+                      }`}
+                  >
+                    <AdjustmentsHorizontalIcon className="w-6 h-6" />
+                    <span className="hidden md:inline font-medium">Filtros</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Panel de Filtros Avanzados */}
+              <div className={`overflow-hidden transition-all duration-500 ease-in-out ${showFilters ? 'max-h-[500px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
+                <div className="bg-[#151515] border border-white/10 rounded-2xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-left shadow-2xl">
+
+                  {/* Filtro de Precio */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Precio</h3>
+                    <div className="flex flex-col gap-2">
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${priceFilter === 'all' ? 'border-purple-500 bg-purple-500/20' : 'border-gray-600 group-hover:border-gray-400'}`}>
+                          {priceFilter === 'all' && <div className="w-2.5 h-2.5 rounded-full bg-purple-500"></div>}
+                        </div>
+                        <input type="radio" name="price" className="hidden" checked={priceFilter === 'all'} onChange={() => setPriceFilter('all')} />
+                        <span className={priceFilter === 'all' ? 'text-white' : 'text-gray-400'}>Todos los precios</span>
+                      </label>
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${priceFilter === 'free' ? 'border-green-500 bg-green-500/20' : 'border-gray-600 group-hover:border-gray-400'}`}>
+                          {priceFilter === 'free' && <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>}
+                        </div>
+                        <input type="radio" name="price" className="hidden" checked={priceFilter === 'free'} onChange={() => setPriceFilter('free')} />
+                        <span className={priceFilter === 'free' ? 'text-white' : 'text-gray-400'}>Gratis</span>
+                      </label>
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${priceFilter === 'paid' ? 'border-purple-500 bg-purple-500/20' : 'border-gray-600 group-hover:border-gray-400'}`}>
+                          {priceFilter === 'paid' && <div className="w-2.5 h-2.5 rounded-full bg-purple-500"></div>}
+                        </div>
+                        <input type="radio" name="price" className="hidden" checked={priceFilter === 'paid'} onChange={() => setPriceFilter('paid')} />
+                        <span className={priceFilter === 'paid' ? 'text-white' : 'text-gray-400'}>De Pago</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Ordenar Por */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Ordenar Por</h3>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as any)}
+                      className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 transition-colors appearance-none cursor-pointer"
+                    >
+                      <option value="newest">✨ Más Recientes</option>
+                      <option value="popular">🔥 Más Populares</option>
+                      <option value="price_asc">💰 Precio: Menor a Mayor</option>
+                      <option value="price_desc">💎 Precio: Mayor a Menor</option>
+                    </select>
+                  </div>
+
+                  {/* Licencia */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Licencia</h3>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setLicenseFilter('all')}
+                        className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${licenseFilter === 'all' ? 'bg-white text-black border-white' : 'bg-transparent border-white/10 text-gray-400 hover:border-white/30'}`}
+                      >
+                        Cualquiera
+                      </button>
+                      <button
+                        onClick={() => setLicenseFilter('personal')}
+                        className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${licenseFilter === 'personal' ? 'bg-blue-500/20 text-blue-400 border-blue-500/50' : 'bg-transparent border-white/10 text-gray-400 hover:border-white/30'}`}
+                      >
+                        Personal
+                      </button>
+                      <button
+                        onClick={() => setLicenseFilter('commercial')}
+                        className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${licenseFilter === 'commercial' ? 'bg-purple-500/20 text-purple-400 border-purple-500/50' : 'bg-transparent border-white/10 text-gray-400 hover:border-white/30'}`}
+                      >
+                        Comercial
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Botón de Aplicar (Opcional, ya que es reactivo) */}
+                  <div className="md:col-span-3 pt-4 border-t border-white/5 flex justify-end">
+                    <button
+                      onClick={() => setShowFilters(false)}
+                      className="text-sm text-gray-400 hover:text-white underline decoration-gray-600 hover:decoration-white underline-offset-4 transition-all"
+                    >
+                      Ocultar Filtros
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Sección de contenido recomendado para usuarios autenticados */}
-        {user && content.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-              <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Basado en tus intereses
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {content.slice(0, 3).map((item, index) => (
-                <div key={`personalized-${item.id}`} className="relative">
-                  <ContentCardWrapper
-                    item={item}
-                    options={{
-                      onClick: () => openItemModal(item),
-                      variant: 'featured',
-                      showPrice: true,
-                      showStats: true,
-                      showTags: false,
-                      showAuthor: false,
-                      showDescription: true
-                    }}
-                  />
-                  <div className="absolute top-3 right-3 z-10">
-                    <span className="px-3 py-1.5 bg-gradient-to-r from-purple-600/90 to-blue-600/90 backdrop-blur-sm text-white text-xs font-medium rounded-full border border-purple-400/50 shadow-lg">
-                      Recomendado
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Filtros por categoría */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-            <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
-            </svg>
-            {user ? 'Explorar por categoría' : 'Tendencias por categoría'}
-          </h2>
-          <div className="flex flex-wrap gap-4 justify-center">
+        <div className="max-w-7xl mx-auto px-4 pb-24">
+          {/* Categorías */}
+          <div className="flex flex-wrap justify-center gap-3 mb-12">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${selectedCategory === category
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white transform scale-105 shadow-lg shadow-purple-500/25'
-                  : 'bg-gray-800/50 border border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:border-purple-400 hover:text-purple-400'
+                className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all duration-300 border ${selectedCategory === category
+                  ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105'
+                  : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white hover:border-white/30'
                   }`}
               >
-                {category === 'Todo' ? '🔍 Todo' :
-                  category === 'Avatares' ? '👤 Avatares' :
-                    category === 'Modelos 3D' ? '🎯 Modelos 3D' :
-                      category === 'Música' ? '🎵 Música' :
-                        category === 'Texturas' ? '✨ Texturas' :
-                          category === 'Animaciones' ? '🎬 Animaciones' :
-                            category === 'OBS' ? '📺 OBS' :
-                              category === 'Colecciones' ? '📦 Colecciones' : category}
+                {category}
               </button>
             ))}
           </div>
+
+          {/* Estado de Carga */}
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mb-4"></div>
+              <p className="text-gray-400 animate-pulse">Cargando contenido increíble...</p>
+            </div>
+          )}
+
+          {/* Grid de Contenido */}
+          {!loading && !error && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {displayItems.map((item, index) => (
+                <div key={item.id} className="animate-fade-in-up" style={{ animationDelay: `${index * 50}ms` }}>
+                  <ContentCardWrapper
+                    item={item}
+                    options={{
+                      onClick: () => openItemModal(item),
+                      showPrice: true,
+                      showStats: true,
+                      showDescription: true
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loading && !error && displayItems.length === 0 && (
+            <div className="text-center py-24">
+              <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-white/5 mb-6">
+                <span className="text-4xl">🔍</span>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">No encontramos nada por aquí</h3>
+              <p className="text-gray-400">Intenta con otra categoría o ajusta tus filtros.</p>
+              <button
+                onClick={() => {
+                  setPriceFilter('all');
+                  setSortBy('newest');
+                  setSearchQuery('');
+                  setSelectedCategory('Todo');
+                }}
+                className="mt-4 text-purple-400 hover:text-purple-300 font-medium"
+              >
+                Limpiar todos los filtros
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Indicador de carga */}
-        {loading && (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400"></div>
-            <span className="ml-3 text-purple-400">Cargando contenido...</span>
-          </div>
+        {/* Modal de producto */}
+        {selectedItem && (
+          <ProductModal
+            product={transformContentItem(selectedItem)}
+            isOpen={isModalOpen}
+            onClose={closeModal}
+            isOwner={user?.username === selectedItem.author}
+            currentUserId={user?._id}
+            onEdit={() => { }}
+            onDelete={handleDeleteContent}
+            onBuy={() => { }}
+            onAddToBox={handleAddToBox}
+            onLike={() => { }}
+            onSave={() => { }}
+            onShare={() => { }}
+            source="explore"
+          />
         )}
-
-        {/* Mensaje de error */}
-        {error && !loading && (
-          <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 mb-8">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              <span className="text-red-400">Error: {error}</span>
-            </div>
-            <button
-              onClick={() => fetchContent(selectedCategory)}
-              className="mt-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 text-sm transition-colors"
-            >
-              Reintentar
-            </button>
-          </div>
-        )}
-
-        {/* Grid de Contenido del Marketplace */}
-        {!loading && !error && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {displayItems.map((item, index) => (
-              <div key={item.id} style={{ animationDelay: `${index * 100}ms` }}>
-                <ContentCardWrapper
-                  item={item}
-                  options={{
-                    onClick: () => openItemModal(item),
-                    variant: 'default',
-                    showPrice: true,
-                    showStats: true,
-                    showTags: false,
-                    showAuthor: false,
-                    showDescription: true
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Mensaje cuando no hay contenido */}
-        {!loading && !error && displayItems.length === 0 && (
-          <div className="text-center py-16">
-            <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 backdrop-blur-md rounded-2xl border border-purple-500/20 p-8 max-w-2xl mx-auto">
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-xl mx-auto mb-4 flex items-center justify-center">
-                <svg className="w-10 h-10 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-4">
-                {isSearching ? 'No se encontraron resultados' : 'No hay contenido disponible'}
-              </h3>
-              <p className="text-gray-300 mb-6">
-                {isSearching
-                  ? `No se encontraron resultados para "${searchQuery}". Intenta con otros términos.`
-                  : selectedCategory === 'Todo'
-                    ? 'Aún no hay contenido subido a la plataforma. ¡Sé el primero en subir algo!'
-                    : `No hay contenido disponible en la categoría "${selectedCategory}". Prueba con otra categoría.`
-                }
-              </p>
-              {isSearching ? (
-                <button
-                  onClick={handleClearSearch}
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Limpiar búsqueda
-                </button>
-              ) : (
-                <a
-                  href="/upload"
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Subir Contenido
-                </a>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Mensaje para usuarios no autenticados */}
-        {!user && (
-          <div className="mt-16 text-center">
-            <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 backdrop-blur-md rounded-2xl border border-purple-500/20 p-8 max-w-2xl mx-auto">
-              <h3 className="text-2xl font-bold text-white mb-4">
-                ¿Quieres contenido personalizado?
-              </h3>
-              <p className="text-gray-300 mb-6">
-                Inicia sesión para ver recomendaciones basadas en tus intereses y acceder a más contenido exclusivo.
-              </p>
-              <div className="flex gap-4 justify-center">
-                <a
-                  href="/auth/login"
-                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
-                >
-                  Iniciar Sesión
-                </a>
-                <a
-                  href="/auth/register"
-                  className="px-6 py-3 bg-gray-800/50 border border-gray-600 text-gray-300 rounded-lg font-medium hover:bg-gray-700/50 hover:border-purple-400 hover:text-purple-400 transition-all duration-300"
-                >
-                  Registrarse
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Botón cargar más */}
-        <div className="text-center mt-16">
-          <button className="group px-10 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25">
-            <span className="relative z-10">Cargar Más Contenido</span>
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
-          </button>
-        </div>
       </div>
-
-      {/* Modal de producto */}
-      {selectedItem && (
-        <ProductModal
-          product={transformContentItem(selectedItem)}
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          isOwner={(() => {
-            return user?.username === selectedItem.author;
-          })()}
-          currentUserId={user?._id}
-          onEdit={() => { }}
-          onDelete={handleDeleteContent}
-          onBuy={() => { }}
-          onAddToBox={handleAddToBox}
-          onLike={() => { }}
-          onSave={() => { }}
-          onShare={() => { }}
-          source="explore"
-        />
-      )}
     </Layout>
   );
 }
