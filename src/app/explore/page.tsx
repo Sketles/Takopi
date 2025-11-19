@@ -114,6 +114,7 @@ export default function ExplorePage() {
       title: item.title,
       author: item.author,
       authorAvatar: (item as any).authorAvatar,
+      authorId: (item as any).authorId,
       contentType: item.contentType || item.type,
       category: item.category,
       price: item.price,

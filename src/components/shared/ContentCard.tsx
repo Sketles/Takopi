@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, memo, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import DefaultCover from './DefaultCover';
 
 // Interfaces para tipado
@@ -9,6 +10,7 @@ interface ContentCardProps {
   id: string;
   title: string;
   author?: string;
+  authorId?: string;
   authorAvatar?: string;
   contentType: string;
   category: string;
@@ -278,23 +280,47 @@ const ContentCard = memo(function ContentCard({
         <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between gap-4">
           {/* Autor */}
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
-              <div className="w-full h-full rounded-full overflow-hidden bg-[#0f0f0f]">
-                {authorAvatar ? (
-                  <img src={authorAvatar} alt={author} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">
-                    {author?.[0]?.toUpperCase() || '?'}
+            {authorId ? (
+              <Link href={`/user/${authorId}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-2 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
+                  <div className="w-full h-full rounded-full overflow-hidden bg-[#0f0f0f]">
+                    {authorAvatar ? (
+                      <img src={authorAvatar} alt={author} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">
+                        {author?.[0]?.toUpperCase() || '?'}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col truncate">
-              <span className="text-xs text-gray-400">Creado por</span>
-              <span className="text-xs font-medium text-white truncate hover:text-purple-400 transition-colors">
-                {author || 'Anónimo'}
-              </span>
-            </div>
+                </div>
+                <div className="flex flex-col truncate">
+                  <span className="text-xs text-gray-400">Creado por</span>
+                  <span className="text-xs font-medium text-white truncate hover:text-purple-400 transition-colors">
+                    {author || 'Anónimo'}
+                  </span>
+                </div>
+              </Link>
+            ) : (
+              <>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
+                  <div className="w-full h-full rounded-full overflow-hidden bg-[#0f0f0f]">
+                    {authorAvatar ? (
+                      <img src={authorAvatar} alt={author} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">
+                        {author?.[0]?.toUpperCase() || '?'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col truncate">
+                  <span className="text-xs text-gray-400">Creado por</span>
+                  <span className="text-xs font-medium text-white truncate hover:text-purple-400 transition-colors">
+                    {author || 'Anónimo'}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Precio (Espectacular) */}
@@ -321,6 +347,7 @@ export const useContentCard = () => {
       id: data.id || data._id,
       title: data.title,
       author: data.author || data.authorUsername,
+      authorId: data.authorId,
       authorAvatar: data.authorAvatar,
       contentType: data.contentType,
       category: data.category,
