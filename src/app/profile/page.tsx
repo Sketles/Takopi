@@ -290,8 +290,11 @@ function ProfileContent() {
         }));
         setEditingType(null);
 
-        // Actualizar el usuario en el contexto
-        if (user) {
+        // Actualizar el usuario en el contexto y localStorage
+        if (user && updateUser) {
+          const updatedUser = { ...user, avatar: data.user.avatar };
+          updateUser(updatedUser as any);
+        } else if (user) {
           const updatedUser = { ...user, avatar: data.user.avatar };
           localStorage.setItem('takopi_user', JSON.stringify(updatedUser));
         }
@@ -324,8 +327,11 @@ function ProfileContent() {
           banner: data.user.banner
         }));
 
-        // Actualizar el usuario en el contexto
-        if (user) {
+        // Actualizar el usuario en el contexto y localStorage
+        if (user && updateUser) {
+          const updatedUser = { ...user, banner: data.user.banner };
+          updateUser(updatedUser as any);
+        } else if (user) {
           const updatedUser = { ...user, banner: data.user.banner };
           localStorage.setItem('takopi_user', JSON.stringify(updatedUser));
         }
