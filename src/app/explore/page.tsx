@@ -71,49 +71,40 @@ export default function ExplorePage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState<Array<{ type: string; value: string }>>([]);
 
-  // Función para cargar todos los likes de una vez
+  // Función para cargar todos los likes de una vez usando batch endpoint
   const loadAllLikes = async (items: ContentItem[]) => {
     const token = localStorage.getItem('takopi_token');
-    if (!token) return;
+    if (!token || items.length === 0) return;
 
     try {
-      const promises = items.map(async (item) => {
-        try {
-          const response = await fetch(`/api/likes?contentId=${item.id}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          if (response.ok) {
-            const result = await response.json();
-            if (result.success) {
-              return {
-                contentId: item.id,
-                data: result.data
-              };
-            }
-          }
-        } catch (error) {
-          // Error silencioso para likes individuales
+      // Use batch endpoint for better performance
+      const contentIds = items.map(item => item.id).join(',');
+      const response = await fetch(`/api/likes?contentIds=${contentIds}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-        
-        return {
-          contentId: item.id,
-          data: { isLiked: false, likesCount: item.likes || 0 }
-        };
       });
-
-      const results = await Promise.all(promises);
-      const likesMap: { [key: string]: { isLiked: boolean; likesCount: number } } = {};
       
-      results.forEach(result => {
-        likesMap[result.contentId] = result.data;
-      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && Array.isArray(result.data)) {
+          const likesMap: { [key: string]: { isLiked: boolean; likesCount: number } } = {};
+          
+          result.data.forEach((item: any) => {
+            likesMap[item.contentId] = {
+              isLiked: item.isLiked,
+              likesCount: item.likesCount
+            };
+          });
 
-      setLikesData(likesMap);
+          setLikesData(likesMap);
+        }
+      }
     } catch (error) {
       // Error silencioso para carga de likes
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Error loading likes:', error);
+      }
     }
   };
 

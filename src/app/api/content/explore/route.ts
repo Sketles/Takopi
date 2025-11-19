@@ -7,7 +7,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category') || 'all';
 
-    console.log('🔍 Explore Content API (Clean Architecture):', { category });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Explore Content API (Clean Architecture):', { category });
+    }
 
     // Crear repository y usecase (Clean Architecture)
     const repository = createContentRepository();
@@ -16,7 +18,9 @@ export async function GET(request: NextRequest) {
     // Ejecutar caso de uso
     const content = await usecase.execute(category);
 
-    console.log('✅ Content retrieved:', { count: content.length, category });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ Content retrieved:', { count: content.length, category });
+    }
 
     // Serializar entities para respuesta JSON
     const serializedContent = content.map(item => ({

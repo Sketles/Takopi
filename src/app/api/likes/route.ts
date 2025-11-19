@@ -7,12 +7,16 @@ import { config } from '@/config/env';
 // POST - Dar o quitar like a un contenido
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 Like API (Clean Architecture)');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Like API (Clean Architecture)');
+    }
 
     // Verificar autenticación
     const token = request.headers.get('Authorization')?.replace('Bearer ', '');
     if (!token) {
-      console.log('❌ No token provided');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('❌ No token provided');
+      }
       return NextResponse.json({ success: false, error: 'Token requerido' }, { status: 401 });
     }
 
@@ -20,7 +24,9 @@ export async function POST(request: NextRequest) {
     const userId = decoded.userId;
 
     const { contentId, action } = await request.json();
-    console.log('🔍 Like request:', { userId, contentId, action });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Like request:', { userId, contentId, action });
+    }
 
     if (!contentId) {
       return NextResponse.json({ success: false, error: 'ID de contenido requerido' }, { status: 400 });
@@ -33,7 +39,9 @@ export async function POST(request: NextRequest) {
     // Ejecutar caso de uso
     const result = await usecase.execute(userId, contentId);
 
-    console.log('✅ Like toggled:', result);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ Like toggled:', result);
+    }
 
     return NextResponse.json({
       success: true,
@@ -57,11 +65,57 @@ export async function POST(request: NextRequest) {
 // GET - Verificar estado de like y obtener conteo
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 Like API GET (Clean Architecture)');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Like API GET (Clean Architecture)');
+    }
 
     const { searchParams } = new URL(request.url);
     const contentId = searchParams.get('contentId');
+    const contentIds = searchParams.get('contentIds'); // Batch support
 
+    // Batch endpoint for multiple content items
+    if (contentIds) {
+      const ids = contentIds.split(',');
+      const repository = createLikeRepository();
+      
+      let userId: string | null = null;
+      const token = request.headers.get('authorization')?.split(' ')[1];
+      
+      if (token) {
+        try {
+          const decoded: any = jwt.verify(token, config.jwt.secret);
+          userId = decoded.userId;
+        } catch (error) {
+          // Token invalid, continue without userId
+        }
+      }
+
+      // Get likes for all content items in parallel
+      const results = await Promise.all(
+        ids.map(async (id) => {
+          const likesCount = await repository.countByContent(id);
+          let isLiked = false;
+          
+          if (userId) {
+            const like = await repository.findByUserAndContent(userId, id);
+            isLiked = like !== null;
+          }
+          
+          return {
+            contentId: id,
+            likesCount,
+            isLiked
+          };
+        })
+      );
+
+      return NextResponse.json({
+        success: true,
+        data: results
+      });
+    }
+
+    // Single content endpoint
     if (!contentId) {
       return NextResponse.json({ success: false, error: 'ID de contenido requerido' }, { status: 400 });
     }
@@ -84,11 +138,15 @@ export async function GET(request: NextRequest) {
           isLiked = like !== null;
         }
       } catch (error) {
-        console.warn('Invalid token for like status check:', error);
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('Invalid token for like status check:', error);
+        }
       }
     }
 
-    console.log('✅ Like status:', { contentId, likesCount, isLiked });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ Like status:', { contentId, likesCount, isLiked });
+    }
 
     return NextResponse.json({
       success: true,

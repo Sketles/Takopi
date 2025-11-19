@@ -7,9 +7,11 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     
-    console.log('🔍 Search API: Procesando búsqueda', {
-      params: Object.fromEntries(searchParams.entries())
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Search API: Procesando búsqueda', {
+        params: Object.fromEntries(searchParams.entries())
+      });
+    }
 
     // Crear query desde parámetros URL
     const searchQuery = SearchMapper.fromUrlParams(searchParams);
@@ -34,11 +36,13 @@ export async function GET(request: NextRequest) {
     // Serializar resultado
     const serializedResult = SearchMapper.serializeSearchResult(result);
 
-    console.log('✅ Search API: Búsqueda completada', {
-      total: result.total,
-      items: result.items.length,
-      page: result.page
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ Search API: Búsqueda completada', {
+        total: result.total,
+        items: result.items.length,
+        page: result.page
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -62,7 +66,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    console.log('🔍 Search API: Búsqueda POST', { body });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Search API: Búsqueda POST', { body });
+    }
 
     // Crear query desde body
     const searchQuery = new (await import('@/features/search/domain/entities/search-query.entity')).SearchQueryEntity(
@@ -98,11 +104,13 @@ export async function POST(request: NextRequest) {
     // Serializar resultado
     const serializedResult = SearchMapper.serializeSearchResult(result);
 
-    console.log('✅ Search API: Búsqueda POST completada', {
-      total: result.total,
-      items: result.items.length,
-      page: result.page
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ Search API: Búsqueda POST completada', {
+        total: result.total,
+        items: result.items.length,
+        page: result.page
+      });
+    }
 
     return NextResponse.json({
       success: true,

@@ -28,7 +28,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    console.log('🔍 Get Profile API (Clean Architecture):', decoded.userId);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Get Profile API (Clean Architecture):', decoded.userId);
+    }
 
     // Usar repository para obtener usuario
     const repository = createAuthRepository();
@@ -61,16 +63,22 @@ export async function GET(request: NextRequest) {
 
 // PUT - Actualizar perfil del usuario
 export async function PUT(request: NextRequest) {
-  console.log('🔍 Update Profile API (Clean Architecture)');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🔍 Update Profile API (Clean Architecture)');
+  }
   try {
     const decoded = await verifyToken(request);
     if (!decoded) {
-      console.log('❌ Token inválido');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('❌ Token inválido');
+      }
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
     const requestBody = await request.json();
-    console.log('🔍 Datos recibidos:', requestBody);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Datos recibidos:', requestBody);
+    }
     const { username, bio, role, avatar, banner, location } = requestBody;
 
     // Crear repository y usecase (Clean Architecture)
@@ -87,7 +95,9 @@ export async function PUT(request: NextRequest) {
       location
     });
 
-    console.log('✅ Perfil actualizado:', updatedUser.id);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ Perfil actualizado:', updatedUser.id);
+    }
 
     // Serializar user entity
     const userResponse = {
