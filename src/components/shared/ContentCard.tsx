@@ -67,7 +67,6 @@ const ContentCard = memo(function ContentCard({
   author,
   authorId,
   authorAvatar,
-  authorId,
   contentType,
   category,
   price = 0,
