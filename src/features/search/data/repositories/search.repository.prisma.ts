@@ -7,7 +7,9 @@ import { Prisma } from '@prisma/client';
 
 export class SearchRepositoryPrisma implements ISearchRepository {
   async search(query: SearchQueryEntity): Promise<SearchResultEntity> {
-    console.log('🔍 SearchRepositoryPrisma: Ejecutando búsqueda', query);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 SearchRepositoryPrisma: Ejecutando búsqueda', query);
+    }
 
     try {
       // Build where clause
@@ -105,11 +107,13 @@ export class SearchRepositoryPrisma implements ISearchRepository {
         limit
       );
 
-      console.log('✅ SearchRepositoryPrisma: Búsqueda completada', {
-        total: result.total,
-        items: result.items.length,
-        page: result.page
-      });
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ SearchRepositoryPrisma: Búsqueda completada', {
+          total: result.total,
+          items: result.items.length,
+          page: result.page
+        });
+      }
 
       return result;
 
@@ -120,35 +124,31 @@ export class SearchRepositoryPrisma implements ISearchRepository {
   }
 
   async getPopularTags(limit: number = 20): Promise<string[]> {
-    console.log('🏷️ SearchRepositoryPrisma: Obteniendo tags populares', { limit });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🏷️ SearchRepositoryPrisma: Obteniendo tags populares', { limit });
+    }
 
     try {
-      // Get all tags from published content
-      const contents = await prisma.content.findMany({
-        where: { isPublished: true },
-        select: { tags: true }
-      });
+      // Use raw SQL for better performance with PostgreSQL array aggregation
+      const result = await prisma.$queryRaw<Array<{ tag: string; count: bigint }>>`
+        SELECT 
+          LOWER(TRIM(tag)) as tag,
+          COUNT(*) as count
+        FROM contents,
+        UNNEST(tags) as tag
+        WHERE "isPublished" = true
+        GROUP BY LOWER(TRIM(tag))
+        ORDER BY count DESC
+        LIMIT ${limit}
+      `;
 
-      // Count tag usage
-      const tagCounts: { [key: string]: number } = {};
-      contents.forEach(content => {
-        content.tags.forEach(tag => {
-          const normalizedTag = tag.toLowerCase().trim();
-          if (normalizedTag) {
-            tagCounts[normalizedTag] = (tagCounts[normalizedTag] || 0) + 1;
-          }
+      const popularTags = result.map(r => r.tag);
+
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ SearchRepositoryPrisma: Tags populares obtenidos', {
+          count: popularTags.length
         });
-      });
-
-      // Sort by popularity and limit
-      const popularTags = Object.entries(tagCounts)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, limit)
-        .map(([tag]) => tag);
-
-      console.log('✅ SearchRepositoryPrisma: Tags populares obtenidos', {
-        count: popularTags.length
-      });
+      }
 
       return popularTags;
 
@@ -159,7 +159,9 @@ export class SearchRepositoryPrisma implements ISearchRepository {
   }
 
   async getSuggestions(partial: string): Promise<{ tags: string[]; titles: string[] }> {
-    console.log('💡 SearchRepositoryPrisma: Obteniendo sugerencias', { partial });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('💡 SearchRepositoryPrisma: Obteniendo sugerencias', { partial });
+    }
 
     if (!partial || partial.length < 2) {
       return { tags: [], titles: [] };
@@ -168,26 +170,19 @@ export class SearchRepositoryPrisma implements ISearchRepository {
     try {
       const partialLower = partial.toLowerCase();
 
-      // Get tag suggestions
-      const tagContents = await prisma.content.findMany({
-        where: {
-          isPublished: true,
-          tags: { hasSome: [partial] } // This will be enhanced with full-text search
-        },
-        select: { tags: true },
-        take: 50
-      });
+      // Get tag suggestions using raw SQL for better performance
+      const tagResults = await prisma.$queryRaw<Array<{ tag: string }>>`
+        SELECT DISTINCT LOWER(TRIM(tag)) as tag
+        FROM contents,
+        UNNEST(tags) as tag
+        WHERE "isPublished" = true
+          AND LOWER(tag) LIKE ${`%${partialLower}%`}
+        LIMIT 10
+      `;
 
-      const tagSuggestions = new Set<string>();
-      tagContents.forEach(content => {
-        content.tags.forEach(tag => {
-          if (tag.toLowerCase().includes(partialLower)) {
-            tagSuggestions.add(tag);
-          }
-        });
-      });
+      const tags = tagResults.map(r => r.tag);
 
-      // Get title suggestions
+      // Get title suggestions with limit
       const titleContents = await prisma.content.findMany({
         where: {
           isPublished: true,
@@ -197,13 +192,14 @@ export class SearchRepositoryPrisma implements ISearchRepository {
         take: 10
       });
 
-      const tags = Array.from(tagSuggestions).slice(0, 10);
       const titles = titleContents.map(c => c.title);
 
-      console.log('✅ SearchRepositoryPrisma: Sugerencias obtenidas', {
-        tags: tags.length,
-        titles: titles.length
-      });
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ SearchRepositoryPrisma: Sugerencias obtenidas', {
+          tags: tags.length,
+          titles: titles.length
+        });
+      }
 
       return { tags, titles };
 
@@ -214,7 +210,9 @@ export class SearchRepositoryPrisma implements ISearchRepository {
   }
 
   async getRelatedSearches(query: string): Promise<string[]> {
-    console.log('🔗 SearchRepositoryPrisma: Obteniendo búsquedas relacionadas', { query });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔗 SearchRepositoryPrisma: Obteniendo búsquedas relacionadas', { query });
+    }
 
     try {
       // Find content with similar titles
@@ -250,7 +248,9 @@ export class SearchRepositoryPrisma implements ISearchRepository {
     popularTags: Array<{ tag: string; count: number }>;
     recentSearches: string[];
   }> {
-    console.log('📊 SearchRepositoryPrisma: Obteniendo estadísticas de búsqueda');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('📊 SearchRepositoryPrisma: Obteniendo estadísticas de búsqueda');
+    }
 
     try {
       // Get total published content
@@ -258,30 +258,37 @@ export class SearchRepositoryPrisma implements ISearchRepository {
         where: { isPublished: true }
       });
 
-      // Get all tags
-      const contents = await prisma.content.findMany({
-        where: { isPublished: true },
-        select: { tags: true }
-      });
+      // Get popular tags using raw SQL for better performance
+      const tagResults = await prisma.$queryRaw<Array<{ tag: string; count: bigint }>>`
+        SELECT 
+          LOWER(TRIM(tag)) as tag,
+          COUNT(*) as count
+        FROM contents,
+        UNNEST(tags) as tag
+        WHERE "isPublished" = true
+        GROUP BY LOWER(TRIM(tag))
+        ORDER BY count DESC
+        LIMIT 10
+      `;
 
-      const tagCounts: { [key: string]: number } = {};
-      contents.forEach(content => {
-        content.tags.forEach(tag => {
-          const normalizedTag = tag.toLowerCase().trim();
-          if (normalizedTag) {
-            tagCounts[normalizedTag] = (tagCounts[normalizedTag] || 0) + 1;
-          }
-        });
-      });
+      const popularTags = tagResults.map(r => ({ 
+        tag: r.tag, 
+        count: Number(r.count) 
+      }));
 
-      const popularTags = Object.entries(tagCounts)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 10)
-        .map(([tag, count]) => ({ tag, count }));
+      // Get total unique tags count
+      const totalTagsResult = await prisma.$queryRaw<Array<{ count: bigint }>>`
+        SELECT COUNT(DISTINCT LOWER(TRIM(tag))) as count
+        FROM contents,
+        UNNEST(tags) as tag
+        WHERE "isPublished" = true
+      `;
+
+      const totalTags = totalTagsResult.length > 0 ? Number(totalTagsResult[0].count) : 0;
 
       return {
         totalContent,
-        totalTags: Object.keys(tagCounts).length,
+        totalTags,
         popularTags,
         recentSearches: [] // TODO: Implement analytics tracking
       };
@@ -298,12 +305,16 @@ export class SearchRepositoryPrisma implements ISearchRepository {
   }
 
   async incrementTagUsage(tag: string): Promise<void> {
-    console.log('📈 SearchRepositoryPrisma: Incrementando uso de tag', { tag });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('📈 SearchRepositoryPrisma: Incrementando uso de tag', { tag });
+    }
     // TODO: Implement analytics when needed
   }
 
   async recordSearch(query: string): Promise<void> {
-    console.log('📝 SearchRepositoryPrisma: Registrando búsqueda', { query });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('📝 SearchRepositoryPrisma: Registrando búsqueda', { query });
+    }
     // TODO: Implement analytics when needed
   }
 
