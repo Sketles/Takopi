@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test:connections": "npx tsx scripts/test-connections.ts",
     "test:e2e": "npx playwright test --config=testing/playwright.config.ts",
     "test:e2e:headed": "npx playwright test --headed --config=testing/playwright.config.ts",
     "test:e2e:install": "npx playwright install",
