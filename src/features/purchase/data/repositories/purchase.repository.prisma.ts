@@ -65,10 +65,38 @@ export class PurchaseRepositoryPrisma implements IPurchaseRepository {
   }
 
   async create(data: any): Promise<PurchaseEntity> {
+    // Obtener el contenido completo para crear el snapshot
+    const content = await prisma.content.findUnique({
+      where: { id: data.contentId }
+    });
+
+    if (!content) {
+      throw new Error('Contenido no encontrado');
+    }
+
+    // Crear snapshot del contenido al momento de la compra
+    const contentSnapshot = {
+      title: content.title,
+      description: content.description,
+      shortDescription: content.shortDescription,
+      contentType: content.contentType,
+      category: content.category,
+      files: content.files, // URLs de Vercel Blob
+      coverImage: content.coverImage,
+      additionalImages: content.additionalImages,
+      price: content.price,
+      currency: content.currency,
+      license: content.license,
+      customLicense: content.customLicense,
+      tags: content.tags,
+      authorId: content.authorId
+    };
+
     const purchase = await prisma.purchase.create({
       data: {
         userId: data.userId,
         contentId: data.contentId,
+        contentSnapshot, // Guardar snapshot
         price: data.price || 0,
         currency: data.currency || 'CLP',
         status: data.status || 'pending',
