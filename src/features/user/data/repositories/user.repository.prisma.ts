@@ -91,8 +91,18 @@ export class UserRepositoryPrisma implements IUserRepository {
   async getUserCreations(userId: string): Promise<any[]> {
     const contents = await prisma.content.findMany({
       where: { authorId: userId },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
+
     return contents;
   }
 
