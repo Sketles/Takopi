@@ -27,8 +27,9 @@ async function testVercelBlob() {
       console.log('⚠️  BLOB: list returned no contents');
     } else if (Array.isArray(listRes)) {
       console.log(`✅ BLOB OK — list returned ${listRes.length} items`);
-    } else if ('blobs' in listRes) {
-      console.log(`✅ BLOB OK — list returned ${listRes.blobs.length} items`);
+    } else if (listRes && typeof listRes === 'object' && Array.isArray((listRes as any).blobs)) {
+      // Guard to avoid TypeError when `listRes` is primitive or null
+      console.log(`✅ BLOB OK — list returned ${((listRes as any).blobs ?? []).length} items`);
     } else {
       console.log('✅ BLOB OK — list returned:', listRes);
     }
