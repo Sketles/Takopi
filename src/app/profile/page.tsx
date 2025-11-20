@@ -636,14 +636,7 @@ function ProfileContent() {
                       currentProfile.role === 'Explorer' ? 'Explorador' :
                         currentProfile.role}
                   </span>
-                  {isOwnProfile && (
-                    <button
-                      onClick={() => setIsRoleSelectorOpen(!isRoleSelectorOpen)}
-                      className="text-xs text-white/40 hover:text-white transition-colors underline"
-                    >
-                      Cambiar
-                    </button>
-                  )}
+                  {/* link to change role removed */}
                   {isOwnProfile && (
                     <RoleSelector
                       currentRole={currentProfile.role}
