@@ -11,8 +11,12 @@ interface CardPreviewProps {
   category: string;
   price: string;
   isFree: boolean;
-  coverImage?: File | null;
+  coverImage?: string | File | null;
   tags: string[];
+  author?: {
+    name: string;
+    avatar: string;
+  };
 }
 
 export default function CardPreview({
@@ -24,10 +28,20 @@ export default function CardPreview({
   price,
   isFree,
   coverImage,
-  tags
+  tags,
+  author
 }: CardPreviewProps) {
   const { createCardProps } = useContentCard();
   const [imageError, setImageError] = useState(false);
+
+  // Helper para obtener la URL de la imagen
+  const getImageUrl = (img?: string | File | null) => {
+    if (!img) return undefined;
+    if (typeof img === 'string') return img;
+    return URL.createObjectURL(img);
+  };
+
+  const imageUrl = getImageUrl(coverImage);
 
   // Crear datos mock para el preview
   const mockData = {
@@ -37,11 +51,11 @@ export default function CardPreview({
     shortDescription,
     contentType,
     category,
-    price: typeof price === 'string' ? parseInt(price || '0') : price,
+    price: typeof price === 'string' ? parseFloat(price || '0') : price,
     isFree,
-    currency: 'CLP',
-    image: coverImage ? URL.createObjectURL(coverImage) : undefined,
-    coverImage: coverImage ? URL.createObjectURL(coverImage) : undefined,
+    currency: 'USD',
+    image: imageUrl,
+    coverImage: imageUrl,
     tags,
     likes: 0,
     views: 0,
