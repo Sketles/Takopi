@@ -2,6 +2,7 @@
 
 import { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/shared/Toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import DefaultCover from './DefaultCover';
@@ -99,6 +100,7 @@ const ContentCard = memo(function ContentCard({
   className = '',
   imageClassName = ''
 }: ContentCardProps) {
+  const { addToast } = useToast();
   const [imageError, setImageError] = useState(false);
 
   // Estados para el sistema de likes
@@ -112,7 +114,7 @@ const ContentCard = memo(function ContentCard({
 
     const token = localStorage.getItem('takopi_token');
     if (!token) {
-      alert('Debes iniciar sesión para dar like');
+      addToast({ type: 'warning', title: 'Inicia sesión', message: 'Debes iniciar sesión para dar like.' });
       return;
     }
 
@@ -141,11 +143,11 @@ const ContentCard = memo(function ContentCard({
           onLike();
         }
       } else {
-        alert(result.error || 'Error al actualizar like');
+        addToast({ type: 'error', title: 'Error', message: result.error || 'Error al actualizar like' });
       }
     } catch (error) {
       console.error('Error liking content:', error);
-      alert('Error al actualizar like');
+      addToast({ type: 'error', title: 'Error', message: 'Error al actualizar like' });
     } finally {
       setIsLikeLoading(false);
     }
@@ -158,7 +160,7 @@ const ContentCard = memo(function ContentCard({
         <img
           src="/logos/OBS_Studio_logo.svg"
           alt="OBS"
-          className="w-4 h-4 object-contain filter brightness-0 invert"
+          className="w-5 h-5"
           onError={(e) => {
             e.currentTarget.style.display = 'none';
             e.currentTarget.nextElementSibling?.classList.remove('hidden');
@@ -233,14 +235,14 @@ const ContentCard = memo(function ContentCard({
         if (data.success && data.data?.id) {
           router.push(`/user/${data.data.id}`);
         } else {
-          alert('Usuario no encontrado');
+          addToast({ type: 'error', title: 'Usuario no encontrado', message: 'No encontramos ese usuario.' });
         }
       } else {
-        alert('Usuario no encontrado');
+        addToast({ type: 'error', title: 'Usuario no encontrado', message: 'No encontramos ese usuario.' });
       }
     } catch (error) {
       console.error('Error looking up user by username:', error);
-      alert('Error buscando usuario');
+      addToast({ type: 'error', title: 'Error', message: 'Error buscando usuario' });
     }
   };
 
@@ -282,8 +284,8 @@ const ContentCard = memo(function ContentCard({
           onClick={handleLike}
           disabled={isLikeLoading}
           className={`absolute top-4 right-4 z-20 p-2 rounded-full backdrop-blur-md border transition-all duration-300 ${currentIsLiked
-              ? 'bg-red-500/20 border-red-500/50 text-red-500'
-              : 'bg-black/40 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
+            ? 'bg-red-500/20 border-red-500/50 text-red-500'
+            : 'bg-black/40 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
             }`}
         >
           {isLikeLoading ? (
@@ -362,8 +364,8 @@ const ContentCard = memo(function ContentCard({
           {/* Precio (Espectacular) */}
           {showPrice && (
             <div className={`flex-shrink-0 px-4 py-1.5 rounded-lg font-bold text-sm shadow-lg transition-all duration-300 ${isFree
-                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                : 'bg-white text-black group-hover:bg-purple-500 group-hover:text-white group-hover:shadow-[0_0_15px_rgba(168,85,247,0.4)]'
+              ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+              : 'bg-white text-black group-hover:bg-purple-500 group-hover:text-white group-hover:shadow-[0_0_15px_rgba(168,85,247,0.4)]'
               }`}>
               {formatPrice(price, isFree, currency)}
             </div>

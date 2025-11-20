@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useToast } from '@/components/shared/Toast';
 
 interface InlineEditorProps {
   type: 'avatar' | 'banner';
@@ -14,6 +15,7 @@ export default function InlineEditor({ type, currentValue, onSave, onCancel, isO
   const [preview, setPreview] = useState(currentValue || '');
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { addToast } = useToast();
 
   // Actualizar preview cuando cambie currentValue
   useEffect(() => {
@@ -25,13 +27,13 @@ export default function InlineEditor({ type, currentValue, onSave, onCancel, isO
     if (file) {
       // Validar tamaño del archivo (5MB máximo)
       if (file.size > 5 * 1024 * 1024) {
-        alert('El archivo es demasiado grande. Máximo 5MB permitido.');
+        addToast({ type: 'error', title: 'Archivo demasiado grande', message: 'Máximo 5MB permitido.' });
         return;
       }
 
       // Validar tipo de archivo
       if (!file.type.startsWith('image/')) {
-        alert('Solo se permiten archivos de imagen.');
+        addToast({ type: 'warning', title: 'Formato no permitido', message: 'Solo se permiten archivos de imagen.' });
         return;
       }
 

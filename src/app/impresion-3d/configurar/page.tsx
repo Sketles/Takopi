@@ -152,7 +152,7 @@ export default function PrintingConfigPage() {
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-purple-900/10 to-transparent"></div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 pt-24 md:pt-28 pb-8">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-12">
             <div>

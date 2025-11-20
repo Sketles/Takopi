@@ -16,7 +16,7 @@ export class PaymentRepositoryPrisma implements IPaymentRepository {
         url: data.url,
         returnUrl: data.returnUrl,
         userId: data.userId,
-        contentIds: data.contentIds || []
+        contentIds: data.contentIds || (data.contentId ? [data.contentId] : [])
       }
     });
     return this.toEntity(transaction);
@@ -68,23 +68,19 @@ export class PaymentRepositoryPrisma implements IPaymentRepository {
   }
 
   private toEntity(transaction: any): WebpayTransactionEntity {
-    return {
-      id: transaction.id,
-      token: transaction.token,
-      buyOrder: transaction.buyOrder,
-      sessionId: transaction.sessionId,
-      amount: transaction.amount,
-      currency: transaction.currency,
-      status: transaction.status,
-      authorizationCode: transaction.authorizationCode,
-      responseCode: transaction.responseCode,
-      paymentTypeCode: transaction.paymentTypeCode,
-      accountingDate: transaction.accountingDate,
-      transactionDate: transaction.transactionDate?.toISOString(),
-      url: transaction.url,
-      returnUrl: transaction.returnUrl,
-      createdAt: transaction.createdAt.toISOString(),
-      updatedAt: transaction.updatedAt.toISOString()
-    } as WebpayTransactionEntity;
+    return new WebpayTransactionEntity(
+      transaction.id,
+      transaction.buyOrder,
+      transaction.sessionId,
+      transaction.amount,
+      transaction.currency,
+      transaction.userId,
+      transaction.contentIds && transaction.contentIds.length > 0 ? transaction.contentIds[0] : '',
+      transaction.token,
+      transaction.url,
+      transaction.status,
+      transaction.createdAt,
+      transaction.updatedAt
+    );
   }
 }

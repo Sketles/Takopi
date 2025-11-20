@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/shared/Toast';
 
 interface FileItem {
   url: string;
@@ -107,6 +108,7 @@ export default function FileExplorerModal({ isOpen, onClose, content }: FileExpl
   const { user } = useAuth();
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const [viewerType, setViewerType] = useState<string>('3d');
+  const { addToast } = useToast();
 
   // Resetear cuando se abre el modal
   useEffect(() => {
@@ -138,7 +140,7 @@ export default function FileExplorerModal({ isOpen, onClose, content }: FileExpl
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading file:', error);
-      alert('Error al descargar el archivo');
+      addToast({ type: 'error', title: 'Error', message: 'Error al descargar el archivo' });
     }
   };
 

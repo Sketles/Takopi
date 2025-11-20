@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useToast } from '@/components/shared/Toast';
 
 interface ProfileEditorProps {
   userProfile: any;
@@ -31,6 +32,7 @@ export default function ProfileEditor({ userProfile, onSave, onCancel, isOpen }:
   const [bannerPreview, setBannerPreview] = useState(userProfile.banner || '');
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  const { addToast } = useToast();
 
   // Actualizar los valores cuando cambie el userProfile o se abra el modal
   useEffect(() => {
@@ -68,7 +70,7 @@ export default function ProfileEditor({ userProfile, onSave, onCancel, isOpen }:
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('El archivo es demasiado grande. Máximo 5MB permitido.');
+        addToast({ type: 'error', title: 'Archivo demasiado grande', message: 'Máximo 5MB permitido.' });
         return;
       }
       const reader = new FileReader();
@@ -87,7 +89,7 @@ export default function ProfileEditor({ userProfile, onSave, onCancel, isOpen }:
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('El archivo es demasiado grande. Máximo 5MB permitido.');
+        addToast({ type: 'error', title: 'Archivo demasiado grande', message: 'Máximo 5MB permitido.' });
         return;
       }
       const reader = new FileReader();

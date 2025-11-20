@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/shared/Toast';
 import Link from 'next/link';
 import ProductMediaTabs from './ProductMediaTabs';
 import PurchasePanel from './PurchasePanel';
@@ -123,6 +124,7 @@ export default function ProductModal({
   };
 
   const { user } = useAuth();
+  const { addToast } = useToast();
   const router = useRouter();
   const authUserId = user?._id;
   const authorProfileLink = product?.authorId
@@ -146,14 +148,14 @@ export default function ProductModal({
           onClose();
           router.push(`/user/${data.data.id}`);
         } else {
-          alert('Usuario no encontrado');
+          addToast({ type: 'error', title: 'Usuario no encontrado', message: 'No hemos podido localizar al usuario solicitado.' });
         }
       } else {
-        alert('Usuario no encontrado');
+        addToast({ type: 'error', title: 'Usuario no encontrado', message: 'No encontramos al usuario solicitado.' });
       }
     } catch (error) {
       console.error('Error looking up user by username:', error);
-      alert('Error buscando usuario');
+      addToast({ type: 'error', title: 'Error', message: 'Error buscando usuario. Inténtalo nuevamente.' });
     }
   };
 
@@ -219,37 +221,27 @@ export default function ProductModal({
                     <div className="flex items-center gap-3 pb-4 border-b border-white/5">
                       {authorProfileLink ? (
                         <button onClick={handleAuthorClick} title={product.author || 'Usuario'} className="flex items-center gap-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
-                              <div className="w-full h-full rounded-full overflow-hidden bg-black">
-                          <div className="w-full h-full rounded-full overflow-hidden bg-black">
-                            {product.authorAvatar ? (
-                              <img src={product.authorAvatar} alt={product.author} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">
-                                {product.author ? product.author.charAt(0).toUpperCase() : 'U'}
-                              </div>
-                            )}
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px] flex-shrink-0">
+                            <div className="w-full h-full rounded-full overflow-hidden bg-black">
+                              {product.authorAvatar ? (
+                                <img src={product.authorAvatar} alt={product.author} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">
+                                  {product.author ? product.author.charAt(0).toUpperCase() : 'U'}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm text-white/40 leading-none mb-1">Creado por</span>
-                          <span className="text-sm font-medium text-white hover:text-purple-400 transition-colors cursor-pointer">
-                            {product.author || 'Usuario'}
-                          </span>
-                              </div>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-sm text-white/40 leading-none mb-1">Creado por</span>
-                              <span className="text-sm font-medium text-white hover:text-purple-400 transition-colors cursor-pointer">
-                                {product.author}
-                              </span>
-                            </div>
+                          <div className="flex flex-col justify-center">
+                            <span className="text-xs text-white/40 leading-tight">Creado por</span>
+                            <span className="text-sm font-medium text-white hover:text-purple-400 transition-colors cursor-pointer leading-tight">
+                              {product.author || 'Usuario'}
+                            </span>
                           </div>
                         </button>
                       ) : (
                         <button onClick={handleAuthorClick} className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px]">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 p-[1px] flex-shrink-0">
                             <div className="w-full h-full rounded-full overflow-hidden bg-black">
                               {product.authorAvatar ? (
                                 <img src={product.authorAvatar} alt={product.author} className="w-full h-full object-cover" />
@@ -260,9 +252,9 @@ export default function ProductModal({
                               )}
                             </div>
                           </div>
-                          <div className="flex flex-col">
-                            <span className="text-sm text-white/40 leading-none mb-1">Creado por</span>
-                            <span className="text-sm font-medium text-white hover:text-purple-400 transition-colors cursor-pointer">
+                          <div className="flex flex-col justify-center">
+                            <span className="text-xs text-white/40 leading-tight">Creado por</span>
+                            <span className="text-sm font-medium text-white hover:text-purple-400 transition-colors cursor-pointer leading-tight">
                               {product.author}
                             </span>
                           </div>

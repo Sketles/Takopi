@@ -14,14 +14,14 @@ const ModelViewerWrapper = dynamic(
     // Cargar el web component dinámicamente solo una vez
     useEffect(() => {
       let isMounted = true;
-      
+
       const loadModelViewer = async () => {
         try {
           // Configurar el entorno de model-viewer para reducir advertencias
           configureModelViewerEnvironment();
-          
+
           await import('@google/model-viewer');
-          
+
           if (isMounted) {
             setIsLoaded(true);
           }
@@ -29,9 +29,9 @@ const ModelViewerWrapper = dynamic(
           console.error('Error loading model-viewer:', error);
         }
       };
-      
+
       loadModelViewer();
-      
+
       return () => {
         isMounted = false;
       };
@@ -40,7 +40,7 @@ const ModelViewerWrapper = dynamic(
     // Adjuntar listeners a eventos del web component
     useEffect(() => {
       if (!isLoaded) return;
-      
+
       const el = modelViewerRef.current;
       if (!el) return;
 
@@ -55,7 +55,7 @@ const ModelViewerWrapper = dynamic(
 
       el.addEventListener('load', handleLoad as any);
       el.addEventListener('error', handleError as any);
-      
+
       return () => {
         el.removeEventListener('load', handleLoad as any);
         el.removeEventListener('error', handleError as any);
@@ -167,20 +167,19 @@ export default function ModelViewer3D({
   };
 
   const handleError = (event: CustomEvent) => {
-    console.error('❌ Error cargando modelo 3D:', { 
-      src, 
-      detail: event.detail,
-      event: event,
-      type: event.type,
-      target: event.target
+    const errorDetail = event.detail;
+    console.error('❌ Error cargando modelo 3D:', {
+      src,
+      message: errorDetail?.message || 'Unknown error',
+      type: event.type
     });
     setIsLoading(false);
     setHasError(true);
-    onError?.(event.detail?.message || 'Error cargando modelo 3D');
+    onError?.(errorDetail?.message || 'Error cargando modelo 3D');
   };
 
-  // Si no hay soporte de WebGL o hay error, mostrar imagen de fallback
-  if (!isWebGLSupported || hasError) {
+  // Si no hay soporte de WebGL, hay error o no hay src, mostrar imagen de fallback
+  if (!isWebGLSupported || hasError || !src) {
     return (
       <div
         className={`relative flex items-center justify-center bg-gray-900/70 rounded-lg border border-gray-600 ${className}`}
@@ -217,20 +216,18 @@ export default function ModelViewer3D({
       {showControls && (
         <div className="absolute top-16 right-4 z-20 bg-gray-900/95 backdrop-blur-sm rounded-lg p-4 border border-gray-600 min-w-[200px] controls-panel">
           <h3 className="text-white text-sm font-semibold mb-3">Controles 3D</h3>
-          
+
           {/* Auto Rotate Toggle */}
           <div className="mb-3">
             <label className="flex items-center justify-between text-gray-300 text-xs">
               <span>Rotación automática</span>
               <button
                 onClick={() => setCurrentRotation(!currentRotation)}
-                className={`w-8 h-4 rounded-full transition-colors ${
-                  currentRotation ? 'bg-purple-500' : 'bg-gray-600'
-                }`}
+                className={`w-8 h-4 rounded-full transition-colors ${currentRotation ? 'bg-purple-500' : 'bg-gray-600'
+                  }`}
               >
-                <div className={`w-3 h-3 bg-white rounded-full transition-transform ${
-                  currentRotation ? 'translate-x-4' : 'translate-x-0.5'
-                }`} />
+                <div className={`w-3 h-3 bg-white rounded-full transition-transform ${currentRotation ? 'translate-x-4' : 'translate-x-0.5'
+                  }`} />
               </button>
             </label>
           </div>

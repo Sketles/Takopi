@@ -357,7 +357,7 @@ export default function ExplorePage() {
       }
     } catch (error) {
       console.error('❌ Error eliminando contenido:', error);
-      alert('Error al eliminar el contenido');
+      addToast({ type: 'error', title: 'Error', message: 'Error al eliminar el contenido' });
       throw error;
     }
   };

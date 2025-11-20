@@ -118,11 +118,11 @@ function ProductDetailContent({ params }: { params: Promise<{ id: string }> }) {
         window.location.href = '/profile';
       } else {
         const errorData = await response.json();
-        alert(`Error al eliminar: ${errorData.error}`);
+        addToast({ type: 'error', title: 'Error', message: `Error al eliminar: ${errorData.error}` });
       }
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Error al eliminar el producto');
+      addToast({ type: 'error', title: 'Error', message: 'Error al eliminar el producto' });
     }
   };
 

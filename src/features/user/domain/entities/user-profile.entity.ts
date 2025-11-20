@@ -3,9 +3,9 @@ export class UserProfileEntity {
   constructor(
     public readonly id: string,
     public readonly username: string,
+    public readonly role: string,
     public readonly avatar?: string,
     public readonly bio?: string,
-    public readonly role: string,
     public readonly createdAt?: Date,
     public readonly stats?: {
       contentCount: number;
@@ -13,8 +13,10 @@ export class UserProfileEntity {
       followersCount: number;
       followingCount: number;
     },
-    public readonly content?: any[]
-  ) {}
+    public readonly content?: any[],
+    public readonly banner?: string,
+    public readonly location?: string
+  ) { }
 
   // Lógica de negocio
   get displayName(): string {
@@ -41,9 +43,11 @@ export class UserProfileEntity {
     return {
       id: this.id,
       username: this.username,
-      avatar: this.avatar,
-      bio: this.bio,
       role: this.role,
+      avatar: this.avatar,
+      banner: this.banner,
+      location: this.location,
+      bio: this.bio,
       stats: this.stats,
       content: this.content || [],
       createdAt: this.createdAt

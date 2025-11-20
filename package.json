@@ -6,6 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test:e2e": "npx playwright test --config=testing/playwright.config.ts",
+    "test:e2e:headed": "npx playwright test --headed --config=testing/playwright.config.ts",
+    "test:e2e:install": "npx playwright install",
     "lint": "eslint"
   },
   "prisma": {
@@ -27,6 +30,7 @@
     "transbank-sdk": "^6.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.40.0",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",

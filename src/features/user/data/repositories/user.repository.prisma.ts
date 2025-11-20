@@ -19,6 +19,10 @@ export class UserRepositoryPrisma implements IUserRepository {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
+        contents: {
+          where: { status: 'published' }, // Only published content
+          orderBy: { createdAt: 'desc' }
+        },
         _count: {
           select: {
             contents: true,
@@ -36,9 +40,9 @@ export class UserRepositoryPrisma implements IUserRepository {
     return new UserProfileEntity(
       user.id,
       user.username,
-      user.avatar,
-      user.bio,
       user.role,
+      user.avatar || undefined,
+      user.bio || undefined,
       user.createdAt,
       {
         contentCount: user._count.contents,
@@ -46,7 +50,9 @@ export class UserRepositoryPrisma implements IUserRepository {
         followersCount: user._count.followers,
         followingCount: user._count.following
       },
-      []
+      user.contents,
+      user.banner || undefined,
+      user.location || undefined
     );
   }
 

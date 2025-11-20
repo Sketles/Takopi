@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useToast } from '@/components/shared/Toast';
 
 interface Comment {
   id: string;
@@ -37,6 +38,7 @@ export default function CommentsSection({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { addToast } = useToast();
 
   const displayComments = localComments;
 
@@ -92,7 +94,7 @@ export default function CommentsSection({
 
     const token = localStorage.getItem('takopi_token');
     if (!token) {
-      alert('Debes iniciar sesión para comentar');
+      addToast({ type: 'warning', title: 'Inicia sesión', message: 'Debes iniciar sesión para comentar.' });
       return;
     }
 
@@ -128,16 +130,16 @@ export default function CommentsSection({
 
           setLocalComments(prev => [formattedComment, ...prev]);
           setNewComment('');
-        } else {
-          alert(result.error || 'Error al crear comentario');
+          } else {
+          addToast({ type: 'error', title: 'Error', message: result.error || 'Error al crear comentario' });
         }
       } else {
         const errorData = await response.json().catch(() => ({}));
-        alert(errorData.error || 'Error al crear comentario');
+        addToast({ type: 'error', title: 'Error', message: errorData.error || 'Error al crear comentario' });
       }
     } catch (error) {
       console.error('Error al agregar comentario:', error);
-      alert('Error al crear comentario');
+      addToast({ type: 'error', title: 'Error', message: 'Error al crear comentario' });
     } finally {
       setIsSubmitting(false);
     }
@@ -146,7 +148,7 @@ export default function CommentsSection({
   const handleLikeComment = async (commentId: string) => {
     const token = localStorage.getItem('takopi_token');
     if (!token) {
-      alert('Debes iniciar sesión para dar like');
+      addToast({ type: 'warning', title: 'Inicia sesión', message: 'Debes iniciar sesión para dar like.' });
       return;
     }
 
@@ -176,11 +178,11 @@ export default function CommentsSection({
         }
       } else {
         const errorData = await response.json().catch(() => ({}));
-        alert(errorData.error || 'Error al dar like');
+        addToast({ type: 'error', title: 'Error', message: errorData.error || 'Error al dar like' });
       }
     } catch (error) {
       console.error('Error al dar like:', error);
-      alert('Error al dar like');
+      addToast({ type: 'error', title: 'Error', message: 'Error al dar like' });
     }
   };
 

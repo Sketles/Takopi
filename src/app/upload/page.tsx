@@ -2,6 +2,7 @@
 
 import Layout from '@/components/shared/Layout';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/shared/Toast';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import CardPreview from '@/components/CardPreview';
@@ -209,6 +210,7 @@ const licenses = [
 export default function UploadPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const { addToast } = useToast();
 
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -303,11 +305,11 @@ export default function UploadPage() {
       const isValidSize = file.size <= selectedContentType.maxSize * 1024 * 1024;
 
       if (!isValidType) {
-        alert(`Tipo de archivo no válido. Tipos permitidos: ${selectedContentType.fileTypes.join(', ')}`);
+        addToast({ type: 'error', title: 'Tipo de archivo inválido', message: `Tipos permitidos: ${selectedContentType.fileTypes.join(', ')}` });
         return false;
       }
       if (!isValidSize) {
-        alert(`Archivo muy grande. Tamaño máximo: ${selectedContentType.maxSize}MB`);
+        addToast({ type: 'error', title: 'Archivo demasiado grande', message: `Tamaño máximo: ${selectedContentType.maxSize}MB` });
         return false;
       }
       return true;
@@ -424,12 +426,12 @@ export default function UploadPage() {
 
     // Verificar que estamos en el paso correcto
     if (currentStep !== 6) {
-      alert('Por favor completa todos los pasos del formulario');
+      addToast({ type: 'warning', title: 'Completa los pasos', message: 'Por favor completa todos los pasos del formulario' });
       return;
     }
 
     if (!formData.provisionalName || !formData.description || !formData.contentType || !formData.category || formData.files.length === 0) {
-      alert('Por favor completa todos los campos requeridos');
+      addToast({ type: 'warning', title: 'Campos incompletos', message: 'Por favor completa todos los campos requeridos' });
       setUploading(false);
       return;
     }
@@ -439,7 +441,7 @@ export default function UploadPage() {
       // Obtener token del localStorage
       const token = localStorage.getItem('takopi_token');
       if (!token) {
-        alert('❌ No estás autenticado. Por favor, inicia sesión primero.');
+        addToast({ type: 'warning', title: 'No autenticado', message: 'No estás autenticado. Por favor, inicia sesión primero.' });
         router.push('/auth/login');
         return;
       }
@@ -478,7 +480,7 @@ export default function UploadPage() {
         if (uploadResponse.status === 401) {
           localStorage.removeItem('takopi_user');
           localStorage.removeItem('takopi_token');
-          alert('❌ Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+          addToast({ type: 'warning', title: 'Sesión expirada', message: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.' });
           router.push('/auth/login');
           return;
         }
@@ -529,7 +531,7 @@ export default function UploadPage() {
         if (response.status === 401) {
           localStorage.removeItem('takopi_user');
           localStorage.removeItem('takopi_token');
-          alert('❌ Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+          addToast({ type: 'warning', title: 'Sesión expirada', message: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.' });
           router.push('/auth/login');
           return;
         }

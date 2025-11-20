@@ -9,6 +9,8 @@ interface User {
   role: string;
   avatar?: string;
   bio?: string;
+  banner?: string;
+  location?: string;
 }
 
 interface AuthContextType {
@@ -31,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
-      
+
       const response = await fetch('/api/auth/verify', {
         method: 'POST',
         headers: {
@@ -40,16 +42,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
         signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (response.ok) {
         return true;
       } else {
         console.log('Token verification failed with status:', response.status);
         return false;
       }
-    } catch (error) {
+    } catch (error: any) {
       if (error.name === 'AbortError') {
         console.log('Token verification timeout');
       } else {
@@ -66,23 +68,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const savedUser = localStorage.getItem('takopi_user');
         const savedToken = localStorage.getItem('takopi_token');
-        
+
         if (savedUser && savedToken) {
           // Verificar si el token sigue siendo válido
           const isValid = await verifyToken(savedToken);
-          
-               if (isValid) {
-                 const userData = JSON.parse(savedUser);
-                 // Verificar si el token tiene información básica del usuario
-                 if (!userData.username) {
-                   // Token incompleto, limpiar sesión para forzar nuevo login
-                   console.log('Token incompleto detectado, limpiando sesión...');
-                   localStorage.removeItem('takopi_user');
-                   localStorage.removeItem('takopi_token');
-                 } else {
-                   setUser(userData);
-                 }
-               } else {
+
+          if (isValid) {
+            const userData = JSON.parse(savedUser);
+            // Verificar si el token tiene información básica del usuario
+            if (!userData.username) {
+              // Token incompleto, limpiar sesión para forzar nuevo login
+              console.log('Token incompleto detectado, limpiando sesión...');
+              localStorage.removeItem('takopi_user');
+              localStorage.removeItem('takopi_token');
+            } else {
+              setUser(userData);
+            }
+          } else {
             // Token expirado, limpiar datos
             console.log('Token expirado, limpiando datos de autenticación');
             localStorage.removeItem('takopi_user');

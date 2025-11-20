@@ -34,7 +34,7 @@ export class AuthRepositoryPrisma implements IAuthRepository {
         role: user.role
       },
       config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
+      { expiresIn: config.jwt.expiresIn } as jwt.SignOptions
     );
 
     const userEntity = this.toEntity(user);
@@ -68,7 +68,7 @@ export class AuthRepositoryPrisma implements IAuthRepository {
         role: user.role
       },
       config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
+      { expiresIn: config.jwt.expiresIn } as jwt.SignOptions
     );
 
     const userEntity = this.toEntity(user);
@@ -127,6 +127,7 @@ export class AuthRepositoryPrisma implements IAuthRepository {
       data: {
         username: data.username,
         bio: data.bio,
+        role: data.role,
         location: data.location,
         avatar: data.avatar,
         banner: data.banner
