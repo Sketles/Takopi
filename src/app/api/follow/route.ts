@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     console.error('❌ Error toggling follow:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     const statusCode = errorMessage.includes('No puedes seguirte') ? 400 : 500;
-    
+
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: statusCode }
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('❌ Error checking follow status:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
-    
+
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }

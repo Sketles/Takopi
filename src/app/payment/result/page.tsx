@@ -20,7 +20,7 @@ function PaymentResultContent() {
         const success = searchParams.get('success') === 'true';
         const error = searchParams.get('error');
         const details = searchParams.get('details');
-        
+
         if (success) {
           // Pago exitoso - obtener información de la transacción
           const transactionId = searchParams.get('transactionId');
@@ -29,7 +29,7 @@ function PaymentResultContent() {
           const currency = searchParams.get('currency') || 'CLP';
           const buyOrder = searchParams.get('buyOrder');
           const authorizationCode = searchParams.get('authorizationCode');
-          
+
           setPaymentResult({
             success: true,
             message: '¡Pago realizado exitosamente!',
@@ -45,7 +45,7 @@ function PaymentResultContent() {
           // Error en el pago
           let errorMessage = 'Error en el pago';
           let errorDetails = 'Ha ocurrido un error durante el proceso de pago.';
-          
+
           if (error === 'not_authorized') {
             errorMessage = 'Pago no autorizado';
             errorDetails = 'La transacción no fue autorizada por Transbank.';
@@ -59,11 +59,11 @@ function PaymentResultContent() {
             errorMessage = 'Error al registrar compra';
             errorDetails = 'El pago fue exitoso pero hubo un error al registrar tu compra.';
           }
-          
+
           if (details) {
             errorDetails = decodeURIComponent(details);
           }
-          
+
           setPaymentResult({
             success: false,
             message: errorMessage,
@@ -96,11 +96,11 @@ function PaymentResultContent() {
   if (loading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="min-h-screen bg-[#050505] flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-400 mx-auto mb-4"></div>
-            <h2 className="text-xl font-semibold text-white">Verificando pago...</h2>
-            <p className="text-gray-400 mt-2">Por favor espera un momento</p>
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mx-auto mb-4"></div>
+            <h2 className="text-xl font-light tracking-wider text-white">Verificando pago...</h2>
+            <p className="text-white/40 mt-2">Por favor espera un momento</p>
           </div>
         </div>
       </Layout>
@@ -109,81 +109,87 @@ function PaymentResultContent() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-12">
-        <div className="max-w-2xl mx-auto px-4">
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-purple-500/20 text-center">
-            
+      <div className="min-h-screen bg-[#050505] pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden flex items-center justify-center">
+        {/* Background Effects */}
+        <div className={`absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none opacity-20 ${paymentResult?.success ? 'bg-green-500' : 'bg-red-500'}`} />
+
+        <div className="max-w-2xl w-full relative z-10">
+          <div className="bg-[#0f0f0f] backdrop-blur-xl rounded-3xl p-8 md:p-12 border border-white/5 shadow-2xl text-center animate-scale-in">
+
             {paymentResult?.success ? (
               <>
                 {/* Éxito */}
-                <div className="text-6xl mb-6">🎉</div>
-                <h1 className="text-3xl font-bold text-white mb-4">
+                <div className="w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce-small">
+                  <svg className="w-12 h-12 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+
+                <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">
                   ¡Pago Exitoso!
                 </h1>
-                <p className="text-xl text-green-400 mb-6">
+                <p className="text-xl text-green-400 mb-2 font-medium">
                   {paymentResult.message}
                 </p>
-                <p className="text-gray-300 mb-8">
+                <p className="text-white/60 mb-10">
                   {paymentResult.details}
                 </p>
 
                 {/* Información adicional */}
-                <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-6 mb-8">
-                  <h3 className="font-semibold text-green-300 mb-4">✅ Transacción Completada</h3>
-                  
-                  {/* Detalles de la transacción */}
-                  <div className="space-y-2 mb-4">
+                <div className="bg-white/5 rounded-2xl p-6 mb-10 text-left border border-white/5">
+                  <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                    Detalles de la transacción
+                  </h3>
+
+                  <div className="space-y-3">
                     {paymentResult.transactionId && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-green-200">ID Transacción:</span>
-                        <span className="text-green-300 font-mono">{paymentResult.transactionId}</span>
+                        <span className="text-white/40">ID Transacción</span>
+                        <span className="text-white font-mono">{paymentResult.transactionId}</span>
                       </div>
                     )}
                     {paymentResult.purchaseId && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-green-200">ID Compra:</span>
-                        <span className="text-green-300 font-mono">{paymentResult.purchaseId}</span>
+                        <span className="text-white/40">ID Compra</span>
+                        <span className="text-white font-mono">{paymentResult.purchaseId}</span>
                       </div>
                     )}
                     {paymentResult.buyOrder && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-green-200">Orden de Compra:</span>
-                        <span className="text-green-300 font-mono">{paymentResult.buyOrder}</span>
+                        <span className="text-white/40">Orden de Compra</span>
+                        <span className="text-white font-mono">{paymentResult.buyOrder}</span>
                       </div>
                     )}
                     {paymentResult.authorizationCode && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-green-200">Código Autorización:</span>
-                        <span className="text-green-300 font-mono">{paymentResult.authorizationCode}</span>
+                        <span className="text-white/40">Código Autorización</span>
+                        <span className="text-white font-mono">{paymentResult.authorizationCode}</span>
                       </div>
                     )}
+                    <div className="h-px bg-white/10 my-2" />
                     {paymentResult.amount && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-green-200">Monto:</span>
-                        <span className="text-green-300 font-semibold">
+                        <span className="text-white/40">Monto Total</span>
+                        <span className="text-white font-bold text-lg">
                           ${parseInt(paymentResult.amount).toLocaleString()} {paymentResult.currency || 'CLP'}
                         </span>
                       </div>
                     )}
                   </div>
-                  
-                  <p className="text-green-200 text-sm">
-                    Tu contenido digital ya está disponible en tu perfil. 
-                    Puedes descargarlo desde la sección "Mis Compras".
-                  </p>
                 </div>
 
                 {/* Botones de acción */}
                 <div className="space-y-4">
                   <button
                     onClick={handleGoToProfile}
-                    className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
+                    className="w-full py-4 px-6 bg-white text-black rounded-xl font-bold hover:bg-gray-200 transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-white/5"
                   >
                     🛒 Ver Mis Compras
                   </button>
                   <button
                     onClick={handleBackToExplore}
-                    className="w-full px-8 py-3 border-2 border-gray-600 text-gray-300 rounded-xl font-semibold hover:border-gray-500 hover:text-white transition-colors"
+                    className="w-full py-4 px-6 bg-white/5 text-white rounded-xl font-medium hover:bg-white/10 transition-colors border border-white/5"
                   >
                     Explorar Más Contenido
                   </button>
@@ -192,25 +198,35 @@ function PaymentResultContent() {
             ) : (
               <>
                 {/* Error */}
-                <div className="text-6xl mb-6">😞</div>
-                <h1 className="text-3xl font-bold text-white mb-4">
+                <div className="w-24 h-24 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
+                  <svg className="w-12 h-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+
+                <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">
                   Error en el Pago
                 </h1>
-                <p className="text-xl text-red-400 mb-6">
+                <p className="text-xl text-red-400 mb-2 font-medium">
                   {paymentResult?.message || 'Ha ocurrido un error'}
                 </p>
-                <p className="text-gray-300 mb-8">
+                <p className="text-white/60 mb-10">
                   {paymentResult?.details || 'Por favor intenta nuevamente o contacta con soporte.'}
                 </p>
 
                 {/* Información de ayuda */}
-                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-6 mb-8">
-                  <h3 className="font-semibold text-red-300 mb-2">🔄 ¿Qué puedes hacer?</h3>
-                  <ul className="text-red-200 text-sm text-left space-y-1">
-                    <li>• Verifica que tu tarjeta tenga fondos suficientes</li>
-                    <li>• Revisa que los datos de tu tarjeta sean correctos</li>
-                    <li>• Intenta nuevamente en unos minutos</li>
-                    <li>• Contacta a tu banco si el problema persiste</li>
+                <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-6 mb-10 text-left">
+                  <h3 className="font-bold text-red-400 mb-4 flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    ¿Qué puedes hacer?
+                  </h3>
+                  <ul className="text-red-400/80 text-sm space-y-2 list-disc list-inside">
+                    <li>Verifica que tu tarjeta tenga fondos suficientes</li>
+                    <li>Revisa que los datos de tu tarjeta sean correctos</li>
+                    <li>Intenta nuevamente en unos minutos</li>
+                    <li>Contacta a tu banco si el problema persiste</li>
                   </ul>
                 </div>
 
@@ -218,13 +234,13 @@ function PaymentResultContent() {
                 <div className="space-y-4">
                   <button
                     onClick={() => router.back()}
-                    className="w-full px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl font-semibold hover:from-orange-700 hover:to-red-700 transition-all duration-300 transform hover:scale-105"
+                    className="w-full py-4 px-6 bg-white text-black rounded-xl font-bold hover:bg-gray-200 transition-all duration-300 transform hover:scale-[1.02]"
                   >
                     🔄 Intentar Nuevamente
                   </button>
                   <button
                     onClick={handleBackToExplore}
-                    className="w-full px-8 py-3 border-2 border-gray-600 text-gray-300 rounded-xl font-semibold hover:border-gray-500 hover:text-white transition-colors"
+                    className="w-full py-4 px-6 bg-white/5 text-white rounded-xl font-medium hover:bg-white/10 transition-colors border border-white/5"
                   >
                     Volver al Marketplace
                   </button>
@@ -233,10 +249,10 @@ function PaymentResultContent() {
             )}
 
             {/* Información de soporte */}
-            <div className="mt-8 pt-6 border-t border-gray-700">
-              <p className="text-gray-400 text-sm">
+            <div className="mt-10 pt-6 border-t border-white/5">
+              <p className="text-white/30 text-sm">
                 ¿Necesitas ayuda? Contacta a nuestro equipo de soporte en{' '}
-                <a href="mailto:soporte@takopi.com" className="text-purple-400 hover:text-purple-300">
+                <a href="mailto:soporte@takopi.com" className="text-white/60 hover:text-white transition-colors underline">
                   soporte@takopi.com
                 </a>
               </p>

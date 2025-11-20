@@ -22,7 +22,7 @@ export async function POST(
     }
 
     const token = authHeader.split(' ')[1];
-    
+
     // Verificar token
     let userId;
     try {
@@ -38,8 +38,8 @@ export async function POST(
     const purchase = purchases.find(p => p.id === purchaseId);
 
     if (!purchase || purchase.status !== 'completed') {
-      return NextResponse.json({ 
-        error: 'Compra no encontrada o no autorizada' 
+      return NextResponse.json({
+        error: 'Compra no encontrada o no autorizada'
       }, { status: 404 });
     }
 
@@ -48,8 +48,8 @@ export async function POST(
     const content = await contentRepository.findById(purchase.contentId);
 
     if (!content) {
-      return NextResponse.json({ 
-        error: 'Contenido no encontrado' 
+      return NextResponse.json({
+        error: 'Contenido no encontrado'
       }, { status: 404 });
     }
 

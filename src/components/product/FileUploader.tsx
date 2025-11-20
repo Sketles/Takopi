@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { useToast } from '@/components/shared/Toast';
 
 interface FileItem {
   id: string;
@@ -40,6 +41,7 @@ export default function FileUploader({
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { addToast } = useToast();
 
   // Formatos permitidos según tipo de contenido
   const getAllowedFormats = (contentType: string) => {
@@ -129,7 +131,7 @@ export default function FileUploader({
 
     // Mostrar errores si los hay
     if (errors.length > 0) {
-      alert(errors.join('\n'));
+      addToast({ type: 'error', title: 'Error de archivo', message: errors.join('\n') });
     }
 
     // Procesar archivos válidos

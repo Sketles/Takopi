@@ -43,6 +43,13 @@ export async function GET(request: NextRequest) {
     console.log('✅ Creaciones obtenidas:', creations.length);
 
     // Serializar creaciones
+    const usernameFromToken = (decoded as any)?.username || 'Anónimo';
+    const userIdFromToken = (decoded as any)?.userId;
+
+    // Obtener avatar del perfil (si existe) para mostrar en las tarjetas del perfil
+    const userProfile = await repository.getPublicProfile(decoded.userId);
+    const profileAvatar = userProfile?.avatar || null;
+
     const serializedCreations = creations.map(item => ({
       id: item._id,
       title: item.title,
@@ -59,7 +66,16 @@ export async function GET(request: NextRequest) {
       views: item.views || 0,
       downloads: item.downloads || 0,
       createdAt: item.createdAt,
-      updatedAt: item.updatedAt
+      updatedAt: item.updatedAt,
+      authorAvatar: item.author?.avatar || null
+      // Agregamos metadata del autor para que las vistas (profile/explore)
+      // muestren correctamente el nombre del creador cuando se renderiza la tarjeta.
+    })).map(entry => ({
+      ...entry,
+      author: usernameFromToken,
+      authorUsername: usernameFromToken,
+      authorId: userIdFromToken,
+      authorAvatar: entry.authorAvatar || profileAvatar
     }));
 
     return NextResponse.json({

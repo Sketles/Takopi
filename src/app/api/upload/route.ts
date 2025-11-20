@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      
+
       if (allowedTypes[contentType] && !allowedTypes[contentType].includes(file.type)) {
         return NextResponse.json(
           { success: false, error: `Tipo de archivo no permitido para ${contentType}: ${file.type}` },
@@ -79,15 +79,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Subir archivos principales a Vercel Blob
+    // Primero, extraer los archivos con sus nombres originales
+    const filesArray = files.filter(f => f.size > 0);
+    const fileMetadata = filesArray.map(file => ({
+      originalName: file.name,
+      file: file
+    }));
+
     const uploadedBlobs = await uploadMultipleFiles(
-      files.filter(f => f.size > 0),
+      fileMetadata.map(fm => fm.file),
       `content/${contentType}`,
       decoded.userId
     );
 
-    const uploadedFiles = uploadedBlobs.map(blob => ({
-      name: blob.pathname.split('/').pop() || blob.pathname,
-      originalName: blob.pathname,
+    // Mapear los blobs subidos con sus nombres originales
+    const uploadedFiles = uploadedBlobs.map((blob, index) => ({
+      name: blob.pathname.split('/').pop() || blob.pathname,  // Nombre del archivo en Vercel Blob
+      originalName: fileMetadata[index]?.originalName || blob.pathname,  // Nombre original del usuario
       size: blob.size,
       type: blob.contentType || 'application/octet-stream',
       url: blob.url,
@@ -119,8 +127,8 @@ export async function POST(request: NextRequest) {
     console.error('❌ Error uploading files to Vercel Blob:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Error al subir archivos',
         details: errorMessage
       },

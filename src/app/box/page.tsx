@@ -10,13 +10,13 @@ import { CartItem } from '@/types/cart';
 
 export default function BoxPage() {
   const { user } = useAuth();
-  const { 
-    items: cartItems, 
-    total: totalPrice, 
-    itemCount, 
-    isLoading, 
-    removeFromCart, 
-    clearCart, 
+  const {
+    items: cartItems,
+    total: totalPrice,
+    itemCount,
+    isLoading,
+    removeFromCart,
+    clearCart,
     getCartSummary,
     getCartSummaryText,
     formatPrice,
@@ -24,7 +24,7 @@ export default function BoxPage() {
     getItemsForCheckout
   } = useCart();
   const { addToast } = useToast();
-  
+
   const [selectedProduct, setSelectedProduct] = useState<{
     id: string;
     title: string;
@@ -177,17 +177,16 @@ export default function BoxPage() {
                 </p>
               </div>
             </div>
-            
+
             {/* Acciones rápidas */}
             {!getCartSummary().isEmpty && (
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleClearCart}
-                  className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
-                    showClearConfirm
+                  className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${showClearConfirm
                       ? 'bg-red-600 text-white hover:bg-red-700'
                       : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50'
-                  }`}
+                    }`}
                 >
                   {showClearConfirm ? 'Confirmar' : 'Vaciar Box'}
                 </button>
@@ -247,7 +246,7 @@ export default function BoxPage() {
                         className="w-full h-full object-cover rounded-xl group-hover:scale-110 transition-transform duration-300"
                       />
                     </div>
-                    
+
                     {/* Información del producto */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between mb-3">
@@ -258,8 +257,8 @@ export default function BoxPage() {
                           <div className="flex items-center gap-4 text-sm text-gray-400 mb-3 flex-wrap">
                             <span className="flex items-center gap-1 min-w-0 flex-shrink-0">
                               por <span className="text-purple-300 font-medium truncate max-w-[120px]">
-                                {item.authorUsername && !item.authorUsername.startsWith('data:') 
-                                  ? item.authorUsername 
+                                {item.authorUsername && !item.authorUsername.startsWith('data:')
+                                  ? item.authorUsername
                                   : item.author || 'Usuario'}
                               </span>
                             </span>
@@ -278,7 +277,7 @@ export default function BoxPage() {
                           )}
                         </div>
                       </div>
-                      
+
                       {/* Acciones */}
                       <div className="flex items-center gap-3">
                         <button
@@ -316,7 +315,7 @@ export default function BoxPage() {
                   </svg>
                   Resumen del Pedido
                 </h3>
-                
+
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between text-gray-300">
                     <span>Productos ({itemCount})</span>
@@ -333,7 +332,7 @@ export default function BoxPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <button
                     onClick={handleProceedToCheckout}
@@ -345,7 +344,7 @@ export default function BoxPage() {
                     </svg>
                     Proceder al Pago
                   </button>
-                  
+
                   <Link
                     href="/explore"
                     className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-300 flex items-center justify-center gap-2"

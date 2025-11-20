@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ Like API error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
-    return NextResponse.json({ 
-      success: false, 
+    return NextResponse.json({
+      success: false,
       error: errorMessage
     }, { status: 500 });
   }
@@ -77,10 +77,10 @@ export async function GET(request: NextRequest) {
     if (contentIds) {
       const ids = contentIds.split(',');
       const repository = createLikeRepository();
-      
+
       let userId: string | null = null;
       const token = request.headers.get('authorization')?.split(' ')[1];
-      
+
       if (token) {
         try {
           const decoded: any = jwt.verify(token, config.jwt.secret);
@@ -95,12 +95,12 @@ export async function GET(request: NextRequest) {
         ids.map(async (id) => {
           const likesCount = await repository.countByContent(id);
           let isLiked = false;
-          
+
           if (userId) {
             const like = await repository.findByUserAndContent(userId, id);
             isLiked = like !== null;
           }
-          
+
           return {
             contentId: id,
             likesCount,

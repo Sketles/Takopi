@@ -109,6 +109,33 @@ npm run dev
 # Build de producción
 npm run build
 npm start
+
+## 🧪 Pruebas E2E (Playwright)
+
+Se incluyen tests E2E básicos para validar flujos de perfil y navegación de autor. Para ejecutarlos, instala dependencias y configura las variables de entorno.
+
+```bash
+# Instalar dependencias (incluye Playwright)
+npm install
+
+# Ejecutar tests E2E (headless)
+npm run test:e2e
+
+# Ejecutar tests E2E en modo headed (ver la UI)
+npm run test:e2e:headed
+```
+
+Variables de entorno requeridas para pruebas E2E (ejemplo):
+
+```
+E2E_TEST_USER_EMAIL=test@example.com
+E2E_TEST_USER_PASSWORD=password123
+E2E_BASE_URL=http://localhost:3000
+```
+
+Nota: Los tests asumen que tu instancia local tiene datos de prueba adecuados (usuarios y contenido). Ajusta o prepara fixtures según sea necesario.
+
+Los tests se encuentran en la carpeta `testing/e2e` y la configuración específica está en `testing/playwright.config.ts`.
 ```
 
 Abre [http://localhost:3000](http://localhost:3000)

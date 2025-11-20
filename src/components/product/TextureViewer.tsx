@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useToast } from '@/components/shared/Toast';
 
 interface TextureViewerProps {
   files: Array<{
@@ -20,6 +21,7 @@ export default function TextureViewer({ files, title, coverImage, className = ''
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [imageLoading, setImageLoading] = useState<boolean[]>([]);
+  const { addToast } = useToast();
 
   // Filtrar solo archivos de imagen
   const imageFiles = files.filter(file => 
@@ -205,7 +207,7 @@ export default function TextureViewer({ files, title, coverImage, className = ''
                   ) : (
                     <button
                       onClick={() => {
-                        alert('Debes comprar este contenido para poder descargar las imágenes.');
+                        addToast({ type: 'warning', title: 'Necesitas comprar', message: 'Debes comprar este contenido para poder descargar las imágenes.' });
                       }}
                       className="p-2 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors cursor-not-allowed opacity-50"
                       title="Comprar para descargar"

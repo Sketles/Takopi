@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       const searchLower = search.toLowerCase();
-      content = content.filter(item => 
+      content = content.filter(item =>
         item.title.toLowerCase().includes(searchLower) ||
         item.description.toLowerCase().includes(searchLower) ||
         (item.tags && item.tags.some(tag => tag.toLowerCase().includes(searchLower)))
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       title: item.title,
       description: item.description,
       shortDescription: item.shortDescription || item.description?.substring(0, 100) + '...',
-      author: item.authorUsername,
+      author: item.author || item.authorUsername,
       authorAvatar: item.authorAvatar,
       authorId: item.authorId,
       type: item.typeDisplay,
@@ -161,8 +161,8 @@ export async function POST(request: NextRequest) {
       id: newContent.id,
       title: newContent.title,
       description: newContent.description,
-      author: newContent.authorUsername,
-      authorId: newContent.author,
+      author: newContent.author || newContent.authorUsername,
+      authorId: newContent.authorId,
       price: newContent.price,
       isFree: newContent.isFree,
       currency: newContent.currency,
@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
     console.error('❌ Error creating content:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     const statusCode = errorMessage.includes('debe tener') ? 400 : 500;
-    
+
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: statusCode }

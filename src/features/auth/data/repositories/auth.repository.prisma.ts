@@ -9,7 +9,7 @@ import { config } from '@/config/env';
 export class AuthRepositoryPrisma implements IAuthRepository {
   async login(email: string, password: string): Promise<LoginResult> {
     console.log('🗄️ AuthRepositoryPrisma: login', email);
-    
+
     // Buscar usuario por email
     const user = await prisma.user.findUnique({
       where: { email }
@@ -27,14 +27,14 @@ export class AuthRepositoryPrisma implements IAuthRepository {
 
     // Generar token JWT
     const token = jwt.sign(
-      { 
-        userId: user.id, 
+      {
+        userId: user.id,
         email: user.email,
         username: user.username,
-        role: user.role 
+        role: user.role
       },
       config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
+      { expiresIn: config.jwt.expiresIn } as jwt.SignOptions
     );
 
     const userEntity = this.toEntity(user);
@@ -44,7 +44,7 @@ export class AuthRepositoryPrisma implements IAuthRepository {
 
   async register(username: string, email: string, password: string, role: string): Promise<LoginResult> {
     console.log('🗄️ AuthRepositoryPrisma: register', email);
-    
+
     // Hash de contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -61,14 +61,14 @@ export class AuthRepositoryPrisma implements IAuthRepository {
 
     // Generar token JWT
     const token = jwt.sign(
-      { 
-        userId: user.id, 
+      {
+        userId: user.id,
         email: user.email,
         username: user.username,
-        role: user.role 
+        role: user.role
       },
       config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
+      { expiresIn: config.jwt.expiresIn } as jwt.SignOptions
     );
 
     const userEntity = this.toEntity(user);
@@ -78,7 +78,7 @@ export class AuthRepositoryPrisma implements IAuthRepository {
 
   async verifyToken(token: string): Promise<UserEntity | null> {
     console.log('🗄️ AuthRepositoryPrisma: verifyToken');
-    
+
     try {
       const decoded: any = jwt.verify(token, config.jwt.secret);
       const user = await this.findUserById(decoded.userId);
@@ -91,7 +91,7 @@ export class AuthRepositoryPrisma implements IAuthRepository {
 
   async findUserByEmail(email: string): Promise<UserEntity | null> {
     console.log('🗄️ AuthRepositoryPrisma: findUserByEmail', email);
-    
+
     const user = await prisma.user.findUnique({
       where: { email }
     });
@@ -101,7 +101,7 @@ export class AuthRepositoryPrisma implements IAuthRepository {
 
   async findUserByUsername(username: string): Promise<UserEntity | null> {
     console.log('🗄️ AuthRepositoryPrisma: findUserByUsername', username);
-    
+
     const user = await prisma.user.findUnique({
       where: { username }
     });
@@ -111,7 +111,7 @@ export class AuthRepositoryPrisma implements IAuthRepository {
 
   async findUserById(id: string): Promise<UserEntity | null> {
     console.log('🗄️ AuthRepositoryPrisma: findUserById', id);
-    
+
     const user = await prisma.user.findUnique({
       where: { id }
     });
@@ -121,12 +121,13 @@ export class AuthRepositoryPrisma implements IAuthRepository {
 
   async updateProfile(userId: string, data: any): Promise<UserEntity | null> {
     console.log('🗄️ AuthRepositoryPrisma: updateProfile', userId);
-    
+
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
         username: data.username,
         bio: data.bio,
+        role: data.role,
         location: data.location,
         avatar: data.avatar,
         banner: data.banner
@@ -144,8 +145,12 @@ export class AuthRepositoryPrisma implements IAuthRepository {
       user.email,
       user.role,
       user.avatar,
+      user.banner,
       user.bio,
-      user.createdAt.toISOString()
+      user.location,
+      user.createdAt,
+      user.updatedAt,
+      user.isActive
     );
   }
 }

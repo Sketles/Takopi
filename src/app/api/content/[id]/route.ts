@@ -54,7 +54,7 @@ export async function GET(
       title: content.title,
       description: content.description,
       shortDescription: content.shortDescription,
-      author: content.authorUsername,
+      author: content.author || content.authorUsername,
       authorAvatar: content.authorAvatar,
       authorId: content.authorId,
       type: content.typeDisplay,
@@ -145,9 +145,9 @@ export async function PUT(
   } catch (error) {
     console.error('❌ Error updating content:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
-    const statusCode = errorMessage.includes('No tienes permisos') ? 403 : 
-                        errorMessage.includes('no encontrado') ? 404 : 500;
-    
+    const statusCode = errorMessage.includes('No tienes permisos') ? 403 :
+      errorMessage.includes('no encontrado') ? 404 : 500;
+
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: statusCode }
@@ -195,9 +195,9 @@ export async function DELETE(
   } catch (error) {
     console.error('❌ Error deleting content:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
-    const statusCode = errorMessage.includes('No tienes permisos') ? 403 : 
-                        errorMessage.includes('no encontrado') ? 404 : 500;
-    
+    const statusCode = errorMessage.includes('No tienes permisos') ? 403 :
+      errorMessage.includes('no encontrado') ? 404 : 500;
+
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: statusCode }

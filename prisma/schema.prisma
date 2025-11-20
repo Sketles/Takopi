@@ -79,6 +79,8 @@ model Content {
   visibility  String   @default("public") // public, private, unlisted
   status      String   @default("draft") // draft, published, archived
   isPublished Boolean  @default(false)
+  isListed    Boolean  @default(true) // false = despublicado/eliminado (borrado lógico)
+  deletedAt   DateTime? // Timestamp de eliminación
   
   // Tags
   tags        String[] // Array de strings
@@ -109,6 +111,7 @@ model Content {
   @@index([createdAt])
   @@index([views])
   @@index([price])
+  @@index([isListed])
   @@index([contentType, isPublished, status])
   @@index([authorId, isPublished])
   @@map("contents")
@@ -192,8 +195,11 @@ model Purchase {
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  contentId       String
-  content         Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  contentId       String?
+  content         Content?  @relation(fields: [contentId], references: [id], onDelete: SetNull)
+  
+  // Snapshot del contenido al momento de la compra
+  contentSnapshot Json     // {title, description, files, coverImage, etc.}
   
   // Detalles de compra
   price           Int      // Precio al momento de la compra

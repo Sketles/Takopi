@@ -8,12 +8,16 @@ export interface IContentRepository {
   findByCategory(category: string): Promise<ContentEntity[]>;
   findByAuthor(authorId: string): Promise<ContentEntity[]>;
   findPublished(): Promise<ContentEntity[]>;
-  
+
   // Mutaciones
   create(content: any): Promise<ContentEntity>;
   update(id: string, content: Partial<any>): Promise<ContentEntity | null>;
   delete(id: string): Promise<boolean>;
-  
+  unlist(id: string): Promise<boolean>; // Borrado lógico
+
+  // Verificaciones
+  hasPurchases(contentId: string): Promise<boolean>; // Verificar si tiene compras
+
   // Paginación
   paginate(page: number, limit: number, filter?: any): Promise<{
     items: ContentEntity[];
@@ -22,4 +26,3 @@ export interface IContentRepository {
     totalPages: number;
   }>;
 }
-

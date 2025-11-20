@@ -19,6 +19,10 @@ export class UserRepositoryPrisma implements IUserRepository {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
+        contents: {
+          where: { status: 'published' }, // Only published content
+          orderBy: { createdAt: 'desc' }
+        },
         _count: {
           select: {
             contents: true,
@@ -32,23 +36,24 @@ export class UserRepositoryPrisma implements IUserRepository {
 
     if (!user) return null;
 
-    return {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      avatar: user.avatar,
-      banner: user.banner,
-      bio: user.bio,
-      location: user.location,
-      createdAt: user.createdAt.toISOString(),
-      stats: {
+    // Return a proper UserProfileEntity instance so methods like isCreator/isAdmin are available
+    return new UserProfileEntity(
+      user.id,
+      user.username,
+      user.role,
+      user.avatar || undefined,
+      user.bio || undefined,
+      user.createdAt,
+      {
         contentCount: user._count.contents,
         purchaseCount: user._count.purchases,
         followersCount: user._count.followers,
         followingCount: user._count.following
-      }
-    } as UserProfileEntity;
+      },
+      user.contents,
+      user.banner || undefined,
+      user.location || undefined
+    );
   }
 
   async getUserStats(userId: string) {
@@ -86,8 +91,18 @@ export class UserRepositoryPrisma implements IUserRepository {
   async getUserCreations(userId: string): Promise<any[]> {
     const contents = await prisma.content.findMany({
       where: { authorId: userId },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
+
     return contents;
   }
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/shared/Toast';
 import ProductMediaTabs from './ProductMediaTabs';
 import PurchasePanel from './PurchasePanel';
 import DescriptionClamp from './DescriptionClamp';
@@ -69,6 +70,7 @@ export default function ProductPage({
   const [isSaved, setIsSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'comments'>('overview');
   const router = useRouter();
+  const { addToast } = useToast();
 
   const handleEdit = () => {
     setIsEditModalOpen(true);
@@ -214,7 +216,7 @@ export default function ProductPage({
                           ) : (
                             <button
                               onClick={() => {
-                                alert('Debes comprar este contenido para poder ver y descargar los archivos.');
+                                addToast({ type: 'warning', title: 'Compra necesaria', message: 'Debes comprar este contenido para poder ver y descargar los archivos.' });
                               }}
                               className="text-gray-500 text-sm font-medium cursor-not-allowed"
                               disabled

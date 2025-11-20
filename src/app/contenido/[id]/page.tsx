@@ -58,14 +58,18 @@ function ProductDetailContent({ params }: { params: Promise<{ id: string }> }) {
   // Desenvolver params con React.use()
   const resolvedParams = use(params);
   const isModal = searchParams.get('modal') === '1';
-  const isOwner = user && product ? user.username === product.author : false;
+  // Prefer stable authorId for ownership checks, fall back to username for legacy content
+  const isOwner =
+    user && product
+      ? (product.authorId ? user._id === product.authorId : user.username === product.author)
+      : false;
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
         const response = await fetch(`/api/content/${resolvedParams.id}`);
-        
+
         if (!response.ok) {
           if (response.status === 404) {
             setError('Producto no encontrado');
@@ -114,11 +118,11 @@ function ProductDetailContent({ params }: { params: Promise<{ id: string }> }) {
         window.location.href = '/profile';
       } else {
         const errorData = await response.json();
-        alert(`Error al eliminar: ${errorData.error}`);
+        addToast({ type: 'error', title: 'Error', message: `Error al eliminar: ${errorData.error}` });
       }
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Error al eliminar el producto');
+      addToast({ type: 'error', title: 'Error', message: 'Error al eliminar el producto' });
     }
   };
 

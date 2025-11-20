@@ -12,12 +12,13 @@ export class ContentRepositoryPrisma implements IContentRepository {
     if (process.env.NODE_ENV !== 'production') {
       console.log('🗄️ ContentRepositoryPrisma: findAll');
     }
-    
+
     // Add limit to prevent loading too many records
     const contents = await prisma.content.findMany({
       where: {
         isPublished: true,
-        status: 'published'
+        status: 'published',
+        isListed: true
       },
       include: {
         author: {
@@ -47,7 +48,7 @@ export class ContentRepositoryPrisma implements IContentRepository {
     if (process.env.NODE_ENV !== 'production') {
       console.log('🗄️ ContentRepositoryPrisma: findById', id);
     }
-    
+
     const content = await prisma.content.findUnique({
       where: { id },
       include: {
@@ -79,11 +80,11 @@ export class ContentRepositoryPrisma implements IContentRepository {
   private incrementViewsThrottled(contentId: string): void {
     const now = Date.now();
     const lastIncrement = ContentRepositoryPrisma.viewThrottleMap.get(contentId);
-    
+
     // Only increment if more than VIEW_THROTTLE_MS has passed
     if (!lastIncrement || now - lastIncrement > ContentRepositoryPrisma.VIEW_THROTTLE_MS) {
       ContentRepositoryPrisma.viewThrottleMap.set(contentId, now);
-      
+
       // Asynchronous increment without blocking
       prisma.content.update({
         where: { id: contentId },
@@ -98,12 +99,13 @@ export class ContentRepositoryPrisma implements IContentRepository {
     if (process.env.NODE_ENV !== 'production') {
       console.log('🗄️ ContentRepositoryPrisma: findByCategory', category);
     }
-    
+
     const contents = await prisma.content.findMany({
       where: {
         contentType: category,
         isPublished: true,
-        status: 'published'
+        status: 'published',
+        isListed: true
       },
       include: {
         author: {
@@ -132,7 +134,7 @@ export class ContentRepositoryPrisma implements IContentRepository {
     if (process.env.NODE_ENV !== 'production') {
       console.log('🗄️ ContentRepositoryPrisma: findByAuthor', authorId);
     }
-    
+
     const contents = await prisma.content.findMany({
       where: { authorId },
       include: {
@@ -162,11 +164,12 @@ export class ContentRepositoryPrisma implements IContentRepository {
     if (process.env.NODE_ENV !== 'production') {
       console.log('🗄️ ContentRepositoryPrisma: findPublished');
     }
-    
+
     const contents = await prisma.content.findMany({
       where: {
         isPublished: true,
-        status: 'published'
+        status: 'published',
+        isListed: true
       },
       include: {
         author: {
@@ -195,7 +198,7 @@ export class ContentRepositoryPrisma implements IContentRepository {
     if (process.env.NODE_ENV !== 'production') {
       console.log('🗄️ ContentRepositoryPrisma: create');
     }
-    
+
     const content = await prisma.content.create({
       data: {
         title: data.title,
@@ -243,9 +246,9 @@ export class ContentRepositoryPrisma implements IContentRepository {
     if (process.env.NODE_ENV !== 'production') {
       console.log('🗄️ ContentRepositoryPrisma: update', id);
     }
-    
+
     const updateData: any = {};
-    
+
     // Solo actualizar campos que existen
     if (data.title !== undefined) updateData.title = data.title;
     if (data.description !== undefined) updateData.description = data.description;
@@ -296,7 +299,7 @@ export class ContentRepositoryPrisma implements IContentRepository {
     if (process.env.NODE_ENV !== 'production') {
       console.log('🗄️ ContentRepositoryPrisma: delete', id);
     }
-    
+
     try {
       await prisma.content.delete({
         where: { id }
@@ -312,11 +315,11 @@ export class ContentRepositoryPrisma implements IContentRepository {
     if (process.env.NODE_ENV !== 'production') {
       console.log('🗄️ ContentRepositoryPrisma: paginate', { page, limit, filter });
     }
-    
+
     const skip = (page - 1) * limit;
-    
+
     const where: any = {};
-    
+
     if (filter) {
       if (filter.contentType) where.contentType = filter.contentType;
       if (filter.category) where.category = filter.category;
@@ -364,6 +367,41 @@ export class ContentRepositoryPrisma implements IContentRepository {
       page,
       totalPages: Math.ceil(total / limit)
     };
+  }
+
+  async hasPurchases(contentId: string): Promise<boolean> {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🗄️ ContentRepositoryPrisma: hasPurchases', contentId);
+    }
+
+    const purchaseCount = await prisma.purchase.count({
+      where: {
+        contentId,
+        status: 'completed' // Solo contar compras completadas
+      }
+    });
+
+    return purchaseCount > 0;
+  }
+
+  async unlist(id: string): Promise<boolean> {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🗄️ ContentRepositoryPrisma: unlist (borrado lógico)', id);
+    }
+
+    try {
+      await prisma.content.update({
+        where: { id },
+        data: {
+          isListed: false,
+          deletedAt: new Date()
+        }
+      });
+      return true;
+    } catch (error) {
+      console.error('Error unlisting content:', error);
+      return false;
+    }
   }
 
   // Helper para convertir modelo Prisma a Entity

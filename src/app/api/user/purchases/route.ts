@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.split(' ')[1];
-    
+
     // Verificar token
     let userId;
     try {
@@ -38,31 +38,75 @@ export async function GET(request: NextRequest) {
       // Obtener información del contenido y vendedor con Prisma
       let content = null;
       let seller = null;
-      
+      let contentData = null;
+
       try {
         content = await prisma.content.findUnique({
           where: { id: purchase.contentId },
           include: { author: true }
         });
-        
+
         if (content) {
+          // Contenido aún existe - usar datos actuales
           seller = content.author;
+          contentData = {
+            id: content.id,
+            title: content.title,
+            coverImage: content.coverImage,
+            category: content.category,
+            contentType: content.contentType,
+            price: content.price,
+            files: content.files || [],
+            isDeleted: false
+          };
+        } else {
+          // Contenido fue eliminado - usar snapshot
+          const snapshot = purchase.contentSnapshot as any;
+          if (snapshot) {
+            contentData = {
+              id: purchase.contentId,
+              title: snapshot.title,
+              coverImage: snapshot.coverImage,
+              category: snapshot.category,
+              contentType: snapshot.contentType,
+              price: snapshot.price,
+              files: snapshot.files || [],
+              isDeleted: true // Flag para indicar que fue eliminado
+            };
+
+            // Intentar obtener info del vendedor desde el snapshot
+            if (snapshot.authorId) {
+              const author = await prisma.user.findUnique({
+                where: { id: snapshot.authorId }
+              });
+              if (author) {
+                seller = author;
+              }
+            }
+          }
         }
       } catch (error) {
         console.log('⚠️ Content not found for purchase:', purchase.contentId);
+        // Usar snapshot como fallback
+        const snapshot = purchase.contentSnapshot as any;
+        if (snapshot) {
+          contentData = {
+            id: purchase.contentId,
+            title: snapshot.title,
+            coverImage: snapshot.coverImage,
+            category: snapshot.category,
+            contentType: snapshot.contentType,
+            price: snapshot.price,
+            files: snapshot.files || [],
+            isDeleted: true
+          };
+        }
       }
-      
+
       return {
         id: purchase.id,
         contentId: purchase.contentId,
-        content: content ? {
-          id: content.id,
-          title: content.title,
-          coverImage: content.coverImage,
-          category: content.category,
-          price: content.price,
-          files: content.files || []
-        } : null,
+        content: contentData,
         seller: seller ? {
           id: seller.id,
           username: seller.username,
