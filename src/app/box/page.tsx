@@ -25,15 +25,7 @@ export default function BoxPage() {
   } = useCart();
   const { addToast } = useToast();
 
-  const [selectedProduct, setSelectedProduct] = useState<{
-    id: string;
-    title: string;
-    description: string;
-    price: number;
-    coverImage?: string;
-    author?: string;
-    contentType?: string;
-  } | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
@@ -374,8 +366,8 @@ export default function BoxPage() {
             setIsModalOpen(false);
             setSelectedProduct(null);
           }}
-          isOwner={selectedProduct.author === user?.id}
-          currentUserId={user?.id}
+          isOwner={selectedProduct.authorId === (user as any)?.userId}
+          currentUserId={(user as any)?.userId}
           source="box"
         />
       )}

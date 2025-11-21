@@ -177,8 +177,16 @@ export default function ProductEditModal({
   const handleDelete = async () => {
     if (!product || !onDelete) return;
 
+    // Validar que el producto tenga un ID válido
+    if (!product.id) {
+      console.error('❌ El producto no tiene un ID válido:', product);
+      alert('Error: El producto no tiene un ID válido');
+      return;
+    }
+
     try {
-      await onDelete(product);
+      // Llamar onDelete con el ID del producto en lugar del objeto completo
+      await onDelete(product.id);
       setShowDeleteConfirm(false);
       onCancel(); // Cerrar el modal después de eliminar
     } catch (error) {

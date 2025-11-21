@@ -9,13 +9,14 @@ export class CommentMapper {
       model.contentId,
       model.userId,
       model.username,
-      model.userAvatar,
       model.text,
       model.likes,
       model.likedBy || [],
       currentUserId ? (model.likedBy || []).includes(currentUserId) : false,
+      null, // parentId
       new Date(model.createdAt),
-      new Date(model.updatedAt)
+      new Date(model.updatedAt),
+      model.userAvatar
     );
   }
 

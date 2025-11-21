@@ -414,37 +414,29 @@ export class ContentRepositoryPrisma implements IContentRepository {
 
   // Helper para convertir modelo Prisma a Entity
   private toEntity(content: any): ContentEntity {
-    return {
-      id: content.id,
-      title: content.title,
-      description: content.description,
-      shortDescription: content.shortDescription,
-      contentType: content.contentType,
-      category: content.category,
-      files: content.files as any[],
-      coverImage: content.coverImage,
-      additionalImages: content.additionalImages as string[],
-      price: content.price,
-      currency: content.currency,
-      isFree: content.isFree,
-      license: content.license,
-      customLicense: content.customLicense,
-      visibility: content.visibility,
-      status: content.status,
-      isPublished: content.isPublished,
-      tags: content.tags,
-      customTags: content.customTags,
-      views: content.views,
-      downloads: content.downloads,
-      createdAt: content.createdAt.toISOString(),
-      updatedAt: content.updatedAt.toISOString(),
-      publishedAt: content.publishedAt?.toISOString(),
-      author: content.author?.username || 'Unknown',
-      authorId: content.authorId,
-      authorAvatar: content.author?.avatar,
-      likes: content._count?.likes || 0,
-      comments: content._count?.comments || 0,
-      pins: content._count?.pins || 0
-    } as ContentEntity;
+    return new ContentEntity(
+      content.id,                           // id
+      content.title,                        // title
+      content.description,                  // description
+      content.authorId,                     // author (ID del autor)
+      content.author?.username || 'Unknown', // authorUsername
+      content.price,                        // price
+      content.currency,                     // currency
+      content.contentType,                  // contentType
+      content.category,                     // category
+      content.tags || [],                   // tags
+      content.isPublished,                  // isPublished
+      content.coverImage,                   // coverImage (opcional)
+      content.files as string[],            // files (opcional)
+      content._count?.likes || 0,           // likes (opcional)
+      content.views || 0,                   // views (opcional)
+      content.downloads || 0,               // downloads (opcional)
+      content._count?.pins || 0,            // pins (opcional)
+      content.author?.avatar,               // authorAvatar (opcional)
+      content.authorId,                     // authorId (opcional)
+      content.shortDescription,             // shortDescription (opcional)
+      content.createdAt,                    // createdAt (opcional)
+      content.updatedAt                     // updatedAt (opcional)
+    );
   }
 }

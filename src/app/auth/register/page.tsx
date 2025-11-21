@@ -43,7 +43,9 @@ export default function RegisterPage() {
     }
 
     try {
-      const success = await register(formData.username, formData.email, formData.password, formData.role);
+      // Normalizar email a lowercase antes de enviar
+      const normalizedEmail = formData.email.toLowerCase().trim();
+      const success = await register(formData.username, normalizedEmail, formData.password, formData.role);
       if (success) {
         router.push('/explore');
       } else {
@@ -57,9 +59,11 @@ export default function RegisterPage() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      // Normalizar email automáticamente mientras se escribe
+      [name]: name === 'email' ? value.toLowerCase() : value
     });
   };
 

@@ -1,7 +1,7 @@
 // Search Mapper - Convierte entre modelos de datos y entidades de dominio
 import { SearchQueryEntity } from '../../domain/entities/search-query.entity';
 import { SearchResultEntity } from '../../domain/entities/search-result.entity';
-import { ContentEntity } from '../../content/domain/entities/content.entity';
+import { ContentEntity } from '../../../content/domain/entities/content.entity';
 
 export class SearchMapper {
   // Convertir modelo de query a entidad de dominio

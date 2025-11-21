@@ -11,9 +11,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=no_token`, 302);
     }
 
-    console.log('🔍 Webpay return received token:', token);
+    console.log('🔍 Webpay return POST received token:', token);
 
-    // Redirigir al endpoint de commit con el token
+    // Redirigir a commit para confirmar transacción con Transbank
     return NextResponse.redirect(`${baseUrl}/api/webpay/commit?token_ws=${token}`, 302);
 
   } catch (error) {
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// También manejar GET requests por si acaso
+// También manejar GET requests (Webpay usa GET para el return)
 export async function GET(req: NextRequest) {
   try {
     const token = req.nextUrl.searchParams.get("token_ws");
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 
     console.log('🔍 Webpay return GET received token:', token);
 
-    // Redirigir al endpoint de commit con el token
+    // Redirigir a commit para confirmar transacción con Transbank
     return NextResponse.redirect(`${baseUrl}/api/webpay/commit?token_ws=${token}`, 302);
 
   } catch (error) {

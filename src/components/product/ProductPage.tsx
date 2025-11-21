@@ -324,8 +324,6 @@ export default function ProductPage({
                 <CommentsSection
                   productId={product.id}
                   isOwner={isOwner}
-                  onAddComment={(text) => console.log('Agregar comentario:', text)}
-                  onLikeComment={(commentId) => console.log('Like comentario:', commentId)}
                 />
               )}
             </div>
@@ -354,7 +352,24 @@ export default function ProductPage({
       {/* Modal de edición */}
       {isEditModalOpen && (
         <ProductEditModal
-          product={product}
+          product={{
+            ...product,
+            customTags: product.customTags || [],
+            files: (product.files || []).map((file: any) => ({
+              id: file.id || '',
+              name: file.name || '',
+              originalName: file.originalName || file.name || '',
+              size: file.size || 0,
+              type: file.type || '',
+              url: file.url || '',
+              previewUrl: file.previewUrl,
+              isCover: file.isCover
+            })),
+            license: (product as any).license || 'cc-by-4.0',
+            customLicense: (product as any).customLicense,
+            visibility: (product as any).visibility || 'public',
+            additionalImages: (product as any).additionalImages || []
+          }}
           isOpen={isEditModalOpen}
           onSave={handleSaveProduct}
           onCancel={() => setIsEditModalOpen(false)}

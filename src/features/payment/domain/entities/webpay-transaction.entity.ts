@@ -40,15 +40,15 @@ export class WebpayTransactionEntity {
   }
 
   get isValid(): boolean {
-    return this.amount > 0 && 
+    return !!(this.amount > 0 && 
            this.userId && 
            this.contentId && 
            this.buyOrder && 
-           this.sessionId;
+           this.sessionId);
   }
 
   canBeCompleted(): boolean {
-    return this.isPending && this.token;
+    return !!(this.isPending && this.token);
   }
 
   markAsCompleted(token?: string): WebpayTransactionEntity {

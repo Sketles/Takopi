@@ -7,6 +7,7 @@ import ContentCard, { useContentCard } from '@/components/shared/ContentCard';
 import ProductModal from '@/components/product/ProductModal';
 import SearchBar from '@/components/search/SearchBar';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/shared/Toast';
 import { ChevronLeftIcon, ChevronRightIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
@@ -45,6 +46,7 @@ export default function ExplorePage() {
   const { user, isLoading } = useAuth();
   const { addProductToCart, isProductInCart } = useCart();
   const { addToast } = useToast();
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState('Todo');
   const [content, setContent] = useState<ContentItem[]>([]);
   const [trendingContent, setTrendingContent] = useState<ContentItem[]>([]);
@@ -393,6 +395,18 @@ export default function ExplorePage() {
 
   const handleAddToBox = async (product: any) => {
     try {
+      // Verificar autenticación
+      const token = localStorage.getItem('takopi_token');
+      if (!token || !user) {
+        addToast({
+          type: 'warning',
+          title: 'Inicia sesión',
+          message: 'Debes iniciar sesión para agregar productos al carrito'
+        });
+        router.push('/auth/login?redirect=/explore');
+        return;
+      }
+
       if (isProductInCart(product.id)) {
         addToast({
           type: 'warning',

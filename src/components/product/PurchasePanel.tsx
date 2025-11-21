@@ -105,6 +105,18 @@ export default function PurchasePanel({
   const handleAddToBox = async () => {
     if (isAddingToCart) return;
 
+    // Verificar autenticación
+    const token = localStorage.getItem('takopi_token');
+    if (!token) {
+      addToast({
+        type: 'warning',
+        title: 'Inicia sesión',
+        message: 'Debes iniciar sesión para agregar productos al carrito'
+      });
+      router.push('/auth/login');
+      return;
+    }
+
     setIsAddingToCart(true);
 
     try {

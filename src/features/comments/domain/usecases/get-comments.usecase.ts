@@ -22,13 +22,14 @@ export class GetCommentsUseCase {
           comment.contentId,
           comment.userId,
           comment.username,
-          comment.userAvatar,
           comment.text,
           comment.likes,
           comment.likedBy,
           true, // isLiked = true
+          comment.parentId,
           comment.createdAt,
-          comment.updatedAt
+          comment.updatedAt,
+          comment.userAvatar
         );
       }
       return comment;

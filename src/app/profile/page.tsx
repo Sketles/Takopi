@@ -398,8 +398,15 @@ function ProfileContent() {
       originalId: creation.id,
       mongoId: creation._id,
       finalId: validId,
-      type: typeof validId
+      type: typeof validId,
+      creationCompleto: creation
     });
+
+    // Validar que tengamos un ID válido
+    if (!validId) {
+      console.error('❌ No se pudo obtener un ID válido de la creación:', creation);
+      addToast({ type: 'error', title: 'Error', message: 'Producto sin ID válido' });
+    }
 
     return {
       id: validId,
@@ -445,20 +452,50 @@ function ProfileContent() {
 
   // Función para editar producto
   const handleEditProduct = (product: any) => {
+    console.log('📝 handleEditProduct - Producto recibido:', product);
+    console.log('📝 ID del producto:', product?.id);
+    console.log('📝 Todas las keys:', Object.keys(product || {}));
+    
     setProductToEdit(product);
     setIsProductEditorOpen(true);
   };
 
   // Función para eliminar producto
-  const handleDeleteProduct = async (product: any, source?: string) => {
+  const handleDeleteProduct = async (productOrId: any, source?: string) => {
     try {
       const token = localStorage.getItem('takopi_token');
 
+      // Validar que productOrId no sea undefined o null
+      if (!productOrId) {
+        console.error('❌ productOrId es undefined o null');
+        addToast({ type: 'error', title: 'Error', message: 'Producto no válido' });
+        return { success: false };
+      }
+
+      // Obtener el ID correcto: puede ser un string directo o un objeto con id/_id
+      let productId: string;
+      if (typeof productOrId === 'string') {
+        productId = productOrId;
+      } else if (typeof productOrId === 'object') {
+        productId = productOrId.id || productOrId._id;
+      } else {
+        console.error('❌ Tipo de productOrId no válido:', typeof productOrId);
+        addToast({ type: 'error', title: 'Error', message: 'Formato de producto no válido' });
+        return { success: false };
+      }
+      
+      if (!productId) {
+        console.error('❌ No se encontró ID en el producto:', productOrId);
+        addToast({ type: 'error', title: 'Error', message: 'ID de producto no válido' });
+        return { success: false };
+      }
+
       // Debug: verificar el ID que se está enviando
-      console.log('🔍 Eliminando producto con ID:', product.id);
+      console.log('🔍 Eliminando producto con ID:', productId);
+      console.log('🔍 Producto/ID recibido:', productOrId);
       console.log('🔍 Fuente:', source);
 
-      const response = await fetch(`/api/content/${product.id}`, {
+      const response = await fetch(`/api/content/${productId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -469,12 +506,13 @@ function ProfileContent() {
         // Remover el producto de la lista de creaciones solo si estamos en el perfil
         if (source === 'profile') {
           setUserCreations(prev =>
-            prev.filter(creation => creation.id !== product.id)
+            prev.filter(creation => (creation.id || creation._id) !== productId)
           );
         }
 
         // No mostrar alert - eliminación silenciosa y profesional
         // El modal se cerrará automáticamente por el ProductModal
+        addToast({ type: 'success', title: 'Éxito', message: 'Producto eliminado correctamente' });
         return { success: true };
       } else {
         console.error('❌ Error response status:', response.status);
@@ -707,7 +745,7 @@ function ProfileContent() {
               { label: 'Creaciones', value: realStats ? realStats.contentCount : currentProfile.stats.modelsPublished, clickable: false },
               { label: 'Ventas', value: realStats ? realStats.purchaseCount : currentProfile.stats.totalSales, clickable: false },
               { label: 'Corazones', value: realStats ? realStats.totalLikes : currentProfile.stats.heartsReceived, clickable: false },
-              { label: 'Colecciones', value: realStats ? realStats.collectionsCount : 0, clickable: true, onClick: () => setIsCollectionsModalOpen(true) }
+              { label: 'Colecciones', value: realStats ? realStats.totalDownloads : currentProfile.stats.pinsCreated, clickable: true, onClick: () => setIsCollectionsModalOpen(true) }
             ].map((stat, idx) => (
               <div
                 key={idx}
@@ -908,7 +946,6 @@ function ProfileContent() {
       <CollectionsModal
         isOpen={isCollectionsModalOpen}
         onClose={() => setIsCollectionsModalOpen(false)}
-        onStatsUpdate={loadUserStats}
       />
 
     </Layout>

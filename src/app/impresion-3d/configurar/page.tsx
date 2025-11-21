@@ -136,7 +136,8 @@ export default function PrintingConfigPage() {
 
   // Calcular precio estimado
   useEffect(() => {
-    if (!config.modelFile) return;
+    // Verificar si hay modelo (archivo local O URL del marketplace)
+    if (!config.modelFile && !config.modelUrl) return;
 
     setIsCalculating(true);
     setTimeout(() => {
@@ -167,7 +168,28 @@ export default function PrintingConfigPage() {
       router.push('/auth/login?redirect=/impresion-3d/configurar');
       return;
     }
-    console.log('Proceeding to checkout with config:', config);
+    
+    // Guardar configuración en sessionStorage para la página de envío
+    const configData = {
+      material: config.material,
+      quality: config.quality,
+      price: estimatedPrice,
+      estimatedTime,
+      infill: config.infill,
+      scale: config.scale,
+      copies: config.copies,
+      supports: config.supports,
+      color: config.color,
+      modelUrl: config.modelUrl,
+      productId,
+      productTitle,
+      fileName
+    };
+    
+    sessionStorage.setItem('printConfig', JSON.stringify(configData));
+    
+    // Redirigir a página de envío
+    router.push('/impresion-3d/envio');
   };
 
   return (
