@@ -12,6 +12,7 @@ import ContentCard, { useContentCard } from '@/components/shared/ContentCard';
 import ProductModal from '@/components/product/ProductModal';
 import ProductEditModal from '@/components/product/ProductEditModal';
 import PurchasesSection from '@/components/profile/PurchasesSection';
+import CollectionsModal from '@/components/profile/CollectionsModal';
 
 // Evitar pre-render estático
 export const dynamic = 'force-dynamic';
@@ -50,6 +51,7 @@ function ProfileContent() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<'creations' | 'purchases'>('creations');
+  const [isCollectionsModalOpen, setIsCollectionsModalOpen] = useState(false);
   const { user, updateUser } = useAuth();
   const { addToast } = useToast();
   const { createCardProps } = useContentCard();
@@ -700,18 +702,28 @@ function ProfileContent() {
           {/* Stats Bar - Floating Glass */}
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-12">
             {[
-              { label: 'Seguidores', value: realStats ? realStats.followersCount : currentProfile.stats.followers },
-              { label: 'Siguiendo', value: realStats ? realStats.followingCount : currentProfile.stats.following },
-              { label: 'Creaciones', value: realStats ? realStats.contentCount : currentProfile.stats.modelsPublished },
-              { label: 'Ventas', value: realStats ? realStats.purchaseCount : currentProfile.stats.totalSales },
-              { label: 'Corazones', value: realStats ? realStats.totalLikes : currentProfile.stats.heartsReceived },
-              { label: 'Pines', value: realStats ? realStats.totalDownloads : currentProfile.stats.pinsCreated }
+              { label: 'Seguidores', value: realStats ? realStats.followersCount : currentProfile.stats.followers, clickable: false },
+              { label: 'Siguiendo', value: realStats ? realStats.followingCount : currentProfile.stats.following, clickable: false },
+              { label: 'Creaciones', value: realStats ? realStats.contentCount : currentProfile.stats.modelsPublished, clickable: false },
+              { label: 'Ventas', value: realStats ? realStats.purchaseCount : currentProfile.stats.totalSales, clickable: false },
+              { label: 'Corazones', value: realStats ? realStats.totalLikes : currentProfile.stats.heartsReceived, clickable: false },
+              { label: 'Colecciones', value: realStats ? realStats.totalDownloads : currentProfile.stats.pinsCreated, clickable: true, onClick: () => setIsCollectionsModalOpen(true) }
             ].map((stat, idx) => (
-              <div key={idx} className="bg-[#0f0f0f]/80 backdrop-blur-md border border-white/5 rounded-2xl p-4 text-center hover:bg-white/5 transition-colors group cursor-default">
+              <div
+                key={idx}
+                onClick={stat.clickable ? stat.onClick : undefined}
+                className={`bg-[#0f0f0f]/80 backdrop-blur-md border border-white/5 rounded-2xl p-4 text-center hover:bg-white/5 transition-colors group ${
+                  stat.clickable ? 'cursor-pointer hover:border-purple-500/30 hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]' : 'cursor-default'
+                }`}
+              >
                 <div className="text-2xl font-bold text-white mb-1 group-hover:scale-110 transition-transform duration-300">
                   {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
                 </div>
-                <div className="text-xs text-white/40 uppercase tracking-wider font-medium">{stat.label}</div>
+                <div className={`text-xs uppercase tracking-wider font-medium ${
+                  stat.clickable ? 'text-purple-400/80 group-hover:text-purple-400' : 'text-white/40'
+                }`}>
+                  {stat.label}
+                </div>
               </div>
             ))}
           </div>
@@ -890,6 +902,12 @@ function ProfileContent() {
         onSave={handleSaveProduct}
         onCancel={handleCancelEdit}
         onDelete={handleDeleteProduct}
+      />
+
+      {/* Collections Modal */}
+      <CollectionsModal
+        isOpen={isCollectionsModalOpen}
+        onClose={() => setIsCollectionsModalOpen(false)}
       />
 
     </Layout>
