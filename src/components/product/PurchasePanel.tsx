@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/shared/Toast';
+import { useRouter } from 'next/navigation';
 
 interface PurchasePanelProps {
   product: {
@@ -15,8 +16,10 @@ interface PurchasePanelProps {
     license: string;
     customLicense?: string;
     files?: Array<{
+      name: string;
       type: string;
       size: number;
+      url: string;
     }>;
     author: string;
     authorAvatar?: string;
@@ -58,6 +61,7 @@ export default function PurchasePanel({
 
   const { addProductToCart, isProductInCart } = useCart();
   const { addToast } = useToast();
+  const router = useRouter();
 
   const formatPrice = (price: number | undefined, isFree: boolean, currency: string) => {
     if (isFree) return 'GRATIS';
@@ -112,7 +116,26 @@ export default function PurchasePanel({
     }
   };
 
+  const handlePrint3D = () => {
+    // Buscar archivo 3D
+    const modelFile = product.files?.find(f =>
+      f.name.toLowerCase().endsWith('.stl') ||
+      f.name.toLowerCase().endsWith('.obj') ||
+      f.name.toLowerCase().endsWith('.glb') ||
+      f.name.toLowerCase().endsWith('.gltf')
+    ) || product.files?.[0];
+
+    const params = new URLSearchParams();
+    params.set('productId', product.id);
+    if (modelFile?.url) {
+      params.set('modelUrl', modelFile.url);
+    }
+
+    router.push(`/impresion-3d/configurar?${params.toString()}`);
+  };
+
   const isInCart = isProductInCart(product.id);
+  const is3DModel = product.contentType === 'modelos3d' || product.contentType === '3d' || product.contentType === 'model';
 
   const handleLike = () => {
     setIsLiked(!isLiked);
@@ -187,6 +210,20 @@ export default function PurchasePanel({
                 <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
               </span>
             </button>
+
+            {/* Botón Imprimir y Comprar (Solo para modelos 3D) */}
+            {is3DModel && (
+              <button
+                onClick={handlePrint3D}
+                className="group relative w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_30px_rgba(6,182,212,0.3)] overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
+                <span className="relative flex items-center justify-center gap-2">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" /></svg>
+                  IMPRIMIR Y COMPRAR
+                </span>
+              </button>
+            )}
 
             <button
               onClick={handleAddToBox}

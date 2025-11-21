@@ -55,8 +55,8 @@ export async function GET(request: NextRequest) {
       text: comment.text,
       likes: comment.likes,
       isLiked: comment.isLiked,
-      createdAt: comment.createdAt.toISOString(),
-      updatedAt: comment.updatedAt.toISOString()
+      createdAt: comment.createdAt instanceof Date ? comment.createdAt.toISOString() : comment.createdAt,
+      updatedAt: comment.updatedAt instanceof Date ? comment.updatedAt.toISOString() : comment.updatedAt
     }));
 
     return NextResponse.json({
@@ -124,8 +124,8 @@ export async function POST(request: NextRequest) {
       text: comment.text,
       likes: comment.likes,
       isLiked: comment.isLiked,
-      createdAt: comment.createdAt.toISOString(),
-      updatedAt: comment.updatedAt.toISOString()
+      createdAt: comment.createdAt instanceof Date ? comment.createdAt.toISOString() : comment.createdAt,
+      updatedAt: comment.updatedAt instanceof Date ? comment.updatedAt.toISOString() : comment.updatedAt
     };
 
     return NextResponse.json({

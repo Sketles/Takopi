@@ -159,8 +159,8 @@ export class CommentRepositoryPrisma implements ICommentRepository {
       userAvatar: comment.user?.avatar,
       likeCount: comment.likeCount,
       likedBy: comment.likedBy,
-      createdAt: comment.createdAt.toISOString(),
-      updatedAt: comment.updatedAt.toISOString()
+      createdAt: comment.createdAt instanceof Date ? comment.createdAt : new Date(comment.createdAt),
+      updatedAt: comment.updatedAt instanceof Date ? comment.updatedAt : new Date(comment.updatedAt)
     } as CommentEntity;
   }
 }

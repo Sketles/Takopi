@@ -274,7 +274,7 @@ export default function FileUploader({
           <div className="space-y-2">
             {files.map((file, index) => (
               <div
-                key={file.id}
+                key={file.id || `file-${index}-${file.name}`}
                 className="bg-gradient-to-br from-gray-800/40 to-purple-900/40 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50"
               >
                 <div className="flex items-center gap-3">
