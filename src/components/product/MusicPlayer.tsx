@@ -231,7 +231,7 @@ export default function MusicPlayer({ files, title, coverImage, className = '' }
       {audioFiles.length > 1 && (
         <div className="mt-6">
           <h4 className="text-white text-sm font-medium mb-3">Canciones</h4>
-          <div className="space-y-2 max-h-32 overflow-y-auto">
+          <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar-thin pr-2">
             {audioFiles.map((track, index) => (
               <button
                 key={index}

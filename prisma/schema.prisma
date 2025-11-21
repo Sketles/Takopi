@@ -1,109 +1,74 @@
-// Prisma Schema para Takopi
-// Base de datos: Vercel Postgres
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
-// ============================================
-// USUARIOS Y AUTENTICACIÓN
-// ============================================
-
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  email     String   @unique
-  password  String
-  role      String   @default("Explorer") // Explorer, Artist, Buyer, Maker
-  
-  // Perfil
-  avatar    String?
-  banner    String?
-  bio       String?
-  location  String?
-  
-  // Metadata
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relaciones
-  contents     Content[]
+  id           String        @id @default(cuid())
+  username     String        @unique
+  email        String        @unique
+  password     String
+  role         String        @default("Explorer")
+  avatar       String?
+  banner       String?
+  bio          String?
+  location     String?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   comments     Comment[]
+  contents     Content[]
+  following    Follow[]      @relation("UserFollowing")
+  followers    Follow[]      @relation("UserFollowers")
   likes        Like[]
+  pins         Pin[]
   purchases    Purchase[]
   transactions Transaction[]
-  
-  // Follows
-  following Follow[] @relation("UserFollowing")
-  followers Follow[] @relation("UserFollowers")
-  
+  collections  Collection[]
+
   @@map("users")
 }
 
-// ============================================
-// CONTENIDO
-// ============================================
-
 model Content {
-  id          String   @id @default(cuid())
-  title       String
-  description String   @db.Text
+  id               String     @id @default(cuid())
+  title            String
+  description      String
   shortDescription String?
-  
-  // Tipo y categoría
-  contentType String   // avatares, modelos3d, musica, texturas, animaciones, OBS, colecciones
-  category    String
-  
-  // Archivos (Vercel Blob URLs)
-  files       Json     // Array de {name, url, type, size, previewUrl}
-  coverImage  String?  // URL de Vercel Blob
-  additionalImages Json? // Array de URLs
-  
-  // Monetización
-  price       Int      @default(0) // en CLP
-  currency    String   @default("CLP")
-  isFree      Boolean  @default(false)
-  
-  // Licencia
-  license     String   @default("personal") // personal, commercial, streaming, etc
-  customLicense String?
-  
-  // Visibilidad y estado
-  visibility  String   @default("public") // public, private, unlisted
-  status      String   @default("draft") // draft, published, archived
-  isPublished Boolean  @default(false)
-  isListed    Boolean  @default(true) // false = despublicado/eliminado (borrado lógico)
-  deletedAt   DateTime? // Timestamp de eliminación
-  
-  // Tags
-  tags        String[] // Array de strings
-  customTags  String[] // Array de strings personalizados
-  
-  // Estadísticas
-  views       Int      @default(0)
-  downloads   Int      @default(0)
-  
-  // Metadata
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  publishedAt DateTime?
-  
-  // Autor
-  authorId    String
-  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  
-  // Relaciones
-  comments    Comment[]
-  likes       Like[]
-  purchases   Purchase[]
-  
+  contentType      String
+  category         String
+  files            Json
+  coverImage       String?
+  additionalImages Json?
+  price            Int        @default(0)
+  currency         String     @default("CLP")
+  isFree           Boolean    @default(false)
+  license          String     @default("personal")
+  customLicense    String?
+  visibility       String     @default("public")
+  status           String     @default("draft")
+  isPublished      Boolean    @default(false)
+  tags             String[]
+  customTags       String[]
+  views            Int        @default(0)
+  downloads        Int        @default(0)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  publishedAt      DateTime?
+  authorId         String
+  isListed         Boolean    @default(true)
+  deletedAt        DateTime?
+  comments         Comment[]
+  author           User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes            Like[]
+  pins             Pin[]
+  purchases        Purchase[]
+  collectionItems  CollectionItem[]
+
   @@index([authorId])
   @@index([contentType])
   @@index([status])
@@ -117,48 +82,36 @@ model Content {
   @@map("contents")
 }
 
-// ============================================
-// INTERACCIONES SOCIALES
-// ============================================
-
 model Comment {
   id        String   @id @default(cuid())
-  text      String   @db.Text
-  
-  // Relaciones
+  text      String
   contentId String
-  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Likes en comentarios
+  parentId  String?  // Para respuestas anidadas
   likeCount Int      @default(0)
-  likedBy   String[] // Array de user IDs
-  
-  // Metadata
+  likedBy   String[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+
   @@index([contentId])
   @@index([userId])
+  @@index([parentId])
   @@map("comments")
 }
 
 model Like {
   id        String   @id @default(cuid())
-  
-  // Relaciones
   contentId String
-  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Metadata
   createdAt DateTime @default(now())
-  
-  @@unique([contentId, userId]) // Un usuario solo puede dar like una vez
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contentId, userId])
   @@index([contentId])
   @@index([userId])
   @@map("likes")
@@ -166,57 +119,49 @@ model Like {
 
 model Follow {
   id          String   @id @default(cuid())
-  
-  // Usuario que sigue
   followerId  String
-  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
-  
-  // Usuario seguido
   followingId String
-  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
-  
-  // Metadata
   createdAt   DateTime @default(now())
-  
-  @@unique([followerId, followingId]) // No seguir dos veces al mismo usuario
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
   @@index([followerId])
   @@index([followingId])
   @@map("follows")
 }
 
-// ============================================
-// COMPRAS Y PAGOS
-// ============================================
+model Pin {
+  id        String   @id @default(cuid())
+  userId    String
+  contentId String
+  isPublic  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentId])
+  @@index([contentId])
+  @@index([userId])
+  @@map("pins")
+}
 
 model Purchase {
-  id              String   @id @default(cuid())
-  
-  // Relaciones
+  id              String       @id @default(cuid())
   userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
   contentId       String?
-  content         Content?  @relation(fields: [contentId], references: [id], onDelete: SetNull)
-  
-  // Snapshot del contenido al momento de la compra
-  contentSnapshot Json     // {title, description, files, coverImage, etc.}
-  
-  // Detalles de compra
-  price           Int      // Precio al momento de la compra
-  currency        String   @default("CLP")
-  
-  // Estado
-  status          String   @default("pending") // pending, completed, failed, refunded
-  
-  // Metadata
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  price           Int
+  currency        String       @default("CLP")
+  status          String       @default("pending")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
   completedAt     DateTime?
-  
-  // Relación con transacción de pago
-  transactionId   String?  @unique
+  transactionId   String?      @unique
+  contentSnapshot Json
+  content         Content?     @relation(fields: [contentId], references: [id])
   transaction     Transaction? @relation(fields: [transactionId], references: [id])
-  
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([contentId])
   @@index([status])
@@ -224,46 +169,60 @@ model Purchase {
 }
 
 model Transaction {
-  id              String   @id @default(cuid())
-  
-  // Transbank/Webpay
-  token           String?  @unique // Token de Transbank
-  buyOrder        String   @unique // Orden de compra
-  sessionId       String   // ID de sesión
-  
-  // Montos
-  amount          Int      // Monto total
-  currency        String   @default("CLP")
-  
-  // Estado
-  status          String   @default("pending") // pending, approved, rejected, failed
-  
-  // Respuesta de Transbank
+  id                String    @id @default(cuid())
+  token             String?   @unique
+  buyOrder          String    @unique
+  sessionId         String
+  amount            Int
+  currency          String    @default("CLP")
+  status            String    @default("pending")
   authorizationCode String?
   responseCode      Int?
   paymentTypeCode   String?
   accountingDate    String?
   transactionDate   DateTime?
-  
-  // URLs
-  url             String?  // URL de redirección de Transbank
-  returnUrl       String?  // URL de retorno
-  
-  // Metadata
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  // Relaciones
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  contentIds      String[] // Array de IDs de contenido comprado
-  
-  purchase        Purchase?
-  
+  url               String?
+  returnUrl         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  userId            String
+  contentIds        String[]
+  purchase          Purchase?
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([token])
   @@index([buyOrder])
   @@index([status])
   @@map("transactions")
+}
+
+model Collection {
+  id          String           @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  isPublic    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       CollectionItem[]
+
+  @@index([userId])
+  @@index([userId, isPublic])
+  @@map("collections")
+}
+
+model CollectionItem {
+  id           String     @id @default(cuid())
+  collectionId String
+  contentId    String
+  addedAt      DateTime   @default(now())
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  content      Content    @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, contentId])
+  @@index([collectionId])
+  @@index([contentId])
+  @@map("collection_items")
 }

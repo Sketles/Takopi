@@ -6,6 +6,7 @@ import { useToast } from '@/components/shared/Toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import DefaultCover from './DefaultCover';
+import AddToCollectionModal from './AddToCollectionModal';
 
 // Interfaces para tipado
 interface ContentCardProps {
@@ -33,6 +34,7 @@ interface ContentCardProps {
   views?: number;
   downloads?: number;
   favorites?: number;
+  pins?: number;
 
   // Fechas
   createdAt?: string | Date;
@@ -56,6 +58,7 @@ interface ContentCardProps {
   // Estados
   isLiked?: boolean;
   isSaved?: boolean;
+  isPinned?: boolean;
 
   // Estilos personalizados
   className?: string;
@@ -82,6 +85,7 @@ const ContentCard = memo(function ContentCard({
   views = 0,
   downloads = 0,
   favorites = 0,
+  pins = 0,
   createdAt,
   updatedAt,
   variant = 'default',
@@ -97,6 +101,7 @@ const ContentCard = memo(function ContentCard({
   onDelete,
   isLiked = false,
   isSaved = false,
+  isPinned = false,
   className = '',
   imageClassName = ''
 }: ContentCardProps) {
@@ -107,6 +112,25 @@ const ContentCard = memo(function ContentCard({
   const [currentLikes, setCurrentLikes] = useState(likes);
   const [currentIsLiked, setCurrentIsLiked] = useState(isLiked);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
+
+  // Estados para el sistema de pins
+  const [currentPins, setCurrentPins] = useState(pins);
+  const [currentIsPinned, setCurrentIsPinned] = useState(isPinned);
+  const [isPinLoading, setIsPinLoading] = useState(false);
+
+  // Estado para el modal de colecciones
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
+
+  // Sincronizar estados cuando cambien las props
+  useEffect(() => {
+    setCurrentLikes(likes);
+    setCurrentIsLiked(isLiked);
+  }, [likes, isLiked]);
+
+  useEffect(() => {
+    setCurrentPins(pins);
+    setCurrentIsPinned(isPinned);
+  }, [pins, isPinned]);
 
   // Función para manejar el like
   const handleLike = async (e: React.MouseEvent) => {
@@ -151,6 +175,19 @@ const ContentCard = memo(function ContentCard({
     } finally {
       setIsLikeLoading(false);
     }
+  };
+
+  // Función para abrir modal de colecciones
+  const handleAddToCollection = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    const token = localStorage.getItem('takopi_token');
+    if (!token) {
+      addToast({ type: 'warning', title: 'Inicia sesión', message: 'Debes iniciar sesión para guardar en colecciones.' });
+      return;
+    }
+
+    setShowCollectionModal(true);
   };
 
   // Función para obtener el icono del tipo de contenido
@@ -283,7 +320,7 @@ const ContentCard = memo(function ContentCard({
         <button
           onClick={handleLike}
           disabled={isLikeLoading}
-          className={`absolute top-4 right-4 z-20 p-2 rounded-full backdrop-blur-md border transition-all duration-300 ${currentIsLiked
+          className={`absolute top-4 right-16 z-20 p-2 rounded-full backdrop-blur-md border transition-all duration-300 ${currentIsLiked
             ? 'bg-red-500/20 border-red-500/50 text-red-500'
             : 'bg-black/40 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
             }`}
@@ -298,6 +335,20 @@ const ContentCard = memo(function ContentCard({
               <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
             </svg>
           )}
+        </button>
+
+        {/* Botón de Guardar/Collections (Flotante) */}
+        <button
+          onClick={handleAddToCollection}
+          className="absolute top-4 right-4 z-20 p-2 rounded-full backdrop-blur-md border transition-all duration-300 bg-black/40 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+          title="Guardar en colección"
+        >
+          <svg
+            className="w-5 h-5 stroke-current fill-none"
+            viewBox="0 0 24 24" strokeWidth="2"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+          </svg>
         </button>
       </div>
 
@@ -372,6 +423,14 @@ const ContentCard = memo(function ContentCard({
           )}
         </div>
       </div>
+
+      {/* Modal de Colecciones */}
+      <AddToCollectionModal
+        isOpen={showCollectionModal}
+        onClose={() => setShowCollectionModal(false)}
+        contentId={id}
+        contentTitle={title}
+      />
     </div>
   );
 });
@@ -401,9 +460,11 @@ export const useContentCard = () => {
       views: data.views || 0,
       downloads: data.downloads || 0,
       favorites: data.favorites || 0,
+      pins: data.pins || 0,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
       isLiked: data.isLiked || false,
+      isPinned: data.isPinned || false,
       ...options,
       showDescription: options.showDescription ?? true // Default to showing description in new design
     };

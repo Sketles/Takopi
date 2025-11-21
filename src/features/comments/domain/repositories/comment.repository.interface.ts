@@ -7,6 +7,7 @@ export interface CreateCommentDTO {
   username: string;
   userAvatar?: string;
   text: string;
+  parentId?: string | null;
 }
 
 export interface ICommentRepository {

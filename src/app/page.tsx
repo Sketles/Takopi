@@ -262,7 +262,7 @@ export default function HomePage() {
               {featuredContent.map((content) => (
                 <Link
                   key={content.id}
-                  href={`/contenido/${content.id}`}
+                  href={`/product/${content.id}`}
                   className="group relative overflow-hidden rounded-3xl bg-[#0f0f0f] border border-white/10 hover:border-purple-500/50 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
                 >
                   {/* Image Container */}

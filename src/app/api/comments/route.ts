@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
       text: comment.text,
       likes: comment.likes,
       isLiked: comment.isLiked,
+      parentId: comment.parentId || null,
       createdAt: comment.createdAt instanceof Date ? comment.createdAt.toISOString() : comment.createdAt,
       updatedAt: comment.updatedAt instanceof Date ? comment.updatedAt.toISOString() : comment.updatedAt
     }));
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     const requestBody = await request.json();
-    const { contentId, text } = requestBody;
+    const { contentId, text, parentId } = requestBody;
 
     // Validaciones
     if (!contentId) {
@@ -111,7 +112,8 @@ export async function POST(request: NextRequest) {
       userId: decoded.userId,
       username: decoded.username || 'Usuario',
       userAvatar: decoded.avatar,
-      text: text.trim()
+      text: text.trim(),
+      parentId: parentId || null
     });
 
     // Serializar comentario
@@ -124,6 +126,7 @@ export async function POST(request: NextRequest) {
       text: comment.text,
       likes: comment.likes,
       isLiked: comment.isLiked,
+      parentId: comment.parentId || null,
       createdAt: comment.createdAt instanceof Date ? comment.createdAt.toISOString() : comment.createdAt,
       updatedAt: comment.updatedAt instanceof Date ? comment.updatedAt.toISOString() : comment.updatedAt
     };

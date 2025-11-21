@@ -70,19 +70,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const savedToken = localStorage.getItem('takopi_token');
 
         if (savedUser && savedToken) {
+          // Validar que sea JSON válido antes de parsear
+          if (!savedUser.startsWith('{') && !savedUser.startsWith('[')) {
+            console.warn('Datos de usuario corruptos, limpiando sesión');
+            localStorage.removeItem('takopi_user');
+            localStorage.removeItem('takopi_token');
+            setLoading(false);
+            return;
+          }
+
           // Verificar si el token sigue siendo válido
           const isValid = await verifyToken(savedToken);
 
           if (isValid) {
-            const userData = JSON.parse(savedUser);
-            // Verificar si el token tiene información básica del usuario
-            if (!userData.username) {
-              // Token incompleto, limpiar sesión para forzar nuevo login
-              console.log('Token incompleto detectado, limpiando sesión...');
+            try {
+              const userData = JSON.parse(savedUser);
+              // Verificar si el token tiene información básica del usuario
+              if (!userData.username) {
+                // Token incompleto, limpiar sesión para forzar nuevo login
+                console.log('Token incompleto detectado, limpiando sesión...');
+                localStorage.removeItem('takopi_user');
+                localStorage.removeItem('takopi_token');
+              } else {
+                setUser(userData);
+              }
+            } catch (error) {
+              console.error('Error parseando datos de usuario:', error);
               localStorage.removeItem('takopi_user');
               localStorage.removeItem('takopi_token');
-            } else {
-              setUser(userData);
             }
           } else {
             // Token expirado, limpiar datos

@@ -41,6 +41,33 @@ export default function PrintingConfigPage() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
   const [modelViewerLoaded, setModelViewerLoaded] = useState(false);
+  const [productId, setProductId] = useState<string | null>(null);
+  const [productTitle, setProductTitle] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  // Cargar modelo desde URL params si viene de un producto
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const modelUrl = params.get('modelUrl');
+    const prodId = params.get('productId');
+    const prodTitle = params.get('productTitle');
+    const fName = params.get('fileName');
+
+    if (modelUrl) {
+      setConfig(prev => ({ ...prev, modelUrl }));
+      setModelLoaded(true);
+      console.log('📦 Modelo precargado desde producto:', {
+        url: modelUrl,
+        productId: prodId,
+        title: prodTitle,
+        fileName: fName
+      });
+    }
+
+    if (prodId) setProductId(prodId);
+    if (prodTitle) setProductTitle(prodTitle);
+    if (fName) setFileName(fName);
+  }, []);
 
   // Cargar model-viewer
   useEffect(() => {
@@ -247,8 +274,15 @@ export default function PrintingConfigPage() {
                           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                         </div>
                         <div>
-                          <p className="font-medium text-white truncate max-w-[200px]">{config.modelFile?.name}</p>
-                          <p className="text-xs text-gray-400">{(config.modelFile!.size / 1024 / 1024).toFixed(2)} MB</p>
+                          <p className="font-medium text-white truncate max-w-[200px]">
+                            {config.modelFile?.name || fileName || productTitle || 'Modelo 3D'}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {config.modelFile 
+                              ? `${(config.modelFile.size / 1024 / 1024).toFixed(2)} MB`
+                              : (productId ? '📦 Desde Marketplace' : 'Modelo externo')
+                            }
+                          </p>
                         </div>
                       </div>
                       <div className="text-green-400 text-sm font-medium flex items-center gap-1">

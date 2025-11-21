@@ -31,7 +31,8 @@ export class ContentRepositoryPrisma implements IContentRepository {
         _count: {
           select: {
             likes: true,
-            comments: true
+            comments: true,
+            pins: true
           }
         }
       },
@@ -62,7 +63,8 @@ export class ContentRepositoryPrisma implements IContentRepository {
         _count: {
           select: {
             likes: true,
-            comments: true
+            comments: true,
+            pins: true
           }
         }
       }
@@ -118,7 +120,8 @@ export class ContentRepositoryPrisma implements IContentRepository {
         _count: {
           select: {
             likes: true,
-            comments: true
+            comments: true,
+            pins: true
           }
         }
       },
@@ -148,7 +151,8 @@ export class ContentRepositoryPrisma implements IContentRepository {
         _count: {
           select: {
             likes: true,
-            comments: true
+            comments: true,
+            pins: true
           }
         }
       },
@@ -182,7 +186,8 @@ export class ContentRepositoryPrisma implements IContentRepository {
         _count: {
           select: {
             likes: true,
-            comments: true
+            comments: true,
+            pins: true
           }
         }
       },
@@ -233,7 +238,8 @@ export class ContentRepositoryPrisma implements IContentRepository {
         _count: {
           select: {
             likes: true,
-            comments: true
+            comments: true,
+            pins: true
           }
         }
       }
@@ -286,7 +292,8 @@ export class ContentRepositoryPrisma implements IContentRepository {
         _count: {
           select: {
             likes: true,
-            comments: true
+            comments: true,
+            pins: true
           }
         }
       }
@@ -348,7 +355,8 @@ export class ContentRepositoryPrisma implements IContentRepository {
           _count: {
             select: {
               likes: true,
-              comments: true
+              comments: true,
+              pins: true
             }
           }
         },
@@ -435,7 +443,8 @@ export class ContentRepositoryPrisma implements IContentRepository {
       authorId: content.authorId,
       authorAvatar: content.author?.avatar,
       likes: content._count?.likes || 0,
-      comments: content._count?.comments || 0
+      comments: content._count?.comments || 0,
+      pins: content._count?.pins || 0
     } as ContentEntity;
   }
 }

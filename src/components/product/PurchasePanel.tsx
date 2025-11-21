@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/shared/Toast';
 import { useRouter } from 'next/navigation';
+import AddToCollectionModal from '@/components/shared/AddToCollectionModal';
 
 interface PurchasePanelProps {
   product: {
@@ -58,10 +59,42 @@ export default function PurchasePanel({
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [currentLikes, setCurrentLikes] = useState(product.likes || 0);
 
   const { addProductToCart, isProductInCart } = useCart();
   const { addToast } = useToast();
   const router = useRouter();
+
+  // Cargar el estado del like al montar el componente
+  useEffect(() => {
+    const loadLikeStatus = async () => {
+      const token = localStorage.getItem('takopi_token');
+      if (!token) return;
+
+      try {
+        const response = await fetch(`/api/likes?contentIds=${product.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data.length > 0) {
+            const likeData = result.data[0];
+            setIsLiked(likeData.isLiked);
+            setCurrentLikes(likeData.likesCount);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading like status:', error);
+      }
+    };
+
+    loadLikeStatus();
+  }, [product.id]);
 
   const formatPrice = (price: number | undefined, isFree: boolean, currency: string) => {
     if (isFree) return 'GRATIS';
@@ -125,26 +158,75 @@ export default function PurchasePanel({
       f.name.toLowerCase().endsWith('.gltf')
     ) || product.files?.[0];
 
+    console.log('🖨️ Preparando impresión 3D:', {
+      productId: product.id,
+      modelFile: modelFile,
+      allFiles: product.files
+    });
+
     const params = new URLSearchParams();
     params.set('productId', product.id);
+    params.set('productTitle', product.title);
     if (modelFile?.url) {
       params.set('modelUrl', modelFile.url);
+      params.set('fileName', modelFile.name);
     }
 
     router.push(`/impresion-3d/configurar?${params.toString()}`);
   };
 
   const isInCart = isProductInCart(product.id);
-  const is3DModel = product.contentType === 'modelos3d' || product.contentType === '3d' || product.contentType === 'model';
+  const canBePrinted = product.contentType === 'modelos3d' || 
+                       product.contentType === '3d' || 
+                       product.contentType === 'model' || 
+                       product.contentType === 'avatares' ||
+                       product.contentType === 'avatar';
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    onLike?.(product);
+  const handleLike = async () => {
+    const token = localStorage.getItem('takopi_token');
+    if (!token) {
+      addToast({ type: 'warning', title: 'Inicia sesión', message: 'Debes iniciar sesión para dar like' });
+      return;
+    }
+
+    setIsLikeLoading(true);
+    try {
+      const action = isLiked ? 'unlike' : 'like';
+      const response = await fetch('/api/likes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          contentId: product.id,
+          action
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setIsLiked(!isLiked);
+        setCurrentLikes(prev => isLiked ? prev - 1 : prev + 1);
+        onLike?.(product);
+      } else {
+        addToast({ type: 'error', title: 'Error', message: result.error || 'Error al actualizar like' });
+      }
+    } catch (error) {
+      console.error('Error liking content:', error);
+      addToast({ type: 'error', title: 'Error', message: 'Error al actualizar like' });
+    } finally {
+      setIsLikeLoading(false);
+    }
   };
 
   const handleSave = () => {
-    setIsSaved(!isSaved);
-    onSave?.(product);
+    const token = localStorage.getItem('takopi_token');
+    if (!token) {
+      addToast({ type: 'warning', title: 'Inicia sesión', message: 'Debes iniciar sesión para guardar en colecciones' });
+      return;
+    }
+    setShowCollectionModal(true);
   };
 
   const handleShare = () => {
@@ -211,8 +293,8 @@ export default function PurchasePanel({
               </span>
             </button>
 
-            {/* Botón Imprimir y Comprar (Solo para modelos 3D) */}
-            {is3DModel && (
+            {/* Botón Imprimir y Comprar (Solo para modelos 3D y Avatares) */}
+            {canBePrinted && (
               <button
                 onClick={handlePrint3D}
                 className="group relative w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_30px_rgba(6,182,212,0.3)] overflow-hidden"
@@ -255,12 +337,19 @@ export default function PurchasePanel({
       <div className="flex items-center justify-between px-2 pt-4 border-t border-white/5">
         <button
           onClick={handleLike}
-          className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${isLiked ? 'text-red-500' : 'text-white/40 hover:text-white'}`}
+          disabled={isLikeLoading}
+          className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
+            isLiked ? 'text-red-500' : 'text-white/40 hover:text-white'
+          } ${isLikeLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <svg className={`w-6 h-6 ${isLiked ? 'fill-current' : 'stroke-current fill-none'}`} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
-          <span>{product.likes + (isLiked ? 1 : 0)}</span>
+          {isLikeLoading ? (
+            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          ) : (
+            <svg className={`w-6 h-6 ${isLiked ? 'fill-current' : 'stroke-current fill-none'}`} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          )}
+          <span>{currentLikes}</span>
         </button>
 
         <button
@@ -290,6 +379,14 @@ export default function PurchasePanel({
           Licencia: <span className="text-white/60 font-medium">{product.license === 'commercial' ? 'Comercial' : 'Personal'}</span>
         </p>
       </div>
+
+      {/* Modal de Colecciones */}
+      <AddToCollectionModal
+        isOpen={showCollectionModal}
+        onClose={() => setShowCollectionModal(false)}
+        contentId={product.id}
+        contentTitle={product.title}
+      />
 
     </div>
   );

@@ -65,7 +65,15 @@ export class UserRepositoryPrisma implements IUserRepository {
             contents: true,
             purchases: true,
             followers: true,
-            following: true
+            following: true,
+            collections: {
+              where: { isPublic: true }
+            }
+          }
+        },
+        contents: {
+          select: {
+            id: true
           }
         }
       }
@@ -76,15 +84,39 @@ export class UserRepositoryPrisma implements IUserRepository {
         contentCount: 0,
         purchaseCount: 0,
         followersCount: 0,
-        followingCount: 0
+        followingCount: 0,
+        collectionsCount: 0,
+        totalLikes: 0
       };
     }
+
+    // Contar likes de contenidos del usuario
+    const contentIds = user.contents.map(c => c.id);
+    const contentLikes = await prisma.like.count({
+      where: {
+        contentId: { in: contentIds }
+      }
+    });
+
+    // Contar likes de comentarios del usuario
+    const commentLikes = await prisma.comment.aggregate({
+      where: {
+        userId: userId
+      },
+      _sum: {
+        likeCount: true
+      }
+    });
+
+    const totalLikes = contentLikes + (commentLikes._sum.likeCount || 0);
 
     return {
       contentCount: user._count.contents,
       purchaseCount: user._count.purchases,
       followersCount: user._count.followers,
-      followingCount: user._count.following
+      followingCount: user._count.following,
+      collectionsCount: user._count.collections,
+      totalLikes: totalLikes
     };
   }
 

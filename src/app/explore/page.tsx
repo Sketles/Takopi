@@ -53,6 +53,7 @@ export default function ExplorePage() {
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [likesData, setLikesData] = useState<{ [key: string]: { isLiked: boolean; likesCount: number } }>({});
+  const [pinsData, setPinsData] = useState<{ [key: string]: { isPinned: boolean; pinsCount: number } }>({});
   const { createCardProps } = useContentCard();
 
   // Estados para búsqueda y filtros
@@ -105,9 +106,45 @@ export default function ExplorePage() {
     }
   };
 
+  // Función para cargar todos los pins de una vez usando batch endpoint
+  const loadAllPins = async (items: ContentItem[]) => {
+    const token = localStorage.getItem('takopi_token');
+    if (!token || items.length === 0) return;
+
+    try {
+      const contentIds = items.map(item => item.id).join(',');
+      const response = await fetch(`/api/pins?contentIds=${contentIds}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && Array.isArray(result.data)) {
+          const pinsMap: { [key: string]: { isPinned: boolean; pinsCount: number } } = {};
+
+          result.data.forEach((item: any) => {
+            pinsMap[item.contentId] = {
+              isPinned: item.isPinned,
+              pinsCount: item.pinsCount
+            };
+          });
+
+          setPinsData(prev => ({ ...prev, ...pinsMap }));
+        }
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Error loading pins:', error);
+      }
+    }
+  };
+
   // Función para obtener las props de una tarjeta
   const getCardProps = (item: ContentItem, options: any = {}) => {
     const likeInfo = likesData[item.id] || { isLiked: false, likesCount: item.likes || 0 };
+    const pinInfo = pinsData[item.id] || { isPinned: false, pinsCount: 0 };
 
     return {
       id: item.id,
@@ -129,9 +166,11 @@ export default function ExplorePage() {
       views: item.views || 0,
       downloads: item.downloads || 0,
       favorites: (item as any).favorites || 0,
+      pins: pinInfo.pinsCount,
       createdAt: item.createdAt,
       updatedAt: (item as any).updatedAt || item.createdAt,
       isLiked: likeInfo.isLiked,
+      isPinned: pinInfo.isPinned,
       ...options
     };
   };
@@ -202,6 +241,7 @@ export default function ExplorePage() {
 
         setContent(filteredData);
         loadAllLikes(filteredData);
+        loadAllPins(filteredData);
 
         // Cargar tendencias (simulado con los primeros 5 items o aleatorios)
         if (trendingContent.length === 0 && result.data.length > 0) {
@@ -246,6 +286,7 @@ export default function ExplorePage() {
       if (data.success) {
         setSearchResults(data.data.items);
         loadAllLikes(data.data.items);
+        loadAllPins(data.data.items);
       } else {
         setSearchResults([]);
       }
@@ -294,6 +335,60 @@ export default function ExplorePage() {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedItem(null);
+  };
+
+  const handleLikeFromModal = async () => {
+    if (!selectedItem) return;
+    
+    // Recargar el estado del like para el item seleccionado
+    const token = localStorage.getItem('takopi_token');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`/api/likes?contentIds=${selectedItem.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data.length > 0) {
+          const likeData = result.data[0];
+          
+          // Actualizar likesData
+          setLikesData(prev => ({
+            ...prev,
+            [selectedItem.id]: {
+              isLiked: likeData.isLiked,
+              likesCount: likeData.likesCount
+            }
+          }));
+
+          // Actualizar el item en la lista de contenido
+          setContent(prevContent => 
+            prevContent.map(item => 
+              item.id === selectedItem.id 
+                ? { ...item, likes: likeData.likesCount }
+                : item
+            )
+          );
+
+          // Actualizar searchResults si estamos en búsqueda
+          if (isSearching) {
+            setSearchResults(prevResults => 
+              prevResults.map(item => 
+                item.id === selectedItem.id 
+                  ? { ...item, likes: likeData.likesCount }
+                  : item
+              )
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error updating like status:', error);
+    }
   };
 
   const handleAddToBox = async (product: any) => {
@@ -659,7 +754,7 @@ export default function ExplorePage() {
             onDelete={handleDeleteContent}
             onBuy={() => { }}
             onAddToBox={handleAddToBox}
-            onLike={() => { }}
+            onLike={handleLikeFromModal}
             onSave={() => { }}
             onShare={() => { }}
             source="explore"
