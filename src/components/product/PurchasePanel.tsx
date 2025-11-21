@@ -125,17 +125,29 @@ export default function PurchasePanel({
       f.name.toLowerCase().endsWith('.gltf')
     ) || product.files?.[0];
 
+    console.log('🖨️ Preparando impresión 3D:', {
+      productId: product.id,
+      modelFile: modelFile,
+      allFiles: product.files
+    });
+
     const params = new URLSearchParams();
     params.set('productId', product.id);
+    params.set('productTitle', product.title);
     if (modelFile?.url) {
       params.set('modelUrl', modelFile.url);
+      params.set('fileName', modelFile.name);
     }
 
     router.push(`/impresion-3d/configurar?${params.toString()}`);
   };
 
   const isInCart = isProductInCart(product.id);
-  const is3DModel = product.contentType === 'modelos3d' || product.contentType === '3d' || product.contentType === 'model';
+  const canBePrinted = product.contentType === 'modelos3d' || 
+                       product.contentType === '3d' || 
+                       product.contentType === 'model' || 
+                       product.contentType === 'avatares' ||
+                       product.contentType === 'avatar';
 
   const handleLike = () => {
     setIsLiked(!isLiked);
@@ -211,8 +223,8 @@ export default function PurchasePanel({
               </span>
             </button>
 
-            {/* Botón Imprimir y Comprar (Solo para modelos 3D) */}
-            {is3DModel && (
+            {/* Botón Imprimir y Comprar (Solo para modelos 3D y Avatares) */}
+            {canBePrinted && (
               <button
                 onClick={handlePrint3D}
                 className="group relative w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_30px_rgba(6,182,212,0.3)] overflow-hidden"

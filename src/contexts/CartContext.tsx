@@ -124,6 +124,14 @@ export function CartProvider({ children }: CartProviderProps) {
     try {
       const savedCart = localStorage.getItem('takopi_cart');
       if (savedCart) {
+        // Validar que sea JSON válido antes de parsear
+        if (!savedCart.startsWith('{') && !savedCart.startsWith('[')) {
+          console.warn('Datos de carrito corruptos, limpiando localStorage');
+          localStorage.removeItem('takopi_cart');
+          setIsLoading(false);
+          return;
+        }
+        
         const cartItems: CartItem[] = JSON.parse(savedCart);
         
         // Filtrar items antiguos (más de 7 días)
@@ -134,6 +142,8 @@ export function CartProvider({ children }: CartProviderProps) {
       }
     } catch (error) {
       console.error('Error loading cart from localStorage:', error);
+      // Limpiar datos corruptos
+      localStorage.removeItem('takopi_cart');
     } finally {
       setIsLoading(false);
     }
@@ -155,6 +165,11 @@ export function CartProvider({ children }: CartProviderProps) {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'takopi_cart' && e.newValue) {
         try {
+          // Validar formato JSON
+          if (!e.newValue.startsWith('{') && !e.newValue.startsWith('[')) {
+            console.warn('Datos de carrito inválidos desde storage event');
+            return;
+          }
           const cartItems: CartItem[] = JSON.parse(e.newValue);
           dispatch({ type: 'LOAD_CART', payload: cartItems });
         } catch (error) {

@@ -36,8 +36,15 @@ function CheckoutContent() {
       const totalParam = searchParams.get('total');
 
       if (itemsParam) {
+        // Validar formato JSON antes de parsear
+        const decodedParam = decodeURIComponent(itemsParam);
+        if (!decodedParam.startsWith('{') && !decodedParam.startsWith('[')) {
+          console.error('Formato de items inválido en URL');
+          return;
+        }
+
         // Formato JSON (para compatibilidad con compras individuales)
-        const parsedItems = JSON.parse(decodeURIComponent(itemsParam));
+        const parsedItems = JSON.parse(decodedParam);
         setItems(parsedItems);
 
         // Use total from URL or calculate from items
