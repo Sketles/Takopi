@@ -707,7 +707,7 @@ function ProfileContent() {
               { label: 'Creaciones', value: realStats ? realStats.contentCount : currentProfile.stats.modelsPublished, clickable: false },
               { label: 'Ventas', value: realStats ? realStats.purchaseCount : currentProfile.stats.totalSales, clickable: false },
               { label: 'Corazones', value: realStats ? realStats.totalLikes : currentProfile.stats.heartsReceived, clickable: false },
-              { label: 'Colecciones', value: realStats ? realStats.totalDownloads : currentProfile.stats.pinsCreated, clickable: true, onClick: () => setIsCollectionsModalOpen(true) }
+              { label: 'Colecciones', value: realStats ? realStats.collectionsCount : 0, clickable: true, onClick: () => setIsCollectionsModalOpen(true) }
             ].map((stat, idx) => (
               <div
                 key={idx}
@@ -908,6 +908,7 @@ function ProfileContent() {
       <CollectionsModal
         isOpen={isCollectionsModalOpen}
         onClose={() => setIsCollectionsModalOpen(false)}
+        onStatsUpdate={loadUserStats}
       />
 
     </Layout>

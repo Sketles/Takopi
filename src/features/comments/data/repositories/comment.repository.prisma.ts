@@ -11,7 +11,8 @@ export class CommentRepositoryPrisma implements ICommentRepository {
       data: {
         text: data.text,
         contentId: data.contentId,
-        userId: data.userId
+        userId: data.userId,
+        parentId: data.parentId || null
       },
       include: {
         user: {
@@ -159,6 +160,7 @@ export class CommentRepositoryPrisma implements ICommentRepository {
       userAvatar: comment.user?.avatar,
       likeCount: comment.likeCount,
       likedBy: comment.likedBy,
+      parentId: comment.parentId || null,
       createdAt: comment.createdAt instanceof Date ? comment.createdAt : new Date(comment.createdAt),
       updatedAt: comment.updatedAt instanceof Date ? comment.updatedAt : new Date(comment.updatedAt)
     } as CommentEntity;

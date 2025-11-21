@@ -10,6 +10,7 @@ export class CommentEntity {
     public readonly likes: number = 0,
     public readonly likedBy: string[] = [],
     public readonly isLiked: boolean = false,
+    public readonly parentId: string | null = null,
     public readonly createdAt: Date = new Date(),
     public readonly updatedAt: Date = new Date()
   ) {}
@@ -38,6 +39,7 @@ export class CommentEntity {
       this.likes + 1,
       [...this.likedBy, userId],
       this.likedBy.includes(userId),
+      this.parentId,
       this.createdAt,
       new Date()
     );
@@ -57,6 +59,7 @@ export class CommentEntity {
       Math.max(0, this.likes - 1),
       this.likedBy.filter(id => id !== userId),
       false,
+      this.parentId,
       this.createdAt,
       new Date()
     );
@@ -74,6 +77,7 @@ export class CommentEntity {
       likes: this.likes,
       likedBy: this.likedBy,
       isLiked: this.isLiked,
+      parentId: this.parentId,
       createdAt: this.createdAt.toISOString(),
       updatedAt: this.updatedAt.toISOString()
     };

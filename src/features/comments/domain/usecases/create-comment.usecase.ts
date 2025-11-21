@@ -33,7 +33,8 @@ export class CreateCommentUseCase {
       userId: data.userId,
       username: data.username,
       userAvatar: data.userAvatar,
-      text: data.text.trim()
+      text: data.text.trim(),
+      parentId: data.parentId || null
     });
 
     return comment;

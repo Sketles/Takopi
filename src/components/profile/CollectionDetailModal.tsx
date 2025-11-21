@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Fragment } from 'react';
+import { useState, Fragment, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import {
   XMarkIcon,
@@ -14,6 +14,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { Menu } from '@headlessui/react';
 import ContentCard from '@/components/shared/ContentCard';
+import ProductModal from '@/components/product/ProductModal';
+import { useToast } from '@/components/shared/Toast';
 
 interface Collection {
   id: string;
@@ -28,16 +30,27 @@ interface Collection {
 
 interface CollectionItem {
   id: string;
-  title: string;
-  author: string;
-  contentType: string;
-  coverImage: string;
-  price: number;
-  isFree: boolean;
-  currency: string;
-  likes: number;
-  views: number;
-  downloads: number;
+  collectionId: string;
+  contentId: string;
+  addedAt: string;
+  content: {
+    id: string;
+    title: string;
+    description?: string;
+    contentType: string;
+    category: string;
+    coverImage?: string;
+    price: number;
+    isFree: boolean;
+    currency: string;
+    likes: number;
+    pins: number;
+    views: number;
+    downloads: number;
+    author: string;
+    authorId: string;
+    authorAvatar?: string;
+  };
 }
 
 interface CollectionDetailModalProps {
@@ -57,58 +70,105 @@ export default function CollectionDetailModal({
   onDelete,
   onAddItems
 }: CollectionDetailModalProps) {
-  // Mock data de productos en la colección
-  const [items, setItems] = useState<CollectionItem[]>([
-    {
-      id: '1',
-      title: 'Modelo 3D Sci-Fi Rifle',
-      author: 'Usuario Demo',
-      contentType: 'modelos3d',
-      coverImage: '/placeholders/placeholder-modelo3d.webp',
-      price: 15000,
-      isFree: false,
-      currency: 'CLP',
-      likes: 45,
-      views: 230,
-      downloads: 12
-    },
-    {
-      id: '2',
-      title: 'Textura Metal Oxidado',
-      author: 'Usuario Demo',
-      contentType: 'texturas',
-      coverImage: '/placeholders/placeholder-textura.webp',
-      price: 0,
-      isFree: true,
-      currency: 'CLP',
-      likes: 78,
-      views: 450,
-      downloads: 89
-    },
-    {
-      id: '3',
-      title: 'Avatar Cyberpunk',
-      author: 'Usuario Demo',
-      contentType: 'avatares',
-      coverImage: '/placeholders/placeholder-avatar.webp',
-      price: 8000,
-      isFree: false,
-      currency: 'CLP',
-      likes: 120,
-      views: 680,
-      downloads: 34
-    }
-  ]);
+  const [items, setItems] = useState<CollectionItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const { addToast } = useToast();
 
-  const handleRemoveItem = (itemId: string) => {
-    if (confirm('¿Quieres eliminar este item de la colección?')) {
-      setItems(items.filter(item => item.id !== itemId));
+  // Cargar productos de la colección desde la API
+  useEffect(() => {
+    if (isOpen && collection) {
+      loadCollectionItems();
+    }
+  }, [isOpen, collection]);
+
+  const loadCollectionItems = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('takopi_token');
+      if (!token) return;
+
+      const response = await fetch(`/api/collections/${collection.id}/items`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // Los datos ya vienen con la estructura correcta desde la API
+        setItems(result.data || []);
+      } else {
+        console.error('Error loading collection items');
+        setItems([]);
+      }
+    } catch (error) {
+      console.error('Error loading collection items:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleRemoveItem = async (contentId: string) => {
+    if (!confirm('¿Quieres eliminar este item de la colección?')) return;
+
+    try {
+      const token = localStorage.getItem('takopi_token');
+      if (!token) return;
+
+      const response = await fetch(`/api/collections/${collection.id}/items?contentId=${contentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setItems(items.filter(item => item.contentId !== contentId));
+        addToast({ type: 'success', title: 'Eliminado', message: 'Producto eliminado de la colección' });
+      } else {
+        const result = await response.json();
+        addToast({ type: 'error', title: 'Error', message: result.error || 'Error al eliminar el producto' });
+      }
+    } catch (error) {
+      console.error('Error removing item:', error);
+      addToast({ type: 'error', title: 'Error', message: 'Error al eliminar el producto de la colección' });
+    }
+  };
+
+  const openProductModal = (item: CollectionItem) => {
+    // Transformar el item al formato esperado por ProductModal
+    const product = {
+      id: item.content.id,
+      title: item.content.title,
+      description: item.content.description || '',
+      contentType: item.content.contentType,
+      category: item.content.category,
+      coverImage: item.content.coverImage,
+      price: item.content.price,
+      isFree: item.content.isFree,
+      currency: item.content.currency,
+      likes: item.content.likes,
+      views: item.content.views,
+      downloads: item.content.downloads,
+      author: item.content.author,
+      authorId: item.content.authorId,
+      image: item.content.coverImage,
+      tags: [],
+      files: []
+    };
+    setSelectedProduct(product);
+    setIsProductModalOpen(true);
+  };
+
+  const closeProductModal = () => {
+    setIsProductModalOpen(false);
+    setSelectedProduct(null);
+  };
+
   const handleShare = () => {
-    // TODO: Implementar compartir colección
-    alert('¡Función de compartir próximamente!');
+    addToast({ type: 'info', title: 'Próximamente', message: 'Función de compartir colección próximamente' });
   };
 
   return (
@@ -265,7 +325,13 @@ export default function CollectionDetailModal({
 
                 {/* Products Grid */}
                 <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                  {items.length === 0 ? (
+                  {loading ? (
+                    // Loading State
+                    <div className="text-center py-20">
+                      <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                      <p className="text-gray-400 mt-4">Cargando productos...</p>
+                    </div>
+                  ) : items.length === 0 ? (
                     // Empty State
                     <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl bg-white/5">
                       <div className="text-4xl mb-4 opacity-50">📦</div>
@@ -286,24 +352,31 @@ export default function CollectionDetailModal({
                       {items.map((item) => (
                         <div key={item.id} className="relative group">
                           <ContentCard
-                            id={item.id}
-                            title={item.title}
-                            author={item.author}
-                            contentType={item.contentType}
-                            category={item.contentType}
-                            coverImage={item.coverImage}
-                            price={item.price}
-                            isFree={item.isFree}
-                            currency={item.currency}
-                            likes={item.likes}
-                            views={item.views}
-                            downloads={item.downloads}
-                            onClick={() => {/* TODO: Abrir modal de producto */}}
+                            id={item.content.id}
+                            title={item.content.title}
+                            author={item.content.author}
+                            authorId={item.content.authorId}
+                            authorAvatar={item.content.authorAvatar}
+                            contentType={item.content.contentType}
+                            category={item.content.category}
+                            coverImage={item.content.coverImage}
+                            price={item.content.price}
+                            isFree={item.content.isFree}
+                            currency={item.content.currency}
+                            likes={item.content.likes}
+                            views={item.content.views}
+                            downloads={item.content.downloads}
+                            description={item.content.description}
+                            showDescription={false}
+                            onClick={() => openProductModal(item)}
                           />
                           
                           {/* Remove Button Overlay */}
                           <button
-                            onClick={() => handleRemoveItem(item.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveItem(item.contentId);
+                            }}
                             className="absolute top-3 left-3 z-20 p-2 rounded-full bg-red-500/80 hover:bg-red-600 backdrop-blur-md border border-red-500/50 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                             title="Eliminar de colección"
                           >
@@ -318,6 +391,15 @@ export default function CollectionDetailModal({
             </Transition.Child>
           </div>
         </div>
+
+        {/* Product Detail Modal */}
+        {selectedProduct && (
+          <ProductModal
+            isOpen={isProductModalOpen}
+            onClose={closeProductModal}
+            product={selectedProduct}
+          />
+        )}
       </Dialog>
     </Transition>
   );

@@ -337,6 +337,60 @@ export default function ExplorePage() {
     setSelectedItem(null);
   };
 
+  const handleLikeFromModal = async () => {
+    if (!selectedItem) return;
+    
+    // Recargar el estado del like para el item seleccionado
+    const token = localStorage.getItem('takopi_token');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`/api/likes?contentIds=${selectedItem.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data.length > 0) {
+          const likeData = result.data[0];
+          
+          // Actualizar likesData
+          setLikesData(prev => ({
+            ...prev,
+            [selectedItem.id]: {
+              isLiked: likeData.isLiked,
+              likesCount: likeData.likesCount
+            }
+          }));
+
+          // Actualizar el item en la lista de contenido
+          setContent(prevContent => 
+            prevContent.map(item => 
+              item.id === selectedItem.id 
+                ? { ...item, likes: likeData.likesCount }
+                : item
+            )
+          );
+
+          // Actualizar searchResults si estamos en búsqueda
+          if (isSearching) {
+            setSearchResults(prevResults => 
+              prevResults.map(item => 
+                item.id === selectedItem.id 
+                  ? { ...item, likes: likeData.likesCount }
+                  : item
+              )
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error updating like status:', error);
+    }
+  };
+
   const handleAddToBox = async (product: any) => {
     try {
       if (isProductInCart(product.id)) {
@@ -700,7 +754,7 @@ export default function ExplorePage() {
             onDelete={handleDeleteContent}
             onBuy={() => { }}
             onAddToBox={handleAddToBox}
-            onLike={() => { }}
+            onLike={handleLikeFromModal}
             onSave={() => { }}
             onShare={() => { }}
             source="explore"

@@ -9,6 +9,7 @@ export interface UserStats {
   totalViews: number;
   totalLikes: number;
   totalDownloads: number;
+  collectionsCount: number;
 }
 
 export class GetUserStatsUseCase {
@@ -25,14 +26,15 @@ export class GetUserStatsUseCase {
     // Obtener estadísticas básicas
     const basicStats = await this.repository.getUserStats(userId);
 
-    // Calcular estadísticas adicionales (por ahora con valores por defecto)
+    // Calcular estadísticas adicionales
     const stats: UserStats = {
       contentCount: basicStats.contentCount,
       purchaseCount: basicStats.purchaseCount,
       followersCount: basicStats.followersCount,
       followingCount: basicStats.followingCount,
+      collectionsCount: basicStats.collectionsCount,
+      totalLikes: basicStats.totalLikes,
       totalViews: 0, // TODO: Calcular desde contenido
-      totalLikes: 0, // TODO: Calcular desde likes
       totalDownloads: 0 // TODO: Calcular desde purchases
     };
 

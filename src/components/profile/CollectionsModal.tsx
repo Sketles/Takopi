@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Fragment } from 'react';
+import { useState, Fragment, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import {
   XMarkIcon,
@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Menu } from '@headlessui/react';
 import CollectionDetailModal from './CollectionDetailModal';
+import { useToast } from '@/components/shared/Toast';
 
 interface Collection {
   id: string;
@@ -29,43 +30,52 @@ interface Collection {
 interface CollectionsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onStatsUpdate?: () => void;
 }
 
-export default function CollectionsModal({ isOpen, onClose }: CollectionsModalProps) {
-  const [collections, setCollections] = useState<Collection[]>([
-    {
-      id: '1',
-      title: 'Modelos Favoritos',
-      description: 'Mis modelos 3D preferidos para proyectos',
-      isPublic: true,
-      coverImage: '/placeholders/placeholder-modelo3d.webp',
-      itemCount: 12,
-      createdAt: new Date('2024-11-01'),
-      updatedAt: new Date('2024-11-15')
-    },
-    {
-      id: '2',
-      title: 'Texturas Inspiración',
-      isPublic: false,
-      coverImage: '/placeholders/placeholder-textura.webp',
-      itemCount: 8,
-      createdAt: new Date('2024-10-20'),
-      updatedAt: new Date('2024-11-10')
-    },
-    {
-      id: '3',
-      title: 'Audio Pack',
-      description: 'Efectos de sonido y música para videos',
-      isPublic: true,
-      itemCount: 24,
-      createdAt: new Date('2024-09-15'),
-      updatedAt: new Date('2024-11-05')
-    }
-  ]);
-
+export default function CollectionsModal({ isOpen, onClose, onStatsUpdate }: CollectionsModalProps) {
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
   const [viewingCollection, setViewingCollection] = useState<Collection | null>(null);
+  const [loading, setLoading] = useState(false);
+  const { addToast } = useToast();
+
+  // Load collections from API
+  useEffect(() => {
+    if (isOpen) {
+      loadCollections();
+    }
+  }, [isOpen]);
+
+  const loadCollections = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('takopi_token');
+      if (!token) return;
+
+      const response = await fetch('/api/collections', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setCollections(result.data.map((c: any) => ({
+            ...c,
+            createdAt: new Date(c.createdAt),
+            updatedAt: new Date(c.updatedAt)
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading collections:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCreateCollection = () => {
     setShowCreateModal(true);
@@ -76,9 +86,31 @@ export default function CollectionsModal({ isOpen, onClose }: CollectionsModalPr
     setShowCreateModal(true);
   };
 
-  const handleDeleteCollection = (collectionId: string) => {
-    if (confirm('¿Estás seguro de que deseas eliminar esta colección?')) {
-      setCollections(collections.filter(c => c.id !== collectionId));
+  const handleDeleteCollection = async (collectionId: string) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar esta colección?')) return;
+
+    try {
+      const token = localStorage.getItem('takopi_token');
+      if (!token) return;
+
+      const response = await fetch(`/api/collections/${collectionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setCollections(collections.filter(c => c.id !== collectionId));
+        addToast({ type: 'success', title: 'Eliminada', message: 'Colección eliminada correctamente' });
+        onStatsUpdate?.();
+      } else {
+        const result = await response.json();
+        addToast({ type: 'error', title: 'Error', message: result.error || 'Error al eliminar la colección' });
+      }
+    } catch (error) {
+      console.error('Error deleting collection:', error);
+      addToast({ type: 'error', title: 'Error', message: 'Error al eliminar la colección' });
     }
   };
 
@@ -87,8 +119,7 @@ export default function CollectionsModal({ isOpen, onClose }: CollectionsModalPr
   };
 
   const handleAddItems = () => {
-    // TODO: Abrir modal de selección de productos
-    alert('Selector de productos próximamente');
+    addToast({ type: 'info', title: 'Próximamente', message: 'Selector de productos próximamente' });
   };
 
   return (
@@ -299,27 +330,70 @@ export default function CollectionsModal({ isOpen, onClose }: CollectionsModalPr
             setSelectedCollection(null);
           }}
           collection={selectedCollection}
-          onSave={(newCollection) => {
-            if (selectedCollection) {
-              // Editar colección existente
-              setCollections(collections.map(c =>
-                c.id === selectedCollection.id ? { ...c, ...newCollection, updatedAt: new Date() } : c
-              ));
-            } else {
-              // Crear nueva colección
-              const collection: Collection = {
-                id: Date.now().toString(),
-                title: newCollection.title || '',
-                description: newCollection.description,
-                isPublic: newCollection.isPublic ?? true,
-                itemCount: 0,
-                createdAt: new Date(),
-                updatedAt: new Date()
-              };
-              setCollections([...collections, collection]);
+          onSave={async (newCollection) => {
+            try {
+              const token = localStorage.getItem('takopi_token');
+              if (!token) return;
+
+              if (selectedCollection) {
+                // Editar colección existente
+                const response = await fetch(`/api/collections/${selectedCollection.id}`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  },
+                  body: JSON.stringify(newCollection)
+                });
+
+                if (response.ok) {
+                  const result = await response.json();
+                  setCollections(collections.map(c =>
+                    c.id === selectedCollection.id ? {
+                      ...result.data,
+                      createdAt: new Date(result.data.createdAt),
+                      updatedAt: new Date(result.data.updatedAt)
+                    } : c
+                  ));
+                  addToast({ type: 'success', title: 'Actualizada', message: 'Colección actualizada correctamente' });
+                  onStatsUpdate?.();
+                } else {
+                  const result = await response.json();
+                  addToast({ type: 'error', title: 'Error', message: result.error || 'Error al actualizar la colección' });
+                  return;
+                }
+              } else {
+                // Crear nueva colección
+                const response = await fetch('/api/collections', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  },
+                  body: JSON.stringify(newCollection)
+                });
+
+                if (response.ok) {
+                  const result = await response.json();
+                  setCollections([...collections, {
+                    ...result.data,
+                    createdAt: new Date(result.data.createdAt),
+                    updatedAt: new Date(result.data.updatedAt)
+                  }]);
+                  addToast({ type: 'success', title: 'Creada', message: 'Colección creada correctamente' });
+                  onStatsUpdate?.();
+                } else {
+                  const result = await response.json();
+                  addToast({ type: 'error', title: 'Error', message: result.error || 'Error al crear la colección' });
+                  return;
+                }
+              }
+              setShowCreateModal(false);
+              setSelectedCollection(null);
+            } catch (error) {
+              console.error('Error saving collection:', error);
+              addToast({ type: 'error', title: 'Error', message: 'Error al guardar la colección' });
             }
-            setShowCreateModal(false);
-            setSelectedCollection(null);
           }}
         />
       )}
@@ -357,12 +431,13 @@ function CreateCollectionModal({ isOpen, onClose, collection, onSave }: CreateCo
   const [title, setTitle] = useState(collection?.title || '');
   const [description, setDescription] = useState(collection?.description || '');
   const [isPublic, setIsPublic] = useState(collection?.isPublic ?? true);
+  const { addToast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title.trim()) {
-      alert('Por favor ingresa un título para la colección');
+      addToast({ type: 'warning', title: 'Título requerido', message: 'Por favor ingresa un título para la colección' });
       return;
     }
 

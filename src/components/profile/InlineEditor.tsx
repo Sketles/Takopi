@@ -22,21 +22,23 @@ export default function InlineEditor({ type, currentValue, onSave, onCancel, isO
     setPreview(currentValue || '');
   }, [currentValue]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validar tamaño del archivo (5MB máximo)
-      if (file.size > 5 * 1024 * 1024) {
-        addToast({ type: 'error', title: 'Archivo demasiado grande', message: 'Máximo 5MB permitido.' });
+      // Validar tamaño del archivo (10MB máximo para GIFs)
+      if (file.size > 10 * 1024 * 1024) {
+        addToast({ type: 'error', title: 'Archivo demasiado grande', message: 'Máximo 10MB permitido.' });
         return;
       }
 
-      // Validar tipo de archivo
-      if (!file.type.startsWith('image/')) {
-        addToast({ type: 'warning', title: 'Formato no permitido', message: 'Solo se permiten archivos de imagen.' });
+      // Validar tipo de archivo (incluye GIF explícitamente)
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        addToast({ type: 'warning', title: 'Formato no permitido', message: 'Formatos permitidos: JPG, PNG, GIF, WEBP' });
         return;
       }
 
+      // Mostrar preview local mientras se sube
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreview(e.target?.result as string);
@@ -48,7 +50,42 @@ export default function InlineEditor({ type, currentValue, onSave, onCancel, isO
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      await onSave(preview);
+      // Si preview es un data URL, necesitamos subir el archivo
+      let finalUrl = preview;
+      
+      if (preview.startsWith('data:')) {
+        // Obtener el archivo del input
+        const file = fileInputRef.current?.files?.[0];
+        if (!file) {
+          addToast({ type: 'error', title: 'Error', message: 'No se encontró el archivo.' });
+          return;
+        }
+
+        // Subir a Vercel Blob
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', type === 'avatar' ? 'users/avatars' : 'users/banners');
+
+        const token = localStorage.getItem('takopi_token');
+        const uploadResponse = await fetch('/api/upload/profile-image', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        if (!uploadResponse.ok) {
+          const error = await uploadResponse.json();
+          addToast({ type: 'error', title: 'Error al subir', message: error.error || 'Error al subir la imagen' });
+          return;
+        }
+
+        const uploadData = await uploadResponse.json();
+        finalUrl = uploadData.data.url;
+      }
+
+      await onSave(finalUrl);
     } finally {
       setIsLoading(false);
     }
@@ -99,7 +136,9 @@ export default function InlineEditor({ type, currentValue, onSave, onCancel, isO
           </div>
 
           <p className="text-sm text-gray-400 mb-6">
-            Formatos soportados: JPG, PNG, GIF (máx. 5MB)
+            {type === 'banner' 
+              ? 'Formatos: JPG, PNG, GIF animado, WEBP (máx. 10MB)'
+              : 'Formatos: JPG, PNG, GIF, WEBP (máx. 10MB)'}
           </p>
 
           <div className="flex gap-3 justify-center">

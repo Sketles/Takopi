@@ -14,6 +14,8 @@ export interface IUserRepository {
     purchaseCount: number;
     followersCount: number;
     followingCount: number;
+    collectionsCount: number;
+    totalLikes: number;
   }>;
   getUserCreations(userId: string): Promise<any[]>;
   getUserPurchases(userId: string): Promise<any[]>;
