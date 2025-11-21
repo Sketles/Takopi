@@ -74,7 +74,7 @@ export default function UserProfilePage() {
         const token = localStorage.getItem('takopi_token');
         if (token) {
           try {
-            const followResponse = await fetch(`/api/follow?userId=${userId}`, {
+            const followResponse = await fetch(`/api/follow?followingId=${userId}`, {
               headers: {
                 'Authorization': `Bearer ${token}`
               }

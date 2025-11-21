@@ -17,6 +17,7 @@ export class ContentEntity {
     public readonly likes?: number,
     public readonly views?: number,
     public readonly downloads?: number,
+    public readonly pins?: number,
     public readonly authorAvatar?: string,
     public readonly authorId?: string,
     public readonly shortDescription?: string,

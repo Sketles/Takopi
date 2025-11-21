@@ -33,6 +33,7 @@ interface ContentCardProps {
   views?: number;
   downloads?: number;
   favorites?: number;
+  pins?: number;
 
   // Fechas
   createdAt?: string | Date;
@@ -56,6 +57,7 @@ interface ContentCardProps {
   // Estados
   isLiked?: boolean;
   isSaved?: boolean;
+  isPinned?: boolean;
 
   // Estilos personalizados
   className?: string;
@@ -82,6 +84,7 @@ const ContentCard = memo(function ContentCard({
   views = 0,
   downloads = 0,
   favorites = 0,
+  pins = 0,
   createdAt,
   updatedAt,
   variant = 'default',
@@ -97,6 +100,7 @@ const ContentCard = memo(function ContentCard({
   onDelete,
   isLiked = false,
   isSaved = false,
+  isPinned = false,
   className = '',
   imageClassName = ''
 }: ContentCardProps) {
@@ -107,6 +111,11 @@ const ContentCard = memo(function ContentCard({
   const [currentLikes, setCurrentLikes] = useState(likes);
   const [currentIsLiked, setCurrentIsLiked] = useState(isLiked);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
+
+  // Estados para el sistema de pins
+  const [currentPins, setCurrentPins] = useState(pins);
+  const [currentIsPinned, setCurrentIsPinned] = useState(isPinned);
+  const [isPinLoading, setIsPinLoading] = useState(false);
 
   // Función para manejar el like
   const handleLike = async (e: React.MouseEvent) => {
@@ -150,6 +159,50 @@ const ContentCard = memo(function ContentCard({
       addToast({ type: 'error', title: 'Error', message: 'Error al actualizar like' });
     } finally {
       setIsLikeLoading(false);
+    }
+  };
+
+  // Función para manejar el pin
+  const handlePin = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    const token = localStorage.getItem('takopi_token');
+    if (!token) {
+      addToast({ type: 'warning', title: 'Inicia sesión', message: 'Debes iniciar sesión para guardar pins.' });
+      return;
+    }
+
+    setIsPinLoading(true);
+    try {
+      const response = await fetch('/api/pins', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          contentId: id
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setCurrentIsPinned(!currentIsPinned);
+        setCurrentPins(prev => currentIsPinned ? prev - 1 : prev + 1);
+
+        addToast({
+          type: 'success',
+          title: result.data.isPinned ? 'Pineado' : 'Despineado',
+          message: result.data.isPinned ? 'Guardado en tu colección' : 'Eliminado de tu colección'
+        });
+      } else {
+        addToast({ type: 'error', title: 'Error', message: result.error || 'Error al actualizar pin' });
+      }
+    } catch (error) {
+      console.error('Error pinning content:', error);
+      addToast({ type: 'error', title: 'Error', message: 'Error al actualizar pin' });
+    } finally {
+      setIsPinLoading(false);
     }
   };
 
@@ -283,7 +336,7 @@ const ContentCard = memo(function ContentCard({
         <button
           onClick={handleLike}
           disabled={isLikeLoading}
-          className={`absolute top-4 right-4 z-20 p-2 rounded-full backdrop-blur-md border transition-all duration-300 ${currentIsLiked
+          className={`absolute top-4 right-16 z-20 p-2 rounded-full backdrop-blur-md border transition-all duration-300 ${currentIsLiked
             ? 'bg-red-500/20 border-red-500/50 text-red-500'
             : 'bg-black/40 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
             }`}
@@ -296,6 +349,27 @@ const ContentCard = memo(function ContentCard({
               viewBox="0 0 24 24" strokeWidth="2"
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+            </svg>
+          )}
+        </button>
+
+        {/* Botón de Pin (Flotante) */}
+        <button
+          onClick={handlePin}
+          disabled={isPinLoading}
+          className={`absolute top-4 right-4 z-20 p-2 rounded-full backdrop-blur-md border transition-all duration-300 ${currentIsPinned
+            ? 'bg-purple-500/20 border-purple-500/50 text-purple-500'
+            : 'bg-black/40 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
+            }`}
+        >
+          {isPinLoading ? (
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          ) : (
+            <svg
+              className={`w-5 h-5 transition-transform duration-300 ${currentIsPinned ? 'fill-current scale-110' : 'fill-none stroke-current'}`}
+              viewBox="0 0 24 24" strokeWidth="2"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
             </svg>
           )}
         </button>
@@ -401,9 +475,11 @@ export const useContentCard = () => {
       views: data.views || 0,
       downloads: data.downloads || 0,
       favorites: data.favorites || 0,
+      pins: data.pins || 0,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
       isLiked: data.isLiked || false,
+      isPinned: data.isPinned || false,
       ...options,
       showDescription: options.showDescription ?? true // Default to showing description in new design
     };
