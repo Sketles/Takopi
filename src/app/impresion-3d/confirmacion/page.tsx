@@ -1,7 +1,7 @@
 'use client';
 
 import Layout from '@/components/shared/Layout';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,7 +23,7 @@ interface TransactionResult {
   installmentsNumber?: number;
 }
 
-export default function ConfirmacionPage() {
+function ConfirmacionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -302,5 +302,19 @@ export default function ConfirmacionPage() {
         </div>
       </div>
     </Layout>
+  );
+}
+
+export default function ConfirmacionPage() {
+  return (
+    <Suspense fallback={
+      <Layout>
+        <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+          <div className="text-white">Cargando...</div>
+        </div>
+      </Layout>
+    }>
+      <ConfirmacionContent />
+    </Suspense>
   );
 }
