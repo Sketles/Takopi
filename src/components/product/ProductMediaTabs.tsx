@@ -158,16 +158,16 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
   };
 
   return (
-    <div className={`flex flex-col h-full ${className}`}>
+    <div className={`flex flex-col h-full w-full relative ${className}`}>
 
-      {/* Floating Tab Switcher */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
+      {/* Floating Tab Switcher - Centered at top */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30">
         <div className="flex bg-black/60 backdrop-blur-md rounded-full p-1 border border-white/10 shadow-lg">
           <button
             onClick={() => handleTabChange('viewer')}
             className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${activeTab === 'viewer'
-                ? 'bg-white text-black shadow-sm'
-                : 'text-white/60 hover:text-white'
+              ? 'bg-white text-black shadow-sm'
+              : 'text-white/60 hover:text-white'
               }`}
           >
             Vista Previa
@@ -175,8 +175,8 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
           <button
             onClick={() => handleTabChange('files')}
             className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'files'
-                ? 'bg-white text-black shadow-sm'
-                : 'text-white/60 hover:text-white'
+              ? 'bg-white text-black shadow-sm'
+              : 'text-white/60 hover:text-white'
               }`}
           >
             Archivos
@@ -188,9 +188,9 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 relative bg-[#050505] flex items-center justify-center overflow-hidden">
+      <div className="flex-1 relative w-full h-full flex items-center justify-center overflow-hidden bg-transparent">
         {activeTab === 'viewer' && (
-          <div className="w-full h-full animate-fade-in">
+          <div className="w-full h-full flex items-center justify-center animate-fade-in">
             {loadedTabs.has('viewer') ? (
               product.contentType === 'musica' && hasAudio ? (
                 <div className="w-full h-full p-12 flex items-center justify-center">
@@ -211,14 +211,16 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
                 />
               ) : has3D ? (
                 get3DModelUrl() ? (
-                  <ModelViewerModal
-                    src={get3DModelUrl()!}
-                    alt={product.title}
-                    width="100%"
-                    height="100%"
-                    autoRotate={true}
-                    cameraControls={true}
-                  />
+                  <div className="w-full h-full">
+                    <ModelViewerModal
+                      src={get3DModelUrl()!}
+                      alt={product.title}
+                      width="100%"
+                      height="100%"
+                      autoRotate={true}
+                      cameraControls={true}
+                    />
+                  </div>
                 ) : (
                   <div className="flex flex-col items-center gap-4 text-white/30">
                     <span className="text-6xl">🧩</span>
@@ -259,7 +261,7 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
         )}
 
         {activeTab === 'files' && (
-          <div className="w-full h-full p-8 pt-24 overflow-y-auto custom-scrollbar animate-fade-in">
+          <div className="w-full h-full p-8 pt-24 overflow-y-auto custom-scrollbar animate-fade-in bg-black/20 backdrop-blur-sm">
             <div className="max-w-3xl mx-auto space-y-3">
               {product.files && product.files.length > 0 ? (
                 product.files.map((file, index) => (
