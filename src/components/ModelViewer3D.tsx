@@ -168,11 +168,7 @@ export default function ModelViewer3D({
 
   const handleError = (event: CustomEvent) => {
     const errorDetail = event.detail;
-    console.error('❌ Error cargando modelo 3D:', {
-      src,
-      message: errorDetail?.message || 'Unknown error',
-      type: event.type
-    });
+    // Silently handle error to avoid console spam for 404s
     setIsLoading(false);
     setHasError(true);
     onError?.(errorDetail?.message || 'Error cargando modelo 3D');
@@ -297,8 +293,10 @@ export default function ModelViewer3D({
           height: '100%',
           backgroundColor: 'transparent'
         }}
-        autoRotate={currentRotation}
-        cameraControls={cameraControls}
+        auto-rotate={currentRotation}
+        camera-controls={cameraControls}
+        shadow-intensity={currentShadows}
+        exposure={currentExposure}
         onLoad={handleLoad}
         onError={handleError}
       >
