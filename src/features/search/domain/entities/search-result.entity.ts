@@ -1,5 +1,5 @@
 // Search Result Entity - Representa el resultado de una búsqueda
-import { ContentEntity } from '../../content/domain/entities/content.entity';
+import { ContentEntity } from '../../../content/domain/entities/content.entity';
 
 export class SearchResultEntity {
   constructor(

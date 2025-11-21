@@ -29,6 +29,13 @@ function CheckoutContent() {
   const [items, setItems] = useState<CheckoutItem[]>([]);
   const [total, setTotal] = useState(0);
 
+  // Redirigir a login si no está autenticado
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login?redirect=/checkout');
+    }
+  }, [user, authLoading, router]);
+
   // Parse items from URL params
   useEffect(() => {
     try {

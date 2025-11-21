@@ -32,7 +32,7 @@ export async function uploadFile(
       url: blob.url,
       pathname: blob.pathname,
       contentType: blob.contentType || options?.contentType || 'application/octet-stream',
-      size: blob.size,
+      size: 0, // PutBlobResult no incluye size, usar 0 por defecto
     };
   } catch (error) {
     console.error('Error uploading to Vercel Blob:', error);

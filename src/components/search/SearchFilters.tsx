@@ -245,7 +245,7 @@ export default function SearchFilters({
           <div className="mt-3">
             <select
               value={sortBy}
-              onChange={(e) => onSortChange(e.target.value)}
+              onChange={(e) => onSortChange(e.target.value as "relevance" | "price_asc" | "price_desc" | "date" | "popularity")}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               {SORT_OPTIONS.map((option) => (

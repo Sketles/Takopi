@@ -1,92 +1,81 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import dynamic from 'next/dynamic';
 import '../styles/model-viewer.css';
-import { configureModelViewerEnvironment, getOptimizedModelViewerProps } from '@/config/model-viewer';
+import { configureModelViewerEnvironment } from '@/config/model-viewer';
 
 // Componente wrapper para el web component model-viewer
-const ModelViewerWrapper = dynamic(
-  () => Promise.resolve(function ModelViewerWrapper({ children, onLoad, onError, ...rest }: any) {
-    const modelViewerRef = useRef<any>(null);
-    const [isLoaded, setIsLoaded] = useState(false);
+function ModelViewerWrapper({ children, onLoad, onError, ...rest }: any) {
+  const modelViewerRef = useRef<any>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-    // Cargar el web component dinámicamente solo una vez
-    useEffect(() => {
-      let isMounted = true;
+  // Cargar el web component dinámicamente solo una vez
+  useEffect(() => {
+    let isMounted = true;
 
-      const loadModelViewer = async () => {
-        try {
-          // Configurar el entorno de model-viewer para reducir advertencias
-          configureModelViewerEnvironment();
+    const loadModelViewer = async () => {
+      try {
+        // Configurar el entorno de model-viewer para reducir advertencias
+        configureModelViewerEnvironment();
 
-          await import('@google/model-viewer');
-
+        // Importación dinámica compatible con Turbopack
+        await import('@google/model-viewer').then(() => {
           if (isMounted) {
             setIsLoaded(true);
           }
-        } catch (error) {
-          console.error('Error loading model-viewer:', error);
+        });
+      } catch (error) {
+        console.error('Error loading model-viewer:', error);
+        if (isMounted) {
+          onError?.(new CustomEvent('error', { detail: { message: 'Failed to load model-viewer' } }));
         }
-      };
+      }
+    };
 
-      loadModelViewer();
+    loadModelViewer();
 
-      return () => {
-        isMounted = false;
-      };
-    }, []);
+    return () => {
+      isMounted = false;
+    };
+  }, [onError]);
 
-    // Adjuntar listeners a eventos del web component
-    useEffect(() => {
-      if (!isLoaded) return;
+  // Adjuntar listeners a eventos del web component
+  useEffect(() => {
+    if (!isLoaded) return;
 
-      const el = modelViewerRef.current;
-      if (!el) return;
+    const el = modelViewerRef.current;
+    if (!el) return;
 
-      const handleLoad = () => {
-        try { console.log('🟢 model-viewer event: load'); } catch { }
-        onLoad?.();
-      };
-      const handleError = (e: CustomEvent) => {
-        try { console.log('🔴 model-viewer event: error', e?.detail); } catch { }
-        onError?.(e);
-      };
+    const handleLoad = () => {
+      try { console.log('🟢 model-viewer event: load'); } catch { }
+      onLoad?.();
+    };
+    const handleError = (e: CustomEvent) => {
+      try { console.log('🔴 model-viewer event: error', e?.detail); } catch { }
+      onError?.(e);
+    };
 
-      el.addEventListener('load', handleLoad as any);
-      el.addEventListener('error', handleError as any);
+    el.addEventListener('load', handleLoad as any);
+    el.addEventListener('error', handleError as any);
 
-      return () => {
-        el.removeEventListener('load', handleLoad as any);
-        el.removeEventListener('error', handleError as any);
-      };
-    }, [onLoad, onError, isLoaded]);
+    return () => {
+      el.removeEventListener('load', handleLoad as any);
+      el.removeEventListener('error', handleError as any);
+    };
+  }, [onLoad, onError, isLoaded]);
 
-    // No renderizar hasta que model-viewer esté cargado
-    if (!isLoaded) {
-      return <div className="w-full h-full bg-gray-800 rounded-lg flex items-center justify-center">
-        <div className="text-gray-400">Cargando visor 3D...</div>
-      </div>;
-    }
-
-
-    return React.createElement('model-viewer', {
-      ref: modelViewerRef,
-      ...rest
-    }, children);
-  }),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="w-full h-full flex items-center justify-center bg-gray-800/50 rounded-lg">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto mb-2"></div>
-          <p className="text-sm text-gray-300">Cargando visor 3D...</p>
-        </div>
-      </div>
-    )
+  // No renderizar hasta que model-viewer esté cargado
+  if (!isLoaded) {
+    return <div className="w-full h-full bg-gray-800 rounded-lg flex items-center justify-center">
+      <div className="text-gray-400">Cargando visor 3D...</div>
+    </div>;
   }
-);
+
+  return React.createElement('model-viewer', {
+    ref: modelViewerRef,
+    ...rest
+  }, children);
+}
 
 interface ModelViewer3DProps {
   src: string;

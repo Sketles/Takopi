@@ -153,18 +153,17 @@ export class PurchaseRepositoryPrisma implements IPurchaseRepository {
   }
 
   private toEntity(purchase: any): PurchaseEntity {
-    return {
-      id: purchase.id,
-      userId: purchase.userId,
-      contentId: purchase.contentId,
-      price: purchase.price,
-      currency: purchase.currency,
-      status: purchase.status,
-      createdAt: purchase.createdAt.toISOString(),
-      updatedAt: purchase.updatedAt.toISOString(),
-      completedAt: purchase.completedAt?.toISOString(),
-      content: purchase.content,
-      user: purchase.user
-    } as PurchaseEntity;
+    return new PurchaseEntity(
+      purchase.id,
+      purchase.userId,
+      purchase.contentId,
+      purchase.price || 0,
+      purchase.currency || 'CLP',
+      'webpay', // paymentMethod por defecto
+      purchase.status || 'completed',
+      purchase.transactionId,
+      purchase.createdAt,
+      purchase.updatedAt
+    );
   }
 }

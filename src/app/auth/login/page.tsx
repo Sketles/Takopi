@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,9 +22,13 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const success = await login(formData.email, formData.password);
+      // Normalizar email a lowercase antes de enviar
+      const normalizedEmail = formData.email.toLowerCase().trim();
+      const success = await login(normalizedEmail, formData.password);
       if (success) {
-        router.push('/explore');
+        // Redirigir a la página solicitada o a explore por defecto
+        const redirect = searchParams.get('redirect') || '/explore';
+        router.push(redirect);
       } else {
         setError('Credenciales inválidas');
       }
@@ -35,9 +40,11 @@ export default function LoginPage() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      // Normalizar email automáticamente mientras se escribe
+      [name]: name === 'email' ? value.toLowerCase() : value
     });
   };
 

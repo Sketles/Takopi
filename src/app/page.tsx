@@ -3,6 +3,12 @@
 import Layout from '@/components/shared/Layout';
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import ContentCard from '@/components/shared/ContentCard';
+import ProductModal from '@/components/product/ProductModal';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/hooks/useCart';
+import { useToast } from '@/components/shared/Toast';
 
 // Particle Background Component
 const ParticleBackground = () => {
@@ -94,6 +100,13 @@ const ParticleBackground = () => {
 export default function HomePage() {
   const [featuredContent, setFeaturedContent] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [likesData, setLikesData] = useState<{ [key: string]: { isLiked: boolean; likesCount: number } }>({});
+  const { user } = useAuth();
+  const { addProductToCart, isProductInCart } = useCart();
+  const { addToast } = useToast();
+  const router = useRouter();
 
   // Fetch contenido destacado
   useEffect(() => {
@@ -102,8 +115,14 @@ export default function HomePage() {
         const response = await fetch('/api/content/explore?limit=6');
         if (response.ok) {
           const result = await response.json();
-          const data = result.data || result; // Soporta ambos formatos
-          setFeaturedContent(Array.isArray(data) ? data.slice(0, 6) : []);
+          const data = result.data || result;
+          const items = Array.isArray(data) ? data.slice(0, 6) : [];
+          setFeaturedContent(items);
+          
+          // Cargar likes si hay usuario autenticado
+          if (items.length > 0) {
+            loadAllLikes(items);
+          }
         }
       } catch (error) {
         console.error('Error fetching featured:', error);
@@ -113,6 +132,119 @@ export default function HomePage() {
     };
     fetchFeatured();
   }, []);
+
+  // Cargar likes de todos los items
+  const loadAllLikes = async (items: any[]) => {
+    const token = localStorage.getItem('takopi_token');
+    if (!token || items.length === 0) return;
+
+    try {
+      const contentIds = items.map(item => item.id).join(',');
+      const response = await fetch(`/api/likes?contentIds=${contentIds}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && Array.isArray(result.data)) {
+          const likesMap: { [key: string]: { isLiked: boolean; likesCount: number } } = {};
+          result.data.forEach((item: any) => {
+            likesMap[item.contentId] = {
+              isLiked: item.isLiked,
+              likesCount: item.likesCount
+            };
+          });
+          setLikesData(likesMap);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading likes:', error);
+    }
+  };
+
+  const openItemModal = (item: any) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedItem(null);
+  };
+
+  const handleAddToBox = async (product: any) => {
+    try {
+      // Verificar autenticación
+      const token = localStorage.getItem('takopi_token');
+      if (!token || !user) {
+        addToast({
+          type: 'warning',
+          title: 'Inicia sesión',
+          message: 'Debes iniciar sesión para agregar productos al carrito'
+        });
+        router.push('/auth/login?redirect=/');
+        return;
+      }
+
+      if (isProductInCart(product.id)) {
+        addToast({
+          type: 'warning',
+          title: 'Ya está en tu Box',
+          message: 'Este producto ya está en tu carrito'
+        });
+        return;
+      }
+
+      const result = addProductToCart({
+        ...product,
+        author: product.author || 'Usuario',
+        authorUsername: typeof product.author === 'string' ? product.author : 'Usuario',
+        coverImage: product.coverImage || product.image || '/placeholder-content.jpg'
+      });
+
+      if (result.success) {
+        addToast({
+          type: 'success',
+          title: 'Agregado a tu Box',
+          message: result.message
+        });
+      }
+    } catch (error) {
+      addToast({
+        type: 'error',
+        title: 'Error',
+        message: 'No se pudo agregar al carrito'
+      });
+    }
+  };
+
+  const transformContentItem = (item: any) => {
+    return {
+      id: item.id,
+      title: item.title,
+      description: item.description || '',
+      shortDescription: item.shortDescription,
+      contentType: item.contentType,
+      category: item.category,
+      price: typeof item.price === 'string' ? parseFloat(item.price) || 0 : item.price,
+      currency: item.currency || 'CLP',
+      isFree: item.isFree,
+      license: item.license || 'personal',
+      visibility: 'public',
+      status: 'published',
+      author: item.author,
+      authorAvatar: item.authorAvatar,
+      authorId: item.authorId,
+      likes: item.likes,
+      views: item.views,
+      files: item.files || [],
+      coverImage: item.image,
+      additionalImages: [],
+      tags: item.tags || [],
+      createdAt: item.createdAt,
+      updatedAt: item.createdAt
+    };
+  };
 
   return (
     <Layout>
@@ -259,45 +391,38 @@ export default function HomePage() {
             </div>
           ) : featuredContent.length > 0 ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredContent.map((content) => (
-                <Link
-                  key={content.id}
-                  href={`/product/${content.id}`}
-                  className="group relative overflow-hidden rounded-3xl bg-[#0f0f0f] border border-white/10 hover:border-purple-500/50 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
-                >
-                  {/* Image Container */}
-                  <div className="aspect-[4/3] overflow-hidden relative">
-                    <img
-                      src={content.coverImage || content.image || '/placeholder-content.jpg'}
-                      alt={content.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+              {featuredContent.map((content) => {
+                const likeInfo = likesData[content.id] || { isLiked: false, likesCount: content.likes || 0 };
+                return (
+                  <div key={content.id}>
+                    <ContentCard
+                      id={content.id}
+                      title={content.title}
+                      author={content.author}
+                      authorAvatar={content.authorAvatar}
+                      authorId={content.authorId}
+                      contentType={content.contentType || content.type}
+                      category={content.category}
+                      price={content.price}
+                      isFree={content.isFree}
+                      currency={content.currency}
+                      image={content.image}
+                      coverImage={content.coverImage}
+                      description={content.description}
+                      shortDescription={content.shortDescription}
+                      tags={content.tags || []}
+                      likes={likeInfo.likesCount}
+                      views={content.views || 0}
+                      downloads={content.downloads || 0}
+                      createdAt={content.createdAt}
+                      isLiked={likeInfo.isLiked}
+                      onClick={() => openItemModal(content)}
+                      showPrice={true}
+                      showStats={true}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity"></div>
-
-                    {/* Price Tag */}
-                    <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-md border border-white/10 rounded-full text-sm font-bold text-white">
-                      {content.isFree ? 'GRATIS' : `$${content.price}`}
-                    </div>
                   </div>
-
-                  {/* Content */}
-                  <div className="p-6">
-                    <div className="mb-4">
-                      <span className="text-xs font-bold tracking-wider text-purple-400 uppercase mb-2 block">{content.contentType}</span>
-                      <h3 className="font-bold text-xl text-white mb-1 line-clamp-1 group-hover:text-purple-300 transition-colors">{content.title}</h3>
-                      <p className="text-sm text-gray-400">por <span className="text-white">{content.author || 'Takopi User'}</span></p>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <span>★★★★★</span>
-                        <span>(5.0)</span>
-                      </div>
-                      <span className="text-xs text-gray-400 group-hover:text-white transition-colors">Ver detalles</span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-24 border border-dashed border-white/10 rounded-3xl bg-white/5">
@@ -307,6 +432,29 @@ export default function HomePage() {
             </div>
           )}
         </section>
+
+        {/* Modal de producto */}
+        {selectedItem && (
+          <ProductModal
+            product={transformContentItem(selectedItem)}
+            isOpen={isModalOpen}
+            onClose={closeModal}
+            isOwner={user?.username === selectedItem.author}
+            currentUserId={user?._id}
+            onEdit={() => { }}
+            onDelete={async () => { }}
+            onBuy={() => { }}
+            onAddToBox={handleAddToBox}
+            onLike={async () => { 
+              if (selectedItem) {
+                await loadAllLikes([selectedItem]);
+              }
+            }}
+            onSave={() => { }}
+            onShare={() => { }}
+            source="home"
+          />
+        )}
 
         {/* CTA Final */}
         <section className="py-32 px-4 relative overflow-hidden">

@@ -6,10 +6,13 @@ export class LoginUseCase {
   constructor(private repository: IAuthRepository) {}
 
   async execute(email: string, password: string): Promise<LoginResult> {
-    console.log('🎯 LoginUseCase: Iniciando login', email);
+    // Normalizar email a lowercase (doble capa de seguridad)
+    const normalizedEmail = email?.toLowerCase().trim();
+    
+    console.log('🎯 LoginUseCase: Iniciando login', normalizedEmail);
 
     // Validaciones de negocio
-    if (!email || email.trim().length === 0) {
+    if (!normalizedEmail || normalizedEmail.length === 0) {
       throw new Error('El email es requerido');
     }
 
@@ -19,12 +22,12 @@ export class LoginUseCase {
 
     // Email válido
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(normalizedEmail)) {
       throw new Error('El email no es válido');
     }
 
-    // Ejecutar login
-    const result = await this.repository.login(email, password);
+    // Ejecutar login con email normalizado
+    const result = await this.repository.login(normalizedEmail, password);
 
     console.log('✅ LoginUseCase: Login exitoso', result.user.id);
     return result;

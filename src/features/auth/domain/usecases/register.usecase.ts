@@ -10,20 +10,23 @@ export class RegisterUseCase {
     password: string, 
     role: string
   ): Promise<LoginResult> {
-    console.log('🎯 RegisterUseCase: Registrando usuario', email);
+    // Normalizar email a lowercase (doble capa de seguridad)
+    const normalizedEmail = email?.toLowerCase().trim();
+    
+    console.log('🎯 RegisterUseCase: Registrando usuario', normalizedEmail);
 
     // Validaciones de negocio
     if (!username || username.trim().length < 3) {
       throw new Error('El nombre de usuario debe tener al menos 3 caracteres');
     }
 
-    if (!email || email.trim().length === 0) {
+    if (!normalizedEmail || normalizedEmail.length === 0) {
       throw new Error('El email es requerido');
     }
 
     // Email válido
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(normalizedEmail)) {
       throw new Error('El email no es válido');
     }
 
@@ -36,13 +39,13 @@ export class RegisterUseCase {
     }
 
     // Verificar que no existe el email
-    const existingUser = await this.repository.findUserByEmail(email);
+    const existingUser = await this.repository.findUserByEmail(normalizedEmail);
     if (existingUser) {
       throw new Error('El email ya está registrado');
     }
 
-    // Ejecutar registro
-    const result = await this.repository.register(username, email, password, role);
+    // Ejecutar registro con email normalizado
+    const result = await this.repository.register(username, normalizedEmail, password, role);
 
     console.log('✅ RegisterUseCase: Registro exitoso', result.user.id);
     return result;

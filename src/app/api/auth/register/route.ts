@@ -6,14 +6,17 @@ export async function POST(request: NextRequest) {
   try {
     const { username, email, password, role } = await request.json();
 
-    console.log('🔍 Register API (Clean Architecture):', { username, email, role });
+    // Normalizar email a lowercase (estándar de la industria)
+    const normalizedEmail = email?.toLowerCase().trim();
+
+    console.log('🔍 Register API (Clean Architecture):', { username, email: normalizedEmail, role });
 
     // Crear repository y usecase (Clean Architecture)
     const repository = createAuthRepository();
     const usecase = new RegisterUseCase(repository);
 
-    // Ejecutar caso de uso
-    const result = await usecase.execute(username, email, password, role);
+    // Ejecutar caso de uso con email normalizado
+    const result = await usecase.execute(username, normalizedEmail, password, role);
 
     console.log('✅ Registro exitoso:', { userId: result.user.id, email: result.user.email });
 

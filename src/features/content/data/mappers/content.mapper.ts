@@ -21,6 +21,7 @@ export class ContentMapper {
       model.likes || 0,
       model.views || 0,
       model.downloads || 0,
+      0, // pins - se calcula desde el repositorio
       model.authorAvatar,
       model.authorId,
       model.shortDescription,

@@ -151,18 +151,19 @@ export class CommentRepositoryPrisma implements ICommentRepository {
   }
 
   private toEntity(comment: any): CommentEntity {
-    return {
-      id: comment.id,
-      text: comment.text,
-      contentId: comment.contentId,
-      userId: comment.userId,
-      username: comment.user?.username || 'Unknown',
-      userAvatar: comment.user?.avatar,
-      likeCount: comment.likeCount,
-      likedBy: comment.likedBy,
-      parentId: comment.parentId || null,
-      createdAt: comment.createdAt instanceof Date ? comment.createdAt : new Date(comment.createdAt),
-      updatedAt: comment.updatedAt instanceof Date ? comment.updatedAt : new Date(comment.updatedAt)
-    } as CommentEntity;
+    return new CommentEntity(
+      comment.id,
+      comment.contentId,
+      comment.userId,
+      comment.user?.username || 'Unknown',
+      comment.text,
+      comment.likeCount || 0,
+      comment.likedBy || [],
+      false, // isLiked - se determina en el use case
+      comment.parentId || null,
+      comment.createdAt instanceof Date ? comment.createdAt : new Date(comment.createdAt),
+      comment.updatedAt instanceof Date ? comment.updatedAt : new Date(comment.updatedAt),
+      comment.user?.avatar
+    );
   }
 }

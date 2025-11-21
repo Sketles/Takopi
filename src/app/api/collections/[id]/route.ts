@@ -9,10 +9,11 @@ import { DeleteCollectionUseCase } from '@/features/collections/domain/usecases/
 // PATCH - Actualizar colección
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    console.log('🗂️ Collections API PATCH', params.id);
+    console.log('🗂️ Collections API PATCH', id);
 
     const token = request.headers.get('authorization')?.split(' ')[1];
 
@@ -40,7 +41,7 @@ export async function PATCH(
     const repository = createCollectionRepository();
     const useCase = new UpdateCollectionUseCase(repository);
 
-    const collection = await useCase.execute(params.id, userId, {
+    const collection = await useCase.execute(id, userId, {
       title,
       description,
       isPublic
@@ -74,10 +75,11 @@ export async function PATCH(
 // DELETE - Eliminar colección
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    console.log('🗂️ Collections API DELETE', params.id);
+    console.log('🗂️ Collections API DELETE', id);
 
     const token = request.headers.get('authorization')?.split(' ')[1];
 
@@ -102,7 +104,7 @@ export async function DELETE(
     const repository = createCollectionRepository();
     const useCase = new DeleteCollectionUseCase(repository);
 
-    await useCase.execute(params.id, userId);
+    await useCase.execute(id, userId);
 
     return NextResponse.json({
       success: true,

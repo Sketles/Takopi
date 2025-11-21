@@ -5,14 +5,14 @@ export class CommentEntity {
     public readonly contentId: string,
     public readonly userId: string,
     public readonly username: string,
-    public readonly userAvatar?: string,
     public readonly text: string,
     public readonly likes: number = 0,
     public readonly likedBy: string[] = [],
     public readonly isLiked: boolean = false,
     public readonly parentId: string | null = null,
     public readonly createdAt: Date = new Date(),
-    public readonly updatedAt: Date = new Date()
+    public readonly updatedAt: Date = new Date(),
+    public readonly userAvatar?: string
   ) {}
 
   // Métodos de negocio
@@ -34,14 +34,14 @@ export class CommentEntity {
       this.contentId,
       this.userId,
       this.username,
-      this.userAvatar,
       this.text,
       this.likes + 1,
       [...this.likedBy, userId],
       this.likedBy.includes(userId),
       this.parentId,
       this.createdAt,
-      new Date()
+      new Date(),
+      this.userAvatar
     );
   }
 
@@ -54,14 +54,14 @@ export class CommentEntity {
       this.contentId,
       this.userId,
       this.username,
-      this.userAvatar,
       this.text,
       Math.max(0, this.likes - 1),
       this.likedBy.filter(id => id !== userId),
       false,
       this.parentId,
       this.createdAt,
-      new Date()
+      new Date(),
+      this.userAvatar
     );
   }
 

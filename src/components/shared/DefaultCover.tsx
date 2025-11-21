@@ -10,7 +10,7 @@ interface DefaultCoverProps {
 const DefaultCover: React.FC<DefaultCoverProps> = ({ contentType, className = "" }) => {
 
   const getCoverConfig = (type: string) => {
-    const configs = {
+    const configs: Record<string, { gradient: string; icon: string; placeholder: string }> = {
       // Categorías finales definidas
       'avatares': {
         gradient: 'from-green-500 to-teal-500',

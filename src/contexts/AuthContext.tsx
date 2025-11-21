@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.warn('Datos de usuario corruptos, limpiando sesión');
             localStorage.removeItem('takopi_user');
             localStorage.removeItem('takopi_token');
-            setLoading(false);
+            setIsLoading(false);
             return;
           }
 

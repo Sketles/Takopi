@@ -10,13 +10,14 @@ import prisma from '@/lib/prisma';
 // GET - Obtener items de una colección con detalles de contenido
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    console.log('🗂️ Collection Items API GET', params.id);
+    console.log('🗂️ Collection Items API GET', id);
 
     const repository = createCollectionRepository();
-    const items = await repository.getItems(params.id);
+    const items = await repository.getItems(id);
 
     // Get content details for each item
     const contentIds = items.map(item => item.contentId);
@@ -89,10 +90,11 @@ export async function GET(
 // POST - Agregar item a colección
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    console.log('🗂️ Collection Items API POST', params.id);
+    console.log('🗂️ Collection Items API POST', id);
 
     const token = request.headers.get('authorization')?.split(' ')[1];
 
@@ -127,7 +129,7 @@ export async function POST(
     const repository = createCollectionRepository();
     const useCase = new AddItemToCollectionUseCase(repository);
 
-    const item = await useCase.execute(params.id, contentId, userId);
+    const item = await useCase.execute(id, contentId, userId);
 
     return NextResponse.json({
       success: true,
@@ -152,13 +154,14 @@ export async function POST(
   }
 }
 
-// DELETE - Eliminar item de colección
+// DELETE - Remover item de colección
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    console.log('🗂️ Collection Items API DELETE', params.id);
+    console.log('🗂️ Collection Items API DELETE', id);
 
     const token = request.headers.get('authorization')?.split(' ')[1];
 
@@ -193,7 +196,7 @@ export async function DELETE(
     const repository = createCollectionRepository();
     const useCase = new RemoveItemFromCollectionUseCase(repository);
 
-    await useCase.execute(params.id, contentId, userId);
+    await useCase.execute(id, contentId, userId);
 
     return NextResponse.json({
       success: true,
