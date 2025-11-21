@@ -502,7 +502,14 @@ function ProfileContent() {
   // Función para guardar cambios del producto
   const handleSaveProduct = async (updatedProduct: any) => {
     try {
+      console.log('💾 Guardando producto:', updatedProduct);
+      
       const token = localStorage.getItem('takopi_token');
+      if (!token) {
+        addToast({ type: 'error', title: 'Error', message: 'No estás autenticado' });
+        return;
+      }
+
       const response = await fetch(`/api/content/${updatedProduct.id}`, {
         method: 'PUT',
         headers: {
@@ -512,21 +519,30 @@ function ProfileContent() {
         body: JSON.stringify(updatedProduct),
       });
 
+      const data = await response.json();
+      console.log('📥 Respuesta del servidor:', data);
+
       if (response.ok) {
-        // Actualizar la lista de creaciones
+        // Actualizar la lista de creaciones con los datos actualizados del servidor
         setUserCreations(prev =>
           prev.map(creation =>
-            creation.id === updatedProduct.id ? updatedProduct : creation
+            creation.id === updatedProduct.id ? { ...creation, ...data.data } : creation
           )
         );
+        
         setIsProductEditorOpen(false);
         setProductToEdit(null);
+        
+        // Recargar los datos del perfil para asegurar que todo esté actualizado
+        await fetchUserProfile();
+        
         addToast({ type: 'success', title: 'Éxito', message: 'Producto actualizado exitosamente' });
       } else {
-        const errorData = await response.json();
-        addToast({ type: 'error', title: 'Error', message: errorData.error });
+        console.error('❌ Error del servidor:', data);
+        addToast({ type: 'error', title: 'Error', message: data.error || 'Error al actualizar el producto' });
       }
     } catch (error) {
+      console.error('❌ Error al actualizar producto:', error);
       addToast({ type: 'error', title: 'Error', message: 'Error al actualizar el producto' });
     }
   };

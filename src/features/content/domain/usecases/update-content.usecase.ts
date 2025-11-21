@@ -5,13 +5,21 @@ import { IContentRepository } from '../repositories/content.repository.interface
 export interface UpdateContentDTO {
   title?: string;
   description?: string;
+  shortDescription?: string;
   price?: number;
   currency?: string;
+  isFree?: boolean;
   contentType?: string;
   category?: string;
   tags?: string[];
+  customTags?: string[];
   coverImage?: string;
-  files?: string[];
+  additionalImages?: string[];
+  files?: any[];
+  license?: string;
+  customLicense?: string;
+  visibility?: string;
+  status?: string;
   isPublished?: boolean;
 }
 
