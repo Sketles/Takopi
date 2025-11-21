@@ -25,6 +25,7 @@ import { Switch } from '@headlessui/react';
 import ParticlesBackground from '@/components/shared/ParticlesBackground';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/shared/Toast';
+import MediaViewer from '@/components/shared/MediaViewer';
 
 // Tipos de contenido
 const contentTypes = [
@@ -406,55 +407,85 @@ export default function UploadPage() {
                       exit={{ opacity: 0, x: 20 }}
                       className="space-y-10"
                     >
-                      {/* Archivos */}
-                      <div className="space-y-4">
-                        <label className="text-sm font-medium text-gray-400 uppercase tracking-wider">Archivos del Producto</label>
-                        <div
-                          onDragOver={onDragOver}
-                          onDragLeave={onDragLeave}
-                          onDrop={onDrop}
-                          onClick={() => fileInputRef.current?.click()}
-                          className={`border-2 border-dashed rounded-3xl p-10 text-center cursor-pointer transition-all ${isDragging
-                            ? 'border-purple-500 bg-purple-500/10 scale-[1.02]'
-                            : 'border-gray-800 hover:border-gray-600 bg-white/5'
-                            }`}
-                        >
-                          <CloudArrowUpIcon className="w-16 h-16 mx-auto text-gray-500 mb-4" />
-                          <h3 className="text-xl font-semibold mb-2">Sube tus archivos aquí</h3>
-                          <p className="text-gray-500">Arrastra y suelta o haz clic para explorar</p>
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            multiple
-                            onChange={handleFileSelect}
-                            className="hidden"
-                          />
+                      {/* Grid de 2 columnas: Upload + Visor */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Columna Izquierda: Upload de Archivos */}
+                        <div className="space-y-4">
+                          <label className="text-sm font-medium text-gray-400 uppercase tracking-wider">Archivos del Producto</label>
+                          <div
+                            onDragOver={onDragOver}
+                            onDragLeave={onDragLeave}
+                            onDrop={onDrop}
+                            onClick={() => fileInputRef.current?.click()}
+                            className={`border-2 border-dashed rounded-3xl p-10 text-center cursor-pointer transition-all ${isDragging
+                              ? 'border-purple-500 bg-purple-500/10 scale-[1.02]'
+                              : 'border-gray-800 hover:border-gray-600 bg-white/5'
+                              }`}
+                          >
+                            <CloudArrowUpIcon className="w-16 h-16 mx-auto text-gray-500 mb-4" />
+                            <h3 className="text-xl font-semibold mb-2">Sube tus archivos aquí</h3>
+                            <p className="text-gray-500">Arrastra y suelta o haz clic para explorar</p>
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              multiple
+                              onChange={handleFileSelect}
+                              className="hidden"
+                            />
+                          </div>
+
+                          {/* Lista pequeña de Archivos */}
+                          {files.length > 0 && (
+                            <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                              {files.map((file, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">
+                                      <DocumentTextIcon className="w-5 h-5" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-medium text-white text-sm truncate">{file.name}</p>
+                                      <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
+                                    className="p-2 hover:bg-red-500/20 hover:text-red-500 rounded-lg transition-colors flex-shrink-0"
+                                  >
+                                    <XMarkIcon className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
 
-                        {/* Lista de Archivos */}
-                        {files.length > 0 && (
-                          <div className="space-y-2">
-                            {files.map((file, idx) => (
-                              <div key={idx} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">
-                                    <DocumentTextIcon className="w-6 h-6" />
-                                  </div>
-                                  <div>
-                                    <p className="font-medium text-white">{file.name}</p>
-                                    <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
-                                  className="p-2 hover:bg-red-500/20 hover:text-red-500 rounded-lg transition-colors"
-                                >
-                                  <XMarkIcon className="w-5 h-5" />
-                                </button>
+                        {/* Columna Derecha: Vista Previa en Tiempo Real */}
+                        <div className="space-y-4">
+                          <label className="text-sm font-medium text-gray-400 uppercase tracking-wider">Vista Previa</label>
+                          <div className="bg-black/40 border border-white/5 rounded-3xl overflow-hidden" style={{ height: '500px' }}>
+                            {files.length > 0 ? (
+                              <MediaViewer
+                                files={files.map(file => ({
+                                  name: file.name,
+                                  type: file.type,
+                                  size: file.size,
+                                  url: URL.createObjectURL(file),
+                                  originalName: file.name
+                                }))}
+                                coverImage={coverPreview || undefined}
+                                contentType={formData.contentType}
+                                title={formData.title || 'Vista Previa'}
+                                isOwner={false}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center text-white/30">
+                                <span className="text-6xl mb-4">📤</span>
+                                <p>Sube archivos para ver la vista previa</p>
                               </div>
-                            ))}
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
 
                       {/* Descripción */}
