@@ -1,0 +1,276 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { ModelViewerModal } from '../ModelViewer3D';
+import MusicPlayer from '../product/MusicPlayer';
+import TextureViewer from '../product/TextureViewer';
+
+interface MediaFile {
+    name: string;
+    type: string;
+    size: number;
+    url: string;
+    previewUrl?: string;
+    originalName?: string;
+}
+
+interface MediaViewerProps {
+    files: MediaFile[];
+    coverImage?: string;
+    contentType: string;
+    title: string;
+    isOwner?: boolean;
+    className?: string;
+}
+
+export default function MediaViewer({
+    files,
+    coverImage,
+    contentType,
+    title,
+    isOwner = false,
+    className = ''
+}: MediaViewerProps) {
+    const [activeTab, setActiveTab] = useState<'viewer' | 'files'>('viewer');
+    const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set(['viewer']));
+
+    const has3D = files?.some(file =>
+        file.type?.includes('gltf') ||
+        file.type?.includes('glb') ||
+        file.type?.includes('application/octet-stream') ||
+        file.name?.endsWith('.glb') ||
+        file.name?.endsWith('.gltf') ||
+        file.name?.endsWith('.vrm')
+    );
+
+    const hasVideo = files?.some(file =>
+        file.type?.includes('video') ||
+        file.name?.match(/\.(mp4|webm|ogg|avi|mov)$/i)
+    );
+
+    const hasAudio = files?.some(file =>
+        file.type?.includes('audio') ||
+        file.name?.match(/\.(mp3|wav|ogg|flac|m4a)$/i)
+    );
+
+    const hasTextures = files?.some(file =>
+        file.type?.includes('image') ||
+        file.name?.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)
+    );
+
+    const handleTabChange = (tab: 'viewer' | 'files') => {
+        setActiveTab(tab);
+        setLoadedTabs(prev => new Set([...prev, tab]));
+    };
+
+    const get3DModelUrl = () => {
+        const modelFile = files?.find(file =>
+            file.type?.includes('gltf') ||
+            file.type?.includes('glb') ||
+            file.type?.includes('application/octet-stream') ||
+            file.name?.endsWith('.glb') ||
+            file.name?.endsWith('.gltf') ||
+            file.name?.endsWith('.vrm')
+        );
+        return modelFile?.url;
+    };
+
+    const getVideoUrl = () => {
+        const videoFile = files?.find(file =>
+            file.type?.includes('video') ||
+            file.name?.match(/\.(mp4|webm|ogg|avi|mov)$/i)
+        );
+        return videoFile?.url;
+    };
+
+    const getFileIcon = (file: MediaFile) => {
+        if (file.type?.includes('gltf') || file.type?.includes('glb') || file.type?.includes('application/octet-stream') ||
+            file.name?.endsWith('.glb') || file.name?.endsWith('.gltf') || file.name?.endsWith('.vrm')) {
+            return '🧩';
+        }
+        if (file.type?.startsWith('image/')) return '🖼️';
+        if (file.type?.startsWith('video/')) return '🎬';
+        if (file.type?.startsWith('audio/')) return '🎵';
+        if (file.type?.includes('text/') || file.name?.match(/\.(html|css|js|json)$/i)) return '📄';
+        if (file.type?.includes('application/zip') || file.name?.match(/\.(zip|rar|7z)$/i)) return '📦';
+        return '📁';
+    };
+
+    const getFileTypeLabel = (file: MediaFile) => {
+        if (file.type?.includes('gltf') || file.type?.includes('glb') || file.type?.includes('application/octet-stream') ||
+            file.name?.endsWith('.glb') || file.name?.endsWith('.gltf') || file.name?.endsWith('.vrm')) {
+            return 'Modelo 3D';
+        }
+        if (file.type?.startsWith('image/')) return 'Imagen';
+        if (file.type?.startsWith('video/')) return 'Vídeo';
+        if (file.type?.startsWith('audio/')) return 'Audio';
+        if (file.type?.includes('text/') || file.name?.match(/\.(html|css|js|json)$/i)) return 'Código';
+        if (file.type?.includes('application/zip') || file.name?.match(/\.(zip|rar|7z)$/i)) return 'Archivo comprimido';
+        return 'Archivo';
+    };
+
+    const formatFileSize = (bytes: number) => {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    };
+
+    return (
+        <div className={`flex flex-col h-full w-full relative ${className}`}>
+            {/* Floating Tab Switcher */}
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30">
+                <div className="flex bg-black/60 backdrop-blur-md rounded-full p-1 border border-white/10 shadow-lg">
+                    <button
+                        onClick={() => handleTabChange('viewer')}
+                        className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${activeTab === 'viewer'
+                                ? 'bg-white text-black shadow-sm'
+                                : 'text-white/60 hover:text-white'
+                            }`}
+                    >
+                        Vista Previa
+                    </button>
+                    <button
+                        onClick={() => handleTabChange('files')}
+                        className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'files'
+                                ? 'bg-white text-black shadow-sm'
+                                : 'text-white/60 hover:text-white'
+                            }`}
+                    >
+                        Archivos
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === 'files' ? 'bg-black/10 text-black' : 'bg-white/10 text-white'}`}>
+                            {files?.length || 0}
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1 relative w-full h-full flex items-center justify-center overflow-hidden bg-transparent">
+                {activeTab === 'viewer' && (
+                    <div className="w-full h-full flex items-center justify-center animate-fade-in">
+                        {loadedTabs.has('viewer') ? (
+                            contentType === 'musica' && hasAudio ? (
+                                <div className="w-full h-full p-12 flex items-center justify-center">
+                                    <MusicPlayer
+                                        files={files || []}
+                                        title={title}
+                                        coverImage={coverImage}
+                                        className="max-w-2xl w-full"
+                                    />
+                                </div>
+                            ) : contentType === 'texturas' && hasTextures ? (
+                                <TextureViewer
+                                    files={files || []}
+                                    title={title}
+                                    coverImage={coverImage}
+                                    className="h-full w-full"
+                                    isOwner={isOwner}
+                                />
+                            ) : has3D ? (
+                                get3DModelUrl() ? (
+                                    <div className="w-full h-full">
+                                        <ModelViewerModal
+                                            src={get3DModelUrl()!}
+                                            alt={title}
+                                            width="100%"
+                                            height="100%"
+                                            autoRotate={true}
+                                            cameraControls={true}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center gap-4 text-white/30">
+                                        <span className="text-6xl">🧩</span>
+                                        <p>Modelo 3D no disponible</p>
+                                    </div>
+                                )
+                            ) : hasVideo ? (
+                                getVideoUrl() ? (
+                                    <video
+                                        src={getVideoUrl()}
+                                        controls
+                                        className="w-full h-full object-contain"
+                                    />
+                                ) : (
+                                    <div className="flex flex-col items-center gap-4 text-white/30">
+                                        <span className="text-6xl">🎬</span>
+                                        <p>Vídeo no disponible</p>
+                                    </div>
+                                )
+                            ) : coverImage ? (
+                                <img
+                                    src={coverImage}
+                                    alt={title}
+                                    className="w-full h-full object-contain"
+                                />
+                            ) : (
+                                <div className="flex flex-col items-center gap-4 text-white/30">
+                                    <span className="text-6xl">📁</span>
+                                    <p>Sin vista previa</p>
+                                </div>
+                            )
+                        ) : (
+                            <div className="flex items-center justify-center h-full">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'files' && (
+                    <div className="w-full h-full p-8 pt-24 overflow-y-auto custom-scrollbar animate-fade-in bg-black/20 backdrop-blur-sm">
+                        <div className="max-w-3xl mx-auto space-y-3">
+                            {files && files.length > 0 ? (
+                                files.map((file, index) => (
+                                    <div
+                                        key={index}
+                                        className="group bg-white/5 hover:bg-white/10 rounded-xl p-4 border border-white/5 hover:border-white/20 transition-all duration-300 flex items-center gap-4"
+                                    >
+                                        <div className="w-12 h-12 bg-black/40 rounded-lg flex items-center justify-center text-2xl">
+                                            {getFileIcon(file)}
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h4 className="text-white font-medium truncate">{file.originalName || file.name}</h4>
+                                            </div>
+                                            <div className="flex items-center gap-3 text-xs text-white/40">
+                                                <span className="bg-white/5 px-2 py-0.5 rounded">{getFileTypeLabel(file)}</span>
+                                                <span>{formatFileSize(file.size)}</span>
+                                            </div>
+                                        </div>
+
+                                        {isOwner && (
+                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => {
+                                                        const link = document.createElement('a');
+                                                        link.href = file.url;
+                                                        link.download = file.originalName || file.name;
+                                                        link.click();
+                                                    }}
+                                                    className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors"
+                                                    title="Descargar"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center text-white/30 py-12">
+                                    No hay archivos disponibles
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
