@@ -42,6 +42,22 @@ function getTransbankCredentials() {
 
 const credentials = getTransbankCredentials();
 
+// Función para detectar URL base automáticamente
+function getBaseUrl(): string {
+  // Si está definida explícitamente, usar esa
+  if (process.env.APP_BASE_URL) {
+    return process.env.APP_BASE_URL;
+  }
+  
+  // Si es Vercel, detectar automáticamente
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  
+  // Fallback para desarrollo local
+  return 'http://localhost:3000';
+}
+
 export const webpayConfig = {
   // Configuración del ambiente
   environment: credentials.environment,
@@ -50,8 +66,8 @@ export const webpayConfig = {
   commerceCode: credentials.commerceCode,
   apiKey: credentials.apiKey,
   
-  // URL base de la aplicación
-  baseUrl: process.env.APP_BASE_URL || 'http://localhost:3000',
+  // URL base de la aplicación (auto-detectada)
+  baseUrl: getBaseUrl(),
   
   // URLs de Transbank
   urls: {

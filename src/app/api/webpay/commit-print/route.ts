@@ -20,10 +20,15 @@ export async function GET(request: NextRequest) {
 }
 
 async function handleCommit(request: NextRequest) {
+  console.log('🖨️ [commit-print] Iniciando proceso de confirmación');
+  console.log('🖨️ [commit-print] baseUrl configurada:', webpayConfig.baseUrl);
+  
   try {
     const token = request.nextUrl.searchParams.get("token_ws");
+    console.log('🖨️ [commit-print] Token recibido:', token ? `${token.substring(0, 10)}...` : 'NO TOKEN');
     
     if (!token) {
+      console.error('❌ [commit-print] Token no encontrado en la URL');
       return NextResponse.redirect(
         `${webpayConfig.baseUrl}/impresion-3d/confirmacion?success=false&error=no_token`,
         302
@@ -78,7 +83,8 @@ async function handleCommit(request: NextRequest) {
     redirectUrl.searchParams.set('transactionDate', transbankResponse.transaction_date || '');
     redirectUrl.searchParams.set('status', transbankResponse.status);
 
-    console.log('✅ Redirigiendo a confirmación de impresión:', redirectUrl.toString());
+    console.log('✅ [commit-print] Redirigiendo a confirmación exitosa');
+    console.log('✅ [commit-print] URL de redirección:', redirectUrl.toString());
 
     return NextResponse.redirect(redirectUrl.toString(), 302);
 
