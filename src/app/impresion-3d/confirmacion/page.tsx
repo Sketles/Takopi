@@ -34,8 +34,44 @@ function ConfirmacionContent() {
 
   useEffect(() => {
     const verifyTransaction = async () => {
+      // Primero verificar si vienen parámetros directos de la redirección
+      const success = searchParams.get('success');
       const token = searchParams.get('token_ws');
       const paymentMethod = searchParams.get('method');
+      const error = searchParams.get('error');
+
+      // Si viene directamente de Transbank con éxito
+      if (success === 'true' && token) {
+        const transactionData = {
+          success: true,
+          status: searchParams.get('status') || 'AUTHORIZED',
+          amount: parseInt(searchParams.get('amount') || '0'),
+          buyOrder: searchParams.get('buyOrder') || '',
+          authorizationCode: searchParams.get('authorizationCode') || '',
+          cardNumber: searchParams.get('cardNumber') || '',
+          transactionDate: searchParams.get('transactionDate') || '',
+        };
+        
+        setResult(transactionData);
+        
+        // Limpiar datos de sesión
+        sessionStorage.removeItem('printConfig');
+        sessionStorage.removeItem('shippingData');
+        sessionStorage.removeItem('pendingTransaction');
+        
+        setIsVerifying(false);
+        return;
+      }
+
+      // Si viene con error
+      if (success === 'false' || error) {
+        setResult({ 
+          success: false,
+          status: error || 'ERROR'
+        });
+        setIsVerifying(false);
+        return;
+      }
 
       // Si es transferencia bancaria
       if (paymentMethod === 'transfer') {
@@ -48,42 +84,19 @@ function ConfirmacionContent() {
         return;
       }
 
-      // Si es Webpay
-      if (!token) {
-        setResult({ success: false });
+      // Caso antiguo: verificar con la API (ya no debería usarse)
+      if (token && !success) {
+        setResult({ 
+          success: false,
+          status: 'VERIFICACION_REQUERIDA'
+        });
         setIsVerifying(false);
         return;
       }
 
-      try {
-        // Llamar a la API para confirmar la transacción
-        const response = await fetch('/api/webpay/commit', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('takopi_token')}`
-          },
-          body: JSON.stringify({ token })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          setResult(data);
-          
-          // Limpiar datos de sesión
-          sessionStorage.removeItem('printConfig');
-          sessionStorage.removeItem('shippingData');
-          sessionStorage.removeItem('pendingTransaction');
-        } else {
-          setResult({ success: false });
-        }
-      } catch (error) {
-        console.error('Error verificando transacción:', error);
-        setResult({ success: false });
-      } finally {
-        setIsVerifying(false);
-      }
+      // Si no hay nada, mostrar error
+      setResult({ success: false });
+      setIsVerifying(false);
     };
 
     verifyTransaction();

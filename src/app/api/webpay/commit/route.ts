@@ -14,7 +14,16 @@ try {
   console.error('❌ Error loading Transbank SDK for commit:', error);
 }
 
+// Manejar tanto GET como POST para compatibilidad con Transbank
+export async function POST(request: NextRequest) {
+  return handleCommit(request);
+}
+
 export async function GET(request: NextRequest) {
+  return handleCommit(request);
+}
+
+async function handleCommit(request: NextRequest) {
   try {
     const token = request.nextUrl.searchParams.get("token_ws");
     

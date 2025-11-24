@@ -4,28 +4,60 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../styles/model-viewer.css';
 import { configureModelViewerEnvironment } from '@/config/model-viewer';
 
+// Variable global para trackear si model-viewer ya fue cargado
+let modelViewerLoaded = false;
+let modelViewerLoadingPromise: Promise<void> | null = null;
+
 // Componente wrapper para el web component model-viewer
 function ModelViewerWrapper({ children, onLoad, onError, ...rest }: any) {
   const modelViewerRef = useRef<any>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(modelViewerLoaded);
 
-  // Cargar el web component dinámicamente solo una vez
+  // Cargar el web component dinámicamente solo una vez globalmente
   useEffect(() => {
     let isMounted = true;
 
     const loadModelViewer = async () => {
-      try {
-        // Configurar el entorno de model-viewer para reducir advertencias
-        configureModelViewerEnvironment();
+      // Si ya está cargado, solo actualizar el estado
+      if (modelViewerLoaded) {
+        if (isMounted) setIsLoaded(true);
+        return;
+      }
 
-        // Importación dinámica compatible con Turbopack
-        await import('@google/model-viewer').then(() => {
+      // Si ya hay una carga en progreso, esperar a que termine
+      if (modelViewerLoadingPromise) {
+        try {
+          await modelViewerLoadingPromise;
+          if (isMounted) setIsLoaded(true);
+        } catch (error) {
+          console.error('Error loading model-viewer:', error);
           if (isMounted) {
-            setIsLoaded(true);
+            onError?.(new CustomEvent('error', { detail: { message: 'Failed to load model-viewer' } }));
           }
-        });
+        }
+        return;
+      }
+
+      // Crear nueva promesa de carga
+      modelViewerLoadingPromise = (async () => {
+        try {
+          // Configurar el entorno de model-viewer para reducir advertencias
+          configureModelViewerEnvironment();
+
+          // Importación dinámica compatible con Turbopack
+          await import('@google/model-viewer');
+          modelViewerLoaded = true;
+        } catch (error) {
+          console.error('Error loading model-viewer:', error);
+          modelViewerLoadingPromise = null; // Permitir reintentos
+          throw error;
+        }
+      })();
+
+      try {
+        await modelViewerLoadingPromise;
+        if (isMounted) setIsLoaded(true);
       } catch (error) {
-        console.error('Error loading model-viewer:', error);
         if (isMounted) {
           onError?.(new CustomEvent('error', { detail: { message: 'Failed to load model-viewer' } }));
         }
@@ -284,13 +316,14 @@ export default function ModelViewer3D({
         }}
         auto-rotate={currentRotation}
         camera-controls={cameraControls}
+        loading="eager"
+        reveal="auto"
         shadow-intensity={currentShadows}
         exposure={currentExposure}
+        poster={fallbackImage}
         onLoad={handleLoad}
         onError={handleError}
-      >
-        {/* Sin poster para evitar superposición negra */}
-      </ModelViewerWrapper>
+      />
     </div>
   );
 }
