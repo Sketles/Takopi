@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { webpayConfig } from '@/config/webpay';
+import prisma from '@/lib/prisma';
 
 // Importar WebpayPlus de manera condicional para mejor manejo de errores
 let WebpayPlus: any;
@@ -70,6 +71,84 @@ async function handleCommit(request: NextRequest) {
         `${webpayConfig.baseUrl}/impresion-3d/confirmacion?success=false&error=not_authorized&status=${transbankResponse?.status || 'unknown'}`,
         302
       );
+    }
+
+    // Guardar la transacción y la compra en la base de datos
+    try {
+      console.log('💾 [commit-print] Guardando transacción en base de datos...');
+      
+      const buyOrder = transbankResponse.buy_order;
+      
+      // Buscar la transacción inicial que se creó en create-print
+      let transaction = await prisma.transaction.findUnique({
+        where: { buyOrder },
+      });
+
+      if (!transaction) {
+        console.error('❌ [commit-print] Transacción inicial no encontrada para buyOrder:', buyOrder);
+        // Crear una nueva si no existe (fallback)
+        transaction = await prisma.transaction.create({
+          data: {
+            token: token,
+            buyOrder: buyOrder,
+            sessionId: transbankResponse.session_id || 'unknown',
+            amount: transbankResponse.amount,
+            currency: 'CLP',
+            status: 'completed',
+            authorizationCode: transbankResponse.authorization_code || '',
+            paymentTypeCode: transbankResponse.payment_type_code || '',
+            transactionDate: transbankResponse.transaction_date ? new Date(transbankResponse.transaction_date) : new Date(),
+            userId: 'unknown', // No podemos obtener el userId sin la transacción inicial
+            contentIds: [],
+          },
+        });
+      } else {
+        // Actualizar transacción existente
+        transaction = await prisma.transaction.update({
+          where: { id: transaction.id },
+          data: {
+            status: 'completed',
+            authorizationCode: transbankResponse.authorization_code || '',
+            paymentTypeCode: transbankResponse.payment_type_code || '',
+            transactionDate: transbankResponse.transaction_date ? new Date(transbankResponse.transaction_date) : new Date(),
+          },
+        });
+      }
+
+      console.log('✅ [commit-print] Transacción actualizada:', transaction.id);
+
+      // Recuperar datos del pedido de impresión
+      const printOrderData = {
+        type: '3d_print',
+        buyOrder: buyOrder,
+        transbankData: {
+          authorizationCode: transbankResponse.authorization_code,
+          cardNumber: transbankResponse.card_detail?.card_number,
+          transactionDate: transbankResponse.transaction_date,
+          paymentTypeCode: transbankResponse.payment_type_code,
+        }
+      };
+
+      // Crear compra (Purchase) asociada a la transacción
+      const purchase = await prisma.purchase.create({
+        data: {
+          userId: transaction.userId,
+          contentId: null, // No es contenido específico, es servicio de impresión
+          price: transbankResponse.amount,
+          currency: 'CLP',
+          status: 'completed',
+          transactionId: transaction.id,
+          completedAt: new Date(),
+          contentSnapshot: printOrderData, // Guardar detalles del pedido de impresión
+        },
+      });
+
+      console.log('✅ [commit-print] Compra guardada:', purchase.id);
+
+    } catch (dbError) {
+      console.error('❌ [commit-print] Error guardando en base de datos:', dbError);
+      // Continuar con la redirección aunque falle el guardado
+      // La transacción de Transbank ya está confirmada
     }
 
     // Redirigir a la página de confirmación exitosa con los datos de la transacción
