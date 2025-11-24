@@ -6,17 +6,20 @@ export const MODEL_VIEWER_CONFIG = {
     loading: 'eager' as const,
     reveal: 'auto' as const,
     bounds: 'tight' as const,
-    interpolationDecay: 200,
+    interpolationDecay: 100, // Reducido para mejor respuesta
     minCameraOrbit: 'auto auto auto',
     maxCameraOrbit: 'auto auto auto',
+    minFieldOfView: '10deg',
+    maxFieldOfView: '90deg',
   },
   
   // Configuración de interacción
   interaction: {
     cameraControls: true,
-    interactionPrompt: 'auto' as const,
-    interactionPromptStyle: 'basic' as const,
-    interactionPromptThreshold: 1500,
+    interactionPrompt: 'none' as const, // Desactivado para evitar overlay
+    interactionPromptThreshold: 0,
+    touchAction: 'pan-y',
+    disableZoom: false,
   },
   
   // Configuración de iluminación
@@ -53,13 +56,46 @@ export const configureModelViewerEnvironment = () => {
     
     // Configurar WebGL para mejor rendimiento
     const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    const gl = canvas.getContext('webgl2', {
+      alpha: false,
+      antialias: true,
+      depth: true,
+      stencil: false,
+      powerPreference: 'high-performance',
+      preserveDrawingBuffer: false,
+    }) || canvas.getContext('webgl', {
+      alpha: false,
+      antialias: true,
+      depth: true,
+      stencil: false,
+      powerPreference: 'high-performance',
+      preserveDrawingBuffer: false,
+    });
     
     if (gl) {
       // Configurar parámetros de WebGL para mejor rendimiento
       gl.enable(gl.DEPTH_TEST);
       gl.enable(gl.CULL_FACE);
       gl.cullFace(gl.BACK);
+      gl.frontFace(gl.CCW);
+      
+      // Habilitar extensiones útiles si están disponibles
+      const extensions = [
+        'WEBGL_compressed_texture_s3tc',
+        'WEBGL_compressed_texture_astc',
+        'WEBGL_compressed_texture_etc',
+        'EXT_texture_filter_anisotropic',
+        'OES_texture_float',
+        'OES_texture_half_float',
+      ];
+      
+      extensions.forEach(ext => {
+        try {
+          gl.getExtension(ext);
+        } catch (e) {
+          // Silenciar errores de extensiones no soportadas
+        }
+      });
     }
   } catch (error) {
     console.warn('No se pudo configurar el entorno de model-viewer:', error);

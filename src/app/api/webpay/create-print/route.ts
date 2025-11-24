@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const printId = `print-${Date.now()}`;
     const buyOrder = generateBuyOrder(printId, userId);
     const sessionId = generateSessionId();
-    const returnUrl = `${webpayConfig.baseUrl}/impresion-3d/confirmacion`;
+    const returnUrl = `${webpayConfig.baseUrl}/api/webpay/commit-print`;
 
     console.log('🖨️ Creating 3D print transaction:', {
       amount,

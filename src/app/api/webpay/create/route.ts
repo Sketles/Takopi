@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     // Generar identificadores únicos
     const buyOrder = generateBuyOrder(contentId, decoded.userId);
     const sessionId = generateSessionId();
-    const returnUrl = `${webpayConfig.baseUrl}/webpay/return`;
+    const returnUrl = `${webpayConfig.baseUrl}/api/webpay/commit`;
 
     // Configurar transacción usando la API real de Transbank
     const tx = WebpayPlus.Transaction.buildForIntegration(
