@@ -98,9 +98,14 @@ function ModelViewerWrapper({ children, onLoad, onError, ...rest }: any) {
 
   // No renderizar hasta que model-viewer esté cargado
   if (!isLoaded) {
-    return <div className="w-full h-full bg-gray-800 rounded-lg flex items-center justify-center">
-      <div className="text-gray-400">Cargando visor 3D...</div>
-    </div>;
+    return (
+      <div className="w-full h-full bg-[#0a0a0a] rounded-lg flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
+          <p className="text-sm text-gray-400 font-medium">Cargando visor 3D...</p>
+        </div>
+      </div>
+    );
   }
 
   return React.createElement('model-viewer', {
@@ -195,21 +200,17 @@ export default function ModelViewer3D({
     onError?.(errorDetail?.message || 'Error cargando modelo 3D');
   };
 
-  // Si no hay soporte de WebGL, hay error o no hay src, mostrar imagen de fallback
+  // Si no hay soporte de WebGL, hay error o no hay src, mostrar estado de carga
   if (!isWebGLSupported || hasError || !src) {
     return (
       <div
-        className={`relative flex items-center justify-center bg-gray-900/70 rounded-lg border border-gray-600 ${className}`}
+        className={`relative flex items-center justify-center bg-[#0a0a0a] rounded-lg ${className}`}
         style={{ width, height }}
       >
-        <img
-          src={fallbackImage}
-          alt={alt}
-          className="absolute inset-0 w-full h-full object-cover rounded-lg opacity-30"
-        />
-        <div className="relative z-10 text-center">
-          <p className="text-sm text-gray-300">
-            {!isWebGLSupported ? 'WebGL no soportado' : 'No se pudo visualizar el modelo'}
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
+          <p className="text-sm text-gray-400 font-medium">
+            {!isWebGLSupported ? 'WebGL no soportado' : hasError ? 'Error al cargar modelo' : 'Cargando modelo 3D...'}
           </p>
         </div>
       </div>
@@ -231,54 +232,75 @@ export default function ModelViewer3D({
 
       {/* Controls Panel */}
       {showControls && (
-        <div className="absolute top-16 right-4 z-20 bg-gray-900/95 backdrop-blur-sm rounded-lg p-4 border border-gray-600 min-w-[200px] controls-panel">
-          <h3 className="text-white text-sm font-semibold mb-3">Controles 3D</h3>
+        <div className="absolute top-16 right-4 z-20 bg-[#0f0f0f]/95 backdrop-blur-md rounded-xl p-4 border border-white/10 min-w-[240px] shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+          <h3 className="text-white text-sm font-bold mb-4 flex items-center gap-2">
+            <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+            </svg>
+            Controles 3D
+          </h3>
 
-          {/* Auto Rotate Toggle */}
-          <div className="mb-3">
+          {/* Animación */}
+          <div className="mb-4 pb-4 border-b border-white/5">
+            <p className="text-xs font-semibold text-purple-400 uppercase tracking-wider mb-2">Animación</p>
             <label className="flex items-center justify-between text-gray-300 text-xs">
               <span>Rotación automática</span>
               <button
                 onClick={() => setCurrentRotation(!currentRotation)}
-                className={`w-8 h-4 rounded-full transition-colors ${currentRotation ? 'bg-purple-500' : 'bg-gray-600'
-                  }`}
+                className={`relative w-10 h-5 rounded-full transition-all duration-300 ${currentRotation ? 'bg-purple-500' : 'bg-white/10'}`}
               >
-                <div className={`w-3 h-3 bg-white rounded-full transition-transform ${currentRotation ? 'translate-x-4' : 'translate-x-0.5'
-                  }`} />
+                <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform duration-300 ${currentRotation ? 'translate-x-5' : 'translate-x-0'} shadow-lg`} />
               </button>
             </label>
           </div>
 
-          {/* Shadow Intensity */}
-          <div className="mb-3">
-            <label className="text-gray-300 text-xs block mb-1">
-              Intensidad de sombras: {currentShadows.toFixed(1)}
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="3"
-              step="0.1"
-              value={currentShadows}
-              onChange={(e) => setCurrentShadows(parseFloat(e.target.value))}
-              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-            />
-          </div>
+          {/* Iluminación y Sombras */}
+          <div className="mb-4 pb-4 border-b border-white/5">
+            <p className="text-xs font-semibold text-purple-400 uppercase tracking-wider mb-3">Iluminación</p>
+            
+            {/* Shadow Intensity */}
+            <div className="mb-3">
+              <label className="text-gray-300 text-xs block mb-2 flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                  Sombras
+                </span>
+                <span className="text-white font-medium">{currentShadows.toFixed(1)}</span>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="3"
+                step="0.1"
+                value={currentShadows}
+                onChange={(e) => setCurrentShadows(parseFloat(e.target.value))}
+                className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(168,85,247,0.5)]"
+              />
+            </div>
 
-          {/* Exposure */}
-          <div className="mb-3">
-            <label className="text-gray-300 text-xs block mb-1">
-              Exposición: {currentExposure.toFixed(1)}
-            </label>
-            <input
-              type="range"
-              min="0.5"
-              max="3"
-              step="0.1"
-              value={currentExposure}
-              onChange={(e) => setCurrentExposure(parseFloat(e.target.value))}
-              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-            />
+            {/* Exposure */}
+            <div>
+              <label className="text-gray-300 text-xs block mb-2 flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  Brillo
+                </span>
+                <span className="text-white font-medium">{currentExposure.toFixed(1)}</span>
+              </label>
+              <input
+                type="range"
+                min="0.5"
+                max="3"
+                step="0.1"
+                value={currentExposure}
+                onChange={(e) => setCurrentExposure(parseFloat(e.target.value))}
+                className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(168,85,247,0.5)]"
+              />
+            </div>
           </div>
 
           {/* Reset Button */}
@@ -288,19 +310,19 @@ export default function ModelViewer3D({
               setCurrentShadows(1.5);
               setCurrentExposure(1.5);
             }}
-            className="w-full px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded transition-colors"
+            className="w-full px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 text-gray-300 hover:text-white text-xs font-medium rounded-lg transition-all duration-300"
           >
-            Resetear
+            ↻ Resetear valores
           </button>
         </div>
       )}
 
       {/* Loading indicator */}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-800/50 rounded-lg border border-gray-600 z-10">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto mb-2"></div>
-            <p className="text-sm text-gray-300">Cargando modelo 3D...</p>
+        <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a] rounded-lg z-10">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
+            <p className="text-sm text-gray-400 font-medium">Cargando modelo 3D...</p>
           </div>
         </div>
       )}
