@@ -5,6 +5,7 @@ import { DeleteContentUseCase } from '@/features/content/domain/usecases/delete-
 import { createContentRepository } from '@/features/content/data/repositories/content.repository';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config/env';
+import { logger } from '@/lib/logger';
 
 // Función para verificar el token JWT
 async function verifyToken(request: NextRequest) {
@@ -30,7 +31,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    console.log('🔍 Get Content by ID API (Clean Architecture):', id);
+    logger.info('Get Content by ID API', { id });
 
     // Crear repository y usecase (Clean Architecture)
     const repository = createContentRepository();
@@ -46,7 +47,7 @@ export async function GET(
       );
     }
 
-    console.log('✅ Contenido obtenido:', content.id);
+    logger.info('Contenido obtenido exitosamente', { contentId: content.id });
 
     // Serializar entity para respuesta JSON
     const serializedContent = {
@@ -80,7 +81,7 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error('❌ Error fetching content:', error);
+    logger.error('Error fetching content', { error: error instanceof Error ? error.message : error });
     const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return NextResponse.json(
       { success: false, error: errorMessage },

@@ -1,7 +1,26 @@
 import { useCart as useCartContext } from '@/contexts/CartContext';
 import { CartItem } from '@/types/cart';
 
-// Hook personalizado para operaciones comunes del carrito
+/**
+ * Hook personalizado para operaciones comunes del carrito
+ * 
+ * @returns {Object} Objeto con métodos y estado del carrito
+ * @returns {CartItem[]} items - Array de items en el carrito
+ * @returns {number} total - Total en dinero del carrito
+ * @returns {number} itemCount - Cantidad total de items
+ * @returns {boolean} isLoading - Si el carrito está cargando
+ * @returns {(item: CartItem) => void} addProductToCart - Agregar producto al carrito
+ * @returns {(contentId: string) => void} removeFromCart - Quitar producto del carrito
+ * @returns {() => void} clearCart - Vaciar el carrito
+ * @returns {(contentId: string) => boolean} isProductInCart - Verificar si producto está en carrito
+ * 
+ * @example
+ * const { items, addProductToCart, total } = useCart();
+ * 
+ * const handleAddToCart = (product) => {
+ *   addProductToCart(createCartItem(product));
+ * };
+ */
 export function useCart() {
   const cart = useCartContext();
 

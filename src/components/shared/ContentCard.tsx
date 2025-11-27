@@ -7,7 +7,41 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import DefaultCover from './DefaultCover';
 
-// Interfaces para tipado
+/**
+ * ContentCardProps - Props para la tarjeta de contenido
+ * 
+ * @interface ContentCardProps
+ * @property {string} id - ID único del contenido
+ * @property {string} title - Título del contenido
+ * @property {string} [author] - Nombre del autor
+ * @property {string} [authorId] - ID del autor
+ * @property {string} contentType - Tipo (MODEL_3D, MUSIC, DIGITAL_ART, etc)
+ * @property {string} category - Categoría del contenido
+ * @property {number | string} [price] - Precio (número o string formateado)
+ * @property {boolean} [isFree] - Si es contenido gratuito
+ * @property {string} [image] - URL de imagen de preview
+ * @property {string} [coverImage] - URL de imagen de portada
+ * @property {'default' | 'compact' | 'featured'} [variant] - Estilo de la tarjeta
+ * @property {boolean} [showPrice] - Mostrar precio
+ * @property {boolean} [showStats] - Mostrar estadísticas (likes, vistas, etc)
+ * @property {boolean} [showAuthor] - Mostrar nombre del autor
+ * @property {() => void} [onClick] - Callback al hacer click
+ * @property {(id: string) => void} [onAddToCart] - Callback para agregar al carrito
+ * @property {(id: string) => void} [onLike] - Callback para dar like
+ * @property {(id: string) => void} [onPin] - Callback para dar pin
+ * 
+ * @example
+ * <ContentCard
+ *   id="content-123"
+ *   title="3D Model"
+ *   author="John Doe"
+ *   contentType="MODEL_3D"
+ *   price={29.99}
+ *   variant="featured"
+ *   onClick={() => openProductModal(content)}
+ *   onAddToCart={handleAddToCart}
+ * />
+ */
 interface ContentCardProps {
   // Datos del contenido
   id: string;
