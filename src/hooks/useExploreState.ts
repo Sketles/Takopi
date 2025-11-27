@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useReducer } from 'react';
+import React, { useReducer } from 'react';
 
 // ============ TYPES ============
 export interface ContentItem {
@@ -167,106 +167,7 @@ function exploreReducer(state: ExploreState, action: ExploreAction): ExploreStat
 }
 
 // ============ HOOK ============
-export function useExploreState() {
+export function useExploreState(): [ExploreState, React.Dispatch<ExploreAction>] {
   const [state, dispatch] = useReducer(exploreReducer, initialState);
-
-  // Memoized callbacks to prevent unnecessary re-renders
-  const setContent = useCallback((content: ContentItem[]) => {
-    dispatch({ type: 'SET_CONTENT', payload: content });
-  }, []);
-
-  const setTrending = useCallback((trending: ContentItem[]) => {
-    dispatch({ type: 'SET_TRENDING', payload: trending });
-  }, []);
-
-  const setSearchResults = useCallback((results: ContentItem[]) => {
-    dispatch({ type: 'SET_SEARCH_RESULTS', payload: results });
-  }, []);
-
-  const setSelectedItem = useCallback((item: ContentItem | null) => {
-    dispatch({ type: 'SET_SELECTED_ITEM', payload: item });
-  }, []);
-
-  const setModalOpen = useCallback((isOpen: boolean) => {
-    dispatch({ type: 'SET_MODAL_OPEN', payload: isOpen });
-  }, []);
-
-  const setShowFilters = useCallback((show: boolean) => {
-    dispatch({ type: 'SET_SHOW_FILTERS', payload: show });
-  }, []);
-
-  const setLoading = useCallback((loading: boolean) => {
-    dispatch({ type: 'SET_LOADING', payload: loading });
-  }, []);
-
-  const setSearching = useCallback((searching: boolean) => {
-    dispatch({ type: 'SET_SEARCHING', payload: searching });
-  }, []);
-
-  const setLoadingMore = useCallback((loading: boolean) => {
-    dispatch({ type: 'SET_LOADING_MORE', payload: loading });
-  }, []);
-
-  const setError = useCallback((error: string | null) => {
-    dispatch({ type: 'SET_ERROR', payload: error });
-  }, []);
-
-  const setSearchQuery = useCallback((query: string) => {
-    dispatch({ type: 'SET_SEARCH_QUERY', payload: query });
-  }, []);
-
-  const setSuggestions = useCallback((suggestions: Array<{ type: string; value: string }>) => {
-    dispatch({ type: 'SET_SUGGESTIONS', payload: suggestions });
-  }, []);
-
-  const setCategory = useCallback((category: string) => {
-    dispatch({ type: 'SET_CATEGORY', payload: category });
-  }, []);
-
-  const setPriceFilter = useCallback((filter: PriceFilter) => {
-    dispatch({ type: 'SET_PRICE_FILTER', payload: filter });
-  }, []);
-
-  const setSortBy = useCallback((sort: SortBy) => {
-    dispatch({ type: 'SET_SORT_BY', payload: sort });
-  }, []);
-
-  const setLicenseFilter = useCallback((filter: LicenseFilter) => {
-    dispatch({ type: 'SET_LICENSE_FILTER', payload: filter });
-  }, []);
-
-  const setCurrentPage = useCallback((page: number) => {
-    dispatch({ type: 'SET_CURRENT_PAGE', payload: page });
-  }, []);
-
-  const setHasMore = useCallback((hasMore: boolean) => {
-    dispatch({ type: 'SET_HAS_MORE', payload: hasMore });
-  }, []);
-
-  const resetFilters = useCallback(() => {
-    dispatch({ type: 'RESET_FILTERS' });
-  }, []);
-
-  return {
-    state,
-    setContent,
-    setTrending,
-    setSearchResults,
-    setSelectedItem,
-    setModalOpen,
-    setShowFilters,
-    setLoading,
-    setSearching,
-    setLoadingMore,
-    setError,
-    setSearchQuery,
-    setSuggestions,
-    setCategory,
-    setPriceFilter,
-    setSortBy,
-    setLicenseFilter,
-    setCurrentPage,
-    setHasMore,
-    resetFilters,
-  };
+  return [state, dispatch];
 }

@@ -38,19 +38,14 @@ export function useCart() {
   }): CartItem => {
     // Función para extraer el username del autor de forma segura
     const getAuthorUsername = (): string => {
+      // Priorizar authorUsername si existe y es válido
       if (product.authorUsername && !product.authorUsername.startsWith('data:')) {
         return product.authorUsername;
       }
-      
-      if (product.author) {
-        if (typeof product.author === 'string') {
-          return product.author;
-        }
-        if (typeof product.author === 'object' && product.author.username) {
-          return product.author.username;
-        }
+      // Fallback a author si es string
+      if (product.author && typeof product.author === 'string') {
+        return product.author;
       }
-      
       return 'Usuario';
     };
 
@@ -60,7 +55,7 @@ export function useCart() {
       title: product.title,
       price: product.price || 0,
       coverImage: product.coverImage || '/placeholder-content.jpg',
-      author: typeof product.author === 'string' ? product.author : product.author?.username || '',
+      author: product.author || '',
       authorUsername: getAuthorUsername(),
       contentType: product.contentType || '',
       category: product.category || '',
