@@ -17,7 +17,7 @@ export interface IUserRepository {
     collectionsCount: number;
     totalLikes: number;
   }>;
-  getUserCreations(userId: string): Promise<any[]>;
-  getUserPurchases(userId: string): Promise<any[]>;
+  getUserCreations(userId: string): Promise<any[]>; // TODO: cambiar a Promise<UserCreation[]>
+  getUserPurchases(userId: string): Promise<any[]>; // TODO: cambiar a Promise<UserPurchase[]>
 }
 

@@ -1,11 +1,13 @@
 // Get User Purchases UseCase - Obtener compras del usuario
 import { IUserRepository } from '../repositories/user.repository.interface';
+import { UserPurchase } from '@/types/cart';
+import { logger } from '@/lib/logger';
 
 export class GetUserPurchasesUseCase {
   constructor(private repository: IUserRepository) {}
 
-  async execute(userId: string): Promise<any[]> {
-    console.log('🎯 GetUserPurchasesUseCase: Obteniendo compras', userId);
+  async execute(userId: string): Promise<UserPurchase[]> {
+    logger.info('GetUserPurchasesUseCase: Obteniendo compras', { userId });
 
     // Validaciones de negocio
     if (!userId || userId.trim().length === 0) {
@@ -15,7 +17,7 @@ export class GetUserPurchasesUseCase {
     // Obtener compras del usuario
     const purchases = await this.repository.getUserPurchases(userId);
 
-    console.log('✅ Compras obtenidas:', purchases.length);
+    logger.info('Compras obtenidas', { count: purchases.length });
     return purchases;
   }
 }

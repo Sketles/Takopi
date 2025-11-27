@@ -10,7 +10,7 @@ export function useCart() {
     id: string;
     title: string;
     price: number;
-    author?: string | any;
+    author?: string;
     authorUsername?: string;
     contentType?: string;
     category?: string;

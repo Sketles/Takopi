@@ -1,7 +1,8 @@
 // Prisma Client Singleton
 // Previene múltiples instancias en desarrollo (hot reload)
 
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client';
+import { logger } from './logger';
 
 const prismaClientSingleton = () => {
   const client = new PrismaClient({

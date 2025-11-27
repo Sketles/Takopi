@@ -3,31 +3,33 @@
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
+type LogValue = string | number | boolean | object | null | undefined;
+
 export const logger = {
-  log: (...args: any[]) => {
+  log: (...args: LogValue[]) => {
     if (isDevelopment) {
       console.log(...args);
     }
   },
   
-  error: (...args: any[]) => {
+  error: (...args: LogValue[]) => {
     // Always log errors, even in production
     console.error(...args);
   },
   
-  warn: (...args: any[]) => {
+  warn: (...args: LogValue[]) => {
     if (isDevelopment) {
       console.warn(...args);
     }
   },
   
-  info: (...args: any[]) => {
+  info: (...args: LogValue[]) => {
     if (isDevelopment) {
       console.info(...args);
     }
   },
   
-  debug: (...args: any[]) => {
+  debug: (...args: LogValue[]) => {
     if (isDevelopment) {
       console.debug(...args);
     }

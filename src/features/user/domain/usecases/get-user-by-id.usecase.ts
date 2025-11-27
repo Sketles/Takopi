@@ -1,6 +1,7 @@
 // Get User By ID UseCase - Obtener perfil público de usuario
 import { UserProfileEntity } from '../entities/user-profile.entity';
 import { IUserRepository } from '../repositories/user.repository.interface';
+import { logger } from '@/lib/logger';
 
 export class GetUserByIdUseCase {
   constructor(private repository: IUserRepository) {}

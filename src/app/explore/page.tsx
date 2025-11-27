@@ -2,7 +2,7 @@
 
 import Layout from '@/components/shared/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, memo, useCallback } from 'react';
 import ContentCard, { useContentCard } from '@/components/shared/ContentCard';
 import ProductModal from '@/components/product/ProductModal';
 import SearchBar from '@/components/search/SearchBar';
@@ -40,6 +40,8 @@ interface ContentItem {
     previewUrl?: string;
   }>;
   coverImage?: string;
+  isLiked?: boolean;
+  isPinned?: boolean;
 }
 
 export default function ExplorePage() {
@@ -54,8 +56,6 @@ export default function ExplorePage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [likesData, setLikesData] = useState<{ [key: string]: { isLiked: boolean; likesCount: number } }>({});
-  const [pinsData, setPinsData] = useState<{ [key: string]: { isPinned: boolean; pinsCount: number } }>({});
   const { createCardProps } = useContentCard();
 
   // Estados para búsqueda y filtros
@@ -73,81 +73,14 @@ export default function ExplorePage() {
   // Carousel Refs
   const carouselRef = useRef<HTMLDivElement>(null);
 
-  // Función para cargar todos los likes de una vez usando batch endpoint
-  const loadAllLikes = async (items: ContentItem[]) => {
-    const token = localStorage.getItem('takopi_token');
-    if (!token || items.length === 0) return;
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
-    try {
-      const contentIds = items.map(item => item.id).join(',');
-      const response = await fetch(`/api/likes?contentIds=${contentIds}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && Array.isArray(result.data)) {
-          const likesMap: { [key: string]: { isLiked: boolean; likesCount: number } } = {};
-
-          result.data.forEach((item: any) => {
-            likesMap[item.contentId] = {
-              isLiked: item.isLiked,
-              likesCount: item.likesCount
-            };
-          });
-
-          setLikesData(prev => ({ ...prev, ...likesMap }));
-        }
-      }
-    } catch (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Error loading likes:', error);
-      }
-    }
-  };
-
-  // Función para cargar todos los pins de una vez usando batch endpoint
-  const loadAllPins = async (items: ContentItem[]) => {
-    const token = localStorage.getItem('takopi_token');
-    if (!token || items.length === 0) return;
-
-    try {
-      const contentIds = items.map(item => item.id).join(',');
-      const response = await fetch(`/api/pins?contentIds=${contentIds}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && Array.isArray(result.data)) {
-          const pinsMap: { [key: string]: { isPinned: boolean; pinsCount: number } } = {};
-
-          result.data.forEach((item: any) => {
-            pinsMap[item.contentId] = {
-              isPinned: item.isPinned,
-              pinsCount: item.pinsCount
-            };
-          });
-
-          setPinsData(prev => ({ ...prev, ...pinsMap }));
-        }
-      }
-    } catch (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Error loading pins:', error);
-      }
-    }
-  };
-
-  // Función para obtener las props de una tarjeta
+  // Función para obtener las props de una tarjeta (ahora usa datos del servidor)
   const getCardProps = (item: ContentItem, options: any = {}) => {
-    const likeInfo = likesData[item.id] || { isLiked: false, likesCount: item.likes || 0 };
-    const pinInfo = pinsData[item.id] || { isPinned: false, pinsCount: 0 };
-
     return {
       id: item.id,
       title: item.title,
@@ -164,24 +97,26 @@ export default function ExplorePage() {
       description: item.description,
       shortDescription: item.shortDescription,
       tags: item.tags || [],
-      likes: likeInfo.likesCount,
+      likes: item.likes || 0,
       views: item.views || 0,
       downloads: item.downloads || 0,
       favorites: (item as any).favorites || 0,
-      pins: pinInfo.pinsCount,
+      pins: (item as any).pins || 0,
       createdAt: item.createdAt,
       updatedAt: (item as any).updatedAt || item.createdAt,
-      isLiked: likeInfo.isLiked,
-      isPinned: pinInfo.isPinned,
+      isLiked: (item as any).isLiked || false,
+      isPinned: (item as any).isPinned || false,
       ...options
     };
   };
 
-  // Componente optimizado para tarjetas
-  const ContentCardWrapper = ({ item, options }: { item: ContentItem; options: any }) => {
-    const cardProps = useMemo(() => getCardProps(item, options), [item, options, likesData]);
-    return <ContentCard {...cardProps} className="h-full" />;
-  };
+  // Componente optimizado para tarjetas (memoizado)
+  const ContentCardWrapper = useMemo(() => {
+    return memo(({ item, options }: { item: ContentItem; options: any }) => {
+      const cardProps = getCardProps(item, options);
+      return <ContentCard {...cardProps} className="h-full" />;
+    });
+  }, []);
 
   // Mapeo de categorías
   const mapCategoryToContentType = (category: string): string => {
@@ -198,20 +133,21 @@ export default function ExplorePage() {
     return categoryMap[category] || 'all';
   };
 
-  // Cargar contenido
-  const fetchContent = async (category: string = 'Todo') => {
+  // Cargar contenido con paginación
+  const fetchContent = async (category: string = 'Todo', page: number = 1, append: boolean = false) => {
     try {
-      setLoading(true);
+      if (!append) setLoading(true);
+      else setIsLoadingMore(true);
       setError(null);
 
       const contentTypeParam = mapCategoryToContentType(category);
-      let url = `/api/content/explore?category=${encodeURIComponent(contentTypeParam)}&limit=50`;
+      const token = localStorage.getItem('takopi_token');
+      let url = `/api/content/explore?category=${encodeURIComponent(contentTypeParam)}&page=${page}&limit=20`;
 
-      // Añadir filtros a la URL (simulado por ahora si la API no lo soporta, pero preparado)
-      if (priceFilter !== 'all') url += `&price=${priceFilter}`;
-      if (sortBy !== 'newest') url += `&sort=${sortBy}`;
+      const headers: HeadersInit = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, { headers });
 
       if (!response.ok) {
         throw new Error('Error al cargar contenido');
@@ -222,7 +158,7 @@ export default function ExplorePage() {
       if (result.success) {
         let filteredData = result.data;
 
-        // Filtrado en cliente si la API no lo soporta completamente
+        // Filtrado en cliente (precio)
         if (priceFilter === 'free') filteredData = filteredData.filter((item: ContentItem) => item.isFree);
         if (priceFilter === 'paid') filteredData = filteredData.filter((item: ContentItem) => !item.isFree);
 
@@ -241,32 +177,58 @@ export default function ExplorePage() {
           });
         }
 
-        setContent(filteredData);
-        loadAllLikes(filteredData);
-        loadAllPins(filteredData);
+        if (append) {
+          setContent(prev => [...prev, ...filteredData]);
+        } else {
+          setContent(filteredData);
 
-        // Cargar tendencias (simulado con los primeros 5 items o aleatorios)
-        if (trendingContent.length === 0 && result.data.length > 0) {
-          setTrendingContent(result.data.slice(0, 5));
+          // Cargar tendencias solo la primera vez
+          if (trendingContent.length === 0 && filteredData.length > 0) {
+            setTrendingContent(filteredData.slice(0, 5));
+          }
         }
+
+        setHasMore(result.pagination?.hasMore || false);
+        setCurrentPage(page);
       } else {
         throw new Error(result.error || 'Error al cargar contenido');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
-      setContent([]);
+      if (!append) setContent([]);
     } finally {
       setLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
   useEffect(() => {
     if (!isLoading) {
-      fetchContent(selectedCategory);
+      setCurrentPage(1);
+      setHasMore(true);
+      fetchContent(selectedCategory, 1, false);
     }
-  }, [selectedCategory, isLoading, priceFilter, sortBy]); // Recargar cuando cambian filtros
+  }, [selectedCategory, isLoading, priceFilter, sortBy]);
 
-  // Búsqueda
+  // Infinite scroll observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !isLoadingMore && !isSearching) {
+          fetchContent(selectedCategory, currentPage + 1, true);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, loading, isLoadingMore, selectedCategory, currentPage, isSearching]);
+
+  // Búsqueda optimizada
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       setIsSearching(false);
@@ -279,16 +241,17 @@ export default function ExplorePage() {
 
       const params = new URLSearchParams();
       params.set('q', searchQuery);
-      // Añadir filtros a la búsqueda
       if (priceFilter !== 'all') params.set('price', priceFilter);
 
-      const response = await fetch(`/api/search?${params}`);
+      const token = localStorage.getItem('takopi_token');
+      const headers: HeadersInit = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(`/api/search?${params}`, { headers });
       const data = await response.json();
 
       if (data.success) {
         setSearchResults(data.data.items);
-        loadAllLikes(data.data.items);
-        loadAllPins(data.data.items);
       } else {
         setSearchResults([]);
       }
@@ -341,55 +304,23 @@ export default function ExplorePage() {
 
   const handleLikeFromModal = async () => {
     if (!selectedItem) return;
-    
-    // Recargar el estado del like para el item seleccionado
-    const token = localStorage.getItem('takopi_token');
-    if (!token) return;
 
-    try {
-      const response = await fetch(`/api/likes?contentIds=${selectedItem.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data.length > 0) {
-          const likeData = result.data[0];
-          
-          // Actualizar likesData
-          setLikesData(prev => ({
-            ...prev,
-            [selectedItem.id]: {
-              isLiked: likeData.isLiked,
-              likesCount: likeData.likesCount
-            }
-          }));
-
-          // Actualizar el item en la lista de contenido
-          setContent(prevContent => 
-            prevContent.map(item => 
-              item.id === selectedItem.id 
-                ? { ...item, likes: likeData.likesCount }
-                : item
-            )
-          );
-
-          // Actualizar searchResults si estamos en búsqueda
-          if (isSearching) {
-            setSearchResults(prevResults => 
-              prevResults.map(item => 
-                item.id === selectedItem.id 
-                  ? { ...item, likes: likeData.likesCount }
-                  : item
-              )
-            );
-          }
-        }
+    // Actualizar el item en las listas locales (optimistic update)
+    const updateItem = (item: ContentItem) => {
+      if (item.id === selectedItem.id) {
+        const isLiked = (item as any).isLiked || false;
+        return {
+          ...item,
+          likes: isLiked ? (item.likes || 1) - 1 : (item.likes || 0) + 1,
+          isLiked: !isLiked
+        } as ContentItem;
       }
-    } catch (error) {
-      console.error('Error updating like status:', error);
+      return item;
+    };
+
+    setContent(prev => prev.map(updateItem));
+    if (isSearching) {
+      setSearchResults(prev => prev.map(updateItem));
     }
   };
 
@@ -716,21 +647,35 @@ export default function ExplorePage() {
 
           {/* Grid de Contenido */}
           {!loading && !error && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {displayItems.map((item, index) => (
-                <div key={item.id} className="animate-fade-in-up" style={{ animationDelay: `${index * 50}ms` }}>
-                  <ContentCardWrapper
-                    item={item}
-                    options={{
-                      onClick: () => openItemModal(item),
-                      showPrice: true,
-                      showStats: true,
-                      showDescription: true
-                    }}
-                  />
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {displayItems.map((item, index) => (
+                  <div key={item.id} className="animate-fade-in-up" style={{ animationDelay: `${index * 50}ms` }}>
+                    <ContentCardWrapper
+                      item={item}
+                      options={{
+                        onClick: () => openItemModal(item),
+                        showPrice: true,
+                        showStats: true,
+                        showDescription: true
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Infinite Scroll Trigger */}
+              {!isSearching && hasMore && (
+                <div ref={observerTarget} className="flex justify-center py-12">
+                  {isLoadingMore && (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
+                      <p className="text-gray-400 text-sm">Cargando más contenido...</p>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
 
           {/* Empty State */}

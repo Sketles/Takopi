@@ -40,66 +40,81 @@ export async function GET(request: NextRequest) {
       let seller = null;
       let contentData = null;
 
-      try {
-        content = await prisma.content.findUnique({
-          where: { id: purchase.contentId },
-          include: { author: true }
-        });
-
-        if (content) {
-          // Contenido aún existe - usar datos actuales
-          seller = content.author;
-          contentData = {
-            id: content.id,
-            title: content.title,
-            coverImage: content.coverImage,
-            category: content.category,
-            contentType: content.contentType,
-            price: content.price,
-            files: content.files || [],
-            isDeleted: false
+      // Si contentId es null, es una impresión 3D - usar contentSnapshot directamente
+      if (!purchase.contentId) {
+        const snapshot = purchase.contentSnapshot as any;
+        if (snapshot && snapshot.type === '3d_print') {
+          // Es una impresión 3D - no hay contenido asociado
+          contentData = null;
+          seller = {
+            id: 'takopi',
+            username: 'Takopi',
+            email: 'soporte@takopi.com'
           };
-        } else {
-          // Contenido fue eliminado - usar snapshot
+        }
+      } else {
+        // Tiene contentId - intentar obtener el contenido
+        try {
+          content = await prisma.content.findUnique({
+            where: { id: purchase.contentId },
+            include: { author: true }
+          });
+
+          if (content) {
+            // Contenido aún existe - usar datos actuales
+            seller = content.author;
+            contentData = {
+              id: content.id,
+              title: content.title,
+              coverImage: content.coverImage,
+              category: content.category,
+              contentType: content.contentType,
+              price: content.price,
+              files: content.files || [],
+              isDeleted: false
+            };
+          } else {
+            // Contenido fue eliminado - usar snapshot
+            const snapshot = purchase.contentSnapshot as any;
+            if (snapshot) {
+              contentData = {
+                id: purchase.contentId,
+                title: snapshot.title || 'Contenido eliminado',
+                coverImage: snapshot.coverImage || '/placeholder-content.jpg',
+                category: snapshot.category || 'N/A',
+                contentType: snapshot.contentType || 'unknown',
+                price: snapshot.price,
+                files: snapshot.files || [],
+                isDeleted: true // Flag para indicar que fue eliminado
+              };
+
+              // Intentar obtener info del vendedor desde el snapshot
+              if (snapshot.authorId) {
+                const author = await prisma.user.findUnique({
+                  where: { id: snapshot.authorId }
+                });
+                if (author) {
+                  seller = author;
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.log('⚠️ Content not found for purchase:', purchase.contentId);
+          // Usar snapshot como fallback
           const snapshot = purchase.contentSnapshot as any;
           if (snapshot) {
             contentData = {
               id: purchase.contentId,
-              title: snapshot.title,
-              coverImage: snapshot.coverImage,
-              category: snapshot.category,
-              contentType: snapshot.contentType,
+              title: snapshot.title || 'Contenido no disponible',
+              coverImage: snapshot.coverImage || '/placeholder-content.jpg',
+              category: snapshot.category || 'N/A',
+              contentType: snapshot.contentType || 'unknown',
               price: snapshot.price,
               files: snapshot.files || [],
-              isDeleted: true // Flag para indicar que fue eliminado
+              isDeleted: true
             };
-
-            // Intentar obtener info del vendedor desde el snapshot
-            if (snapshot.authorId) {
-              const author = await prisma.user.findUnique({
-                where: { id: snapshot.authorId }
-              });
-              if (author) {
-                seller = author;
-              }
-            }
           }
-        }
-      } catch (error) {
-        console.log('⚠️ Content not found for purchase:', purchase.contentId);
-        // Usar snapshot como fallback
-        const snapshot = purchase.contentSnapshot as any;
-        if (snapshot) {
-          contentData = {
-            id: purchase.contentId,
-            title: snapshot.title,
-            coverImage: snapshot.coverImage,
-            category: snapshot.category,
-            contentType: snapshot.contentType,
-            price: snapshot.price,
-            files: snapshot.files || [],
-            isDeleted: true
-          };
         }
       }
 
@@ -112,14 +127,15 @@ export async function GET(request: NextRequest) {
           username: seller.username,
           email: seller.email
         } : null,
-        amount: purchase.amount,
+        amount: purchase.price, // El campo en DB es 'price', lo mapeamos a 'amount' para el frontend
         currency: purchase.currency,
         paymentMethod: purchase.paymentMethod,
         status: purchase.status,
         transactionId: purchase.transactionId,
         purchaseDate: purchase.createdAt,
         createdAt: purchase.createdAt,
-        updatedAt: purchase.updatedAt
+        updatedAt: purchase.updatedAt,
+        contentSnapshot: purchase.contentSnapshot
       };
     }));
 

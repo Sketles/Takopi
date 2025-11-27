@@ -13,7 +13,7 @@ export class UserProfileEntity {
       followersCount: number;
       followingCount: number;
     },
-    public readonly content?: any[],
+    public readonly content?: any[], // TODO: cambiar a UserCreation[] después de Phase 1 types
     public readonly banner?: string,
     public readonly location?: string
   ) { }
