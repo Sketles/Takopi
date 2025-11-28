@@ -128,9 +128,8 @@ export interface UserCreation {
   views: number;
   downloads: number;
   license?: string;
-  visibility: 'PUBLIC' | 'PRIVATE' | 'UNLISTED';
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   isPublished: boolean;
+  isListed: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

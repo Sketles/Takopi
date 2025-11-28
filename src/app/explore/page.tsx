@@ -2,7 +2,7 @@
 
 import Layout from '@/components/shared/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import ProductModal from '@/components/product/ProductModal';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/hooks/useCart';
@@ -11,6 +11,119 @@ import { useExploreState, type ContentItem } from '@/hooks/useExploreState';
 import ExploreFilters from './ExploreFilters';
 import TrendingCarousel from './TrendingCarousel';
 import ContentGrid from './ContentGrid';
+
+// Particle Background Component - Purple themed
+const ParticleBackground = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let particles: Particle[] = [];
+    let animationFrameId: number;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = document.documentElement.scrollHeight;
+    };
+
+    class Particle {
+      x: number;
+      y: number;
+      size: number;
+      speedX: number;
+      speedY: number;
+      color: string;
+      alpha: number;
+
+      constructor() {
+        this.x = Math.random() * canvas!.width;
+        this.y = Math.random() * canvas!.height;
+        this.size = Math.random() * 2.5 + 0.5;
+        this.speedX = Math.random() * 0.4 - 0.2;
+        this.speedY = Math.random() * 0.4 - 0.2;
+        this.alpha = Math.random() * 0.6 + 0.1;
+        // Purple, fuchsia, and cyan colors
+        const colors = [
+          `rgba(${147 + Math.random() * 50}, ${51 + Math.random() * 50}, 234, ${this.alpha})`, // Purple
+          `rgba(${217 + Math.random() * 30}, ${70 + Math.random() * 30}, 239, ${this.alpha})`, // Fuchsia
+          `rgba(${34 + Math.random() * 20}, ${211 + Math.random() * 30}, 238, ${this.alpha * 0.7})`, // Cyan (less frequent)
+        ];
+        this.color = colors[Math.floor(Math.random() * 3)];
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        if (this.x > canvas!.width) this.x = 0;
+        if (this.x < 0) this.x = canvas!.width;
+        if (this.y > canvas!.height) this.y = 0;
+        if (this.y < 0) this.y = canvas!.height;
+      }
+
+      draw() {
+        if (!ctx) return;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    const init = () => {
+      particles = [];
+      // More particles for full page coverage
+      const particleCount = Math.min(150, Math.floor((canvas.width * canvas.height) / 15000));
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+      }
+    };
+
+    const animate = () => {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(particle => {
+        particle.update();
+        particle.draw();
+      });
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    const handleResize = () => {
+      resize();
+      init();
+    };
+
+    window.addEventListener('resize', handleResize);
+    resize();
+    init();
+    animate();
+
+    // Re-check height on scroll for dynamic content
+    const resizeObserver = new ResizeObserver(() => {
+      resize();
+    });
+    resizeObserver.observe(document.body);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      className="fixed inset-0 pointer-events-none" 
+      style={{ opacity: 0.6, zIndex: 5 }}
+    />
+  );
+};
 
 export default function ExplorePage() {
   const { user, isLoading } = useAuth();
@@ -27,8 +140,7 @@ export default function ExplorePage() {
       'Música': 'musica',
       'Texturas': 'texturas',
       'Animaciones': 'animaciones',
-      'OBS': 'OBS',
-      'Colecciones': 'colecciones'
+      'Otros': 'otros'
     };
     return categoryMap[category] || 'all';
   }, []);
@@ -83,7 +195,7 @@ export default function ExplorePage() {
         dispatch({ type: 'SET_LOADING_MORE', payload: false });
       }
     },
-    [state.priceFilter, state.sortBy, state.trendingContent.length, state.content, mapCategoryToContentType, dispatch]
+    [state.priceFilter, state.sortBy, state.trendingContent.length, mapCategoryToContentType, dispatch]
   );
 
   const handleLoadMore = useCallback(() => {
@@ -157,16 +269,20 @@ export default function ExplorePage() {
     dispatch({ type: 'SET_CATEGORY', payload: 'Todo' });
   }, [dispatch]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!isLoading) fetchContent(state.selectedCategory, 1, false);
-  }, [state.selectedCategory, state.priceFilter, state.sortBy, isLoading, fetchContent]);
+  }, [state.selectedCategory, state.priceFilter, state.sortBy, isLoading]);
 
-  const categories = ['Todo', 'Avatares', 'Modelos 3D', 'Música', 'Texturas', 'Animaciones', 'OBS', 'Colecciones'];
+  const categories = ['Todo', 'Avatares', 'Modelos 3D', 'Música', 'Texturas', 'Animaciones', 'Otros'];
   const displayItems = state.isSearching ? state.searchResults : state.content;
 
   return (
     <Layout>
-      <div className="min-h-screen bg-[#0a0a0a] text-white">
+      {/* Purple Particle Background - Full page */}
+      <ParticleBackground />
+      
+      <div className="min-h-screen text-white relative z-10">
         <div className="relative pt-32 pb-16 px-4 overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] animate-pulse"></div>
@@ -230,8 +346,7 @@ export default function ExplorePage() {
               isFree: state.selectedItem.isFree,
               license: state.selectedItem.license || 'personal',
               customLicense: undefined,
-              visibility: 'public',
-              status: 'published',
+              isPublished: true,
               author: state.selectedItem.author,
               authorAvatar: (state.selectedItem as any).authorAvatar,
               authorId: (state.selectedItem as any).authorId,

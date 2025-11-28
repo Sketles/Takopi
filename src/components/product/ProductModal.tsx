@@ -39,8 +39,7 @@ interface ProductModalProps {
     isFree: boolean;
     license: string;
     customLicense?: string;
-    visibility: string;
-    status: string;
+    isPublished: boolean;
     author: string;
     authorAvatar?: string;
     authorId?: string;

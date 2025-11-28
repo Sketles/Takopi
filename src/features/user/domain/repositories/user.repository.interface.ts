@@ -6,7 +6,7 @@ export interface IUserRepository {
   // Operaciones básicas (heredadas de Auth)
   findById(id: string): Promise<UserEntity | null>;
   findByEmail(email: string): Promise<UserEntity | null>;
-  
+
   // Operaciones específicas de User
   getPublicProfile(userId: string): Promise<UserProfileEntity | null>;
   getUserStats(userId: string): Promise<{
@@ -19,5 +19,6 @@ export interface IUserRepository {
   }>;
   getUserCreations(userId: string): Promise<any[]>; // TODO: cambiar a Promise<UserCreation[]>
   getUserPurchases(userId: string): Promise<any[]>; // TODO: cambiar a Promise<UserPurchase[]>
+  getRecentUsers(limit: number): Promise<UserEntity[]>;
 }
 

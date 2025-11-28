@@ -51,17 +51,23 @@ export async function GET(request: NextRequest) {
     const profileAvatar = userProfile?.avatar || null;
 
     const serializedCreations = creations.map(item => ({
-      id: item._id,
+      id: item.id, // Prisma usa 'id', no '_id' (MongoDB)
       title: item.title,
       description: item.description,
+      shortDescription: item.shortDescription,
       contentType: item.contentType,
       category: item.category,
       price: item.price,
       currency: item.currency,
       isFree: item.price === 0,
+      license: item.license,
+      isListed: item.isListed,
+      isPublished: item.isPublished,
       coverImage: item.coverImage,
+      additionalImages: item.additionalImages || [],
       files: item.files || [],
       tags: item.tags || [],
+      customTags: item.customTags || [],
       likes: item.likes || 0,
       views: item.views || 0,
       downloads: item.downloads || 0,

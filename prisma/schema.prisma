@@ -8,12 +8,36 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
+// ============ ENUMS ============
+enum UserRole {
+  Explorer
+  Artist
+  Maker
+  Admin
+}
+
+enum ContentType {
+  modelos3d
+  avatares
+  texturas
+  musica
+  animaciones
+  otros
+}
+
+enum License {
+  personal
+  commercial
+  streaming
+}
+
+// ============ MODELS ============
 model User {
   id           String        @id @default(cuid())
   username     String        @unique
   email        String        @unique
   password     String
-  role         String        @default("Explorer")
+  role         UserRole      @default(Explorer)
   avatar       String?
   banner       String?
   bio          String?
@@ -35,35 +59,32 @@ model User {
 }
 
 model Content {
-  id               String     @id @default(cuid())
+  id               String      @id @default(cuid())
   title            String
   description      String
   shortDescription String?
-  contentType      String
-  category         String
+  contentType      ContentType
   files            Json
   coverImage       String?
-  additionalImages Json?
-  price            Int        @default(0)
-  currency         String     @default("CLP")
-  isFree           Boolean    @default(false)
-  license          String     @default("personal")
+  additionalImages String[]    @default([])
+  price            Int         @default(0)
+  currency         String      @default("CLP")
+  isFree           Boolean     @default(false)
+  license          License     @default(personal)
   customLicense    String?
-  visibility       String     @default("public")
-  status           String     @default("draft")
-  isPublished      Boolean    @default(false)
+  isPublished      Boolean     @default(false)
+  isListed         Boolean     @default(true)
   tags             String[]
   customTags       String[]
-  views            Int        @default(0)
-  downloads        Int        @default(0)
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  views            Int         @default(0)
+  downloads        Int         @default(0)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
   publishedAt      DateTime?
   authorId         String
-  isListed         Boolean    @default(true)
   deletedAt        DateTime?
   comments         Comment[]
-  author           User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author           User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
   likes            Like[]
   pins             Pin[]
   purchases        Purchase[]
@@ -71,13 +92,12 @@ model Content {
 
   @@index([authorId])
   @@index([contentType])
-  @@index([status])
   @@index([isPublished])
   @@index([createdAt])
   @@index([views])
   @@index([price])
   @@index([isListed])
-  @@index([contentType, isPublished, status])
+  @@index([contentType, isPublished])
   @@index([authorId, isPublished])
   @@map("contents")
 }

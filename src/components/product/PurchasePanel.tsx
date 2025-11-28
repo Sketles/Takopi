@@ -27,8 +27,7 @@ interface PurchasePanelProps {
     authorId?: string;
     likes: number;
     views: number;
-    status: string;
-    visibility: string;
+    isPublished: boolean;
     coverImage?: string;
   };
   isOwner?: boolean;

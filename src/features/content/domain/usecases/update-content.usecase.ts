@@ -10,7 +10,6 @@ export interface UpdateContentDTO {
   currency?: string;
   isFree?: boolean;
   contentType?: string;
-  category?: string;
   tags?: string[];
   customTags?: string[];
   coverImage?: string;
@@ -18,9 +17,8 @@ export interface UpdateContentDTO {
   files?: any[];
   license?: string;
   customLicense?: string;
-  visibility?: string;
-  status?: string;
   isPublished?: boolean;
+  isListed?: boolean;
 }
 
 export class UpdateContentUseCase {

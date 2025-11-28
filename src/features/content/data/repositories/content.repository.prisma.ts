@@ -17,7 +17,6 @@ export class ContentRepositoryPrisma implements IContentRepository {
     const contents = await prisma.content.findMany({
       where: {
         isPublished: true,
-        status: 'published',
         isListed: true
       },
       include: {
@@ -106,7 +105,6 @@ export class ContentRepositoryPrisma implements IContentRepository {
       where: {
         contentType: category,
         isPublished: true,
-        status: 'published',
         isListed: true
       },
       include: {
@@ -172,7 +170,6 @@ export class ContentRepositoryPrisma implements IContentRepository {
     const contents = await prisma.content.findMany({
       where: {
         isPublished: true,
-        status: 'published',
         isListed: true
       },
       include: {
@@ -210,7 +207,6 @@ export class ContentRepositoryPrisma implements IContentRepository {
         description: data.description,
         shortDescription: data.shortDescription,
         contentType: data.contentType,
-        category: data.category,
         files: data.files || [],
         coverImage: data.coverImage,
         additionalImages: data.additionalImages || [],
@@ -219,8 +215,6 @@ export class ContentRepositoryPrisma implements IContentRepository {
         isFree: data.isFree || false,
         license: data.license || 'personal',
         customLicense: data.customLicense,
-        visibility: data.visibility || 'public',
-        status: data.status || 'draft',
         isPublished: data.isPublished || false,
         tags: data.tags || [],
         customTags: data.customTags || [],
@@ -260,7 +254,6 @@ export class ContentRepositoryPrisma implements IContentRepository {
     if (data.description !== undefined) updateData.description = data.description;
     if (data.shortDescription !== undefined) updateData.shortDescription = data.shortDescription;
     if (data.contentType !== undefined) updateData.contentType = data.contentType;
-    if (data.category !== undefined) updateData.category = data.category;
     if (data.files !== undefined) updateData.files = data.files;
     if (data.coverImage !== undefined) updateData.coverImage = data.coverImage;
     if (data.additionalImages !== undefined) updateData.additionalImages = data.additionalImages;
@@ -269,8 +262,6 @@ export class ContentRepositoryPrisma implements IContentRepository {
     if (data.isFree !== undefined) updateData.isFree = data.isFree;
     if (data.license !== undefined) updateData.license = data.license;
     if (data.customLicense !== undefined) updateData.customLicense = data.customLicense;
-    if (data.visibility !== undefined) updateData.visibility = data.visibility;
-    if (data.status !== undefined) updateData.status = data.status;
     if (data.isPublished !== undefined) {
       updateData.isPublished = data.isPublished;
       updateData.publishedAt = data.isPublished ? new Date() : null;
@@ -329,7 +320,6 @@ export class ContentRepositoryPrisma implements IContentRepository {
 
     if (filter) {
       if (filter.contentType) where.contentType = filter.contentType;
-      if (filter.category) where.category = filter.category;
       if (filter.authorId) where.authorId = filter.authorId;
       if (filter.isPublished !== undefined) where.isPublished = filter.isPublished;
       if (filter.status) where.status = filter.status;
@@ -423,7 +413,6 @@ export class ContentRepositoryPrisma implements IContentRepository {
       content.price,                        // price
       content.currency,                     // currency
       content.contentType,                  // contentType
-      content.category,                     // category
       content.tags || [],                   // tags
       content.isPublished,                  // isPublished
       content.coverImage,                   // coverImage (opcional)

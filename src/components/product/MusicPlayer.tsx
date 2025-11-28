@@ -12,26 +12,38 @@ interface MusicPlayerProps {
   }>;
   title: string;
   coverImage?: string;
+  author?: string;
   className?: string;
 }
 
-export default function MusicPlayer({ files, title, coverImage, className = '' }: MusicPlayerProps) {
+export default function MusicPlayer({ files, title, coverImage, author, className = '' }: MusicPlayerProps) {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolume] = useState(0.7);
+  const [trackDurations, setTrackDurations] = useState<Record<number, number>>({});
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // Filtrar solo archivos de audio
-  const audioFiles = files.filter(file => 
-    file.type?.includes('audio') || 
+  const audioFiles = files.filter(file =>
+    file.type?.includes('audio') ||
     file.name?.match(/\.(mp3|wav|ogg|m4a|flac)$/i)
   );
 
   const currentTrack = audioFiles[currentTrackIndex];
 
-  // Efectos del audio
+  // Cargar duraciones de todos los tracks
+  useEffect(() => {
+    audioFiles.forEach((file, index) => {
+      const audio = new Audio(file.url);
+      audio.addEventListener('loadedmetadata', () => {
+        setTrackDurations(prev => ({ ...prev, [index]: audio.duration }));
+      });
+    });
+  }, [files]);
+
+  // Efectos del audio principal
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -39,10 +51,10 @@ export default function MusicPlayer({ files, title, coverImage, className = '' }
     const updateTime = () => setCurrentTime(audio.currentTime);
     const updateDuration = () => setDuration(audio.duration);
     const handleEnded = () => {
-      setIsPlaying(false);
-      // Ir al siguiente track
       if (currentTrackIndex < audioFiles.length - 1) {
         setCurrentTrackIndex(prev => prev + 1);
+      } else {
+        setIsPlaying(false);
       }
     };
 
@@ -57,29 +69,22 @@ export default function MusicPlayer({ files, title, coverImage, className = '' }
     };
   }, [currentTrackIndex, audioFiles.length]);
 
-  // Control de reproducción
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-
     if (isPlaying) {
-      audio.play();
+      audio.play().catch(() => setIsPlaying(false));
     } else {
       audio.pause();
     }
   }, [isPlaying, currentTrackIndex]);
 
-  // Control de volumen
   useEffect(() => {
     const audio = audioRef.current;
-    if (audio) {
-      audio.volume = volume;
-    }
+    if (audio) audio.volume = volume;
   }, [volume]);
 
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-  };
+  const togglePlay = () => setIsPlaying(!isPlaying);
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const audio = audioRef.current;
@@ -91,179 +96,229 @@ export default function MusicPlayer({ files, title, coverImage, className = '' }
   };
 
   const nextTrack = () => {
-    if (currentTrackIndex < audioFiles.length - 1) {
-      setCurrentTrackIndex(prev => prev + 1);
-    }
+    if (currentTrackIndex < audioFiles.length - 1) setCurrentTrackIndex(prev => prev + 1);
   };
 
   const prevTrack = () => {
-    if (currentTrackIndex > 0) {
+    const audio = audioRef.current;
+    if (audio && audio.currentTime > 3) {
+      audio.currentTime = 0;
+    } else if (currentTrackIndex > 0) {
       setCurrentTrackIndex(prev => prev - 1);
     }
   };
 
+  const playTrack = (index: number) => {
+    setCurrentTrackIndex(index);
+    setIsPlaying(true);
+  };
+
   const formatTime = (time: number) => {
+    if (!time || isNaN(time)) return '0:00';
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const cleanTrackName = (name: string) => {
+    return name
+      .replace(/\.(mp3|wav|ogg|m4a|flac)$/i, '')
+      .replace(/^\d+-[a-z0-9]+-/i, '')
+      .replace(/_/g, ' ')
+      .trim();
+  };
+
   if (!currentTrack) {
     return (
-      <div className={`w-full h-full flex items-center justify-center bg-gray-900/50 rounded-xl ${className}`}>
+      <div className={`flex items-center justify-center bg-[#121212] rounded-xl p-8 ${className}`}>
         <div className="text-center text-gray-400">
           <div className="text-4xl mb-2">🎵</div>
-          <div className="text-lg font-medium">No hay archivos de audio</div>
+          <div>No hay archivos de audio</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`w-full h-full bg-gradient-to-br from-gray-900/90 to-purple-900/50 rounded-xl p-6 ${className}`}>
-      <audio
-        ref={audioRef}
-        src={currentTrack.url}
-        preload="metadata"
-      />
-      
-      {/* Carátula y info del álbum */}
-      <div className="flex items-center gap-6 mb-6">
-        {/* Carátula */}
-        <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-lg flex items-center justify-center overflow-hidden">
+    <div className={`flex flex-col bg-[#121212] rounded-xl overflow-hidden ${className}`}>
+      <audio ref={audioRef} src={currentTrack.url} preload="metadata" />
+
+      {/* Cover Image - Grande y centrado */}
+      <div className="flex justify-center py-6 bg-gradient-to-b from-purple-900/20 to-transparent">
+        <div className="relative w-44 h-44 md:w-56 md:h-56 rounded-lg overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
           {coverImage ? (
             <img
               src={coverImage}
               alt={title}
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover transition-transform duration-500 ${isPlaying ? 'scale-105' : 'scale-100'}`}
             />
           ) : (
-            <div className="text-2xl">🎵</div>
+            <div className="w-full h-full bg-gradient-to-br from-purple-800 to-purple-950 flex items-center justify-center">
+              <span className="text-6xl">🎵</span>
+            </div>
+          )}
+          {/* Playing indicator */}
+          {isPlaying && (
+            <div className="absolute bottom-2 right-2 flex items-end gap-[2px] h-4 bg-black/50 px-1.5 py-1 rounded">
+              <div className="w-[3px] bg-green-500 rounded-sm animate-[bar1_0.5s_ease-in-out_infinite]" style={{height: '6px'}}></div>
+              <div className="w-[3px] bg-green-500 rounded-sm animate-[bar2_0.7s_ease-in-out_infinite]" style={{height: '10px'}}></div>
+              <div className="w-[3px] bg-green-500 rounded-sm animate-[bar3_0.6s_ease-in-out_infinite]" style={{height: '5px'}}></div>
+            </div>
           )}
         </div>
-        
-        {/* Info del track */}
-        <div className="flex-1">
-          <h3 className="text-white text-lg font-semibold truncate">
-            {currentTrack.originalName || currentTrack.name}
-          </h3>
-          <p className="text-gray-400 text-sm truncate">{title}</p>
-          <p className="text-gray-500 text-xs">
-            {currentTrackIndex + 1} de {audioFiles.length} canciones
-          </p>
-        </div>
       </div>
 
-      {/* Barra de progreso */}
-      <div className="mb-4">
-        <input
-          type="range"
-          min="0"
-          max={duration || 0}
-          value={currentTime}
-          onChange={handleSeek}
-          className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-        />
-        <div className="flex justify-between text-xs text-gray-400 mt-1">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
-        </div>
-      </div>
-
-      {/* Controles */}
-      <div className="flex items-center justify-between">
-        {/* Botones de navegación */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={prevTrack}
-            disabled={currentTrackIndex === 0}
-            className="p-2 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M8.445 14.832A1 1 0 0010 14v-2.798l5.445 3.63A1 1 0 0017 14V6a1 1 0 00-1.555-.832L10 8.798V6a1 1 0 00-1.555-.832l-6 4a1 1 0 000 1.664l6 4z"/>
-            </svg>
-          </button>
-
-          <button
-            onClick={togglePlay}
-            className="p-3 bg-white text-gray-900 rounded-full hover:bg-gray-200 transition-colors shadow-lg"
-          >
-            {isPlaying ? (
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd"/>
+      {/* Track List */}
+      {audioFiles.length > 0 && (
+        <div className="flex-1 overflow-y-auto">
+          {/* Header de lista */}
+          <div className="sticky top-0 bg-[#121212] border-b border-white/10 px-4 py-2 flex items-center text-xs text-gray-500 uppercase tracking-wider">
+            <div className="w-8 text-center">#</div>
+            <div className="flex-1 pl-3">Título</div>
+            <div className="w-14 text-right pr-2">
+              <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-            ) : (
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd"/>
-              </svg>
-            )}
-          </button>
+            </div>
+          </div>
 
-          <button
-            onClick={nextTrack}
-            disabled={currentTrackIndex === audioFiles.length - 1}
-            className="p-2 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M4.555 5.168A1 1 0 003 6v8a1 1 0 001.555.832L10 11.202V14a1 1 0 001.555.832l6-4a1 1 0 000-1.664l-6-4A1 1 0 0010 6v2.798l-5.445-3.63z"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Control de volumen */}
-        <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.618 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.618l3.765-3.793a1 1 0 011-.131zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clipRule="evenodd"/>
-          </svg>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.1"
-            value={volume}
-            onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="w-16 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-          />
-        </div>
-      </div>
-
-      {/* Lista de canciones */}
-      {audioFiles.length > 1 && (
-        <div className="mt-6">
-          <h4 className="text-white text-sm font-medium mb-3">Canciones</h4>
-          <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar-thin pr-2">
-            {audioFiles.map((track, index) => (
+          {/* Lista de tracks */}
+          {audioFiles.map((track, index) => {
+            const isCurrentTrack = index === currentTrackIndex;
+            const trackName = cleanTrackName(track.originalName || track.name);
+            
+            return (
               <button
                 key={index}
-                onClick={() => setCurrentTrackIndex(index)}
-                className={`w-full text-left p-2 rounded-lg transition-colors ${
-                  index === currentTrackIndex
-                    ? 'bg-purple-600/30 text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-700/30'
+                onClick={() => playTrack(index)}
+                className={`w-full flex items-center px-4 py-3 hover:bg-white/5 transition-colors group ${
+                  isCurrentTrack ? 'bg-white/10' : ''
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 flex items-center justify-center">
-                    {index === currentTrackIndex && isPlaying ? (
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    ) : (
-                      <span className="text-xs">{index + 1}</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate">
-                      {track.originalName || track.name}
-                    </p>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {Math.round(track.size / 1024 / 1024 * 10) / 10} MB
-                  </div>
+                {/* Número / Indicador */}
+                <div className="w-8 text-center flex-shrink-0">
+                  {isCurrentTrack && isPlaying ? (
+                    <div className="flex gap-[2px] justify-center items-end h-4">
+                      <div className="w-[3px] bg-green-500 rounded-sm animate-[bar1_0.5s_ease-in-out_infinite]" style={{height: '8px'}}></div>
+                      <div className="w-[3px] bg-green-500 rounded-sm animate-[bar2_0.7s_ease-in-out_infinite]" style={{height: '12px'}}></div>
+                      <div className="w-[3px] bg-green-500 rounded-sm animate-[bar3_0.6s_ease-in-out_infinite]" style={{height: '6px'}}></div>
+                    </div>
+                  ) : (
+                    <>
+                      <span className={`group-hover:hidden ${isCurrentTrack ? 'text-green-500' : 'text-gray-500'}`}>
+                        {index + 1}
+                      </span>
+                      <svg className="w-4 h-4 text-white hidden group-hover:block mx-auto" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </>
+                  )}
+                </div>
+
+                {/* Nombre del track */}
+                <div className="flex-1 text-left pl-3 min-w-0">
+                  <p className={`text-sm font-medium truncate ${isCurrentTrack ? 'text-green-500' : 'text-white'}`}>
+                    {trackName}
+                  </p>
+                </div>
+
+                {/* Duración */}
+                <div className="w-14 text-right text-sm text-gray-400 font-mono pr-2">
+                  {formatTime(trackDurations[index] || 0)}
                 </div>
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
       )}
+
+      {/* Player Bar - Fijo abajo */}
+      <div className="border-t border-white/10 bg-[#181818] p-3">
+        {/* Progress Bar */}
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[10px] text-gray-400 font-mono w-8 text-right">{formatTime(currentTime)}</span>
+          <div className="flex-1 relative h-1 bg-white/20 rounded-full group cursor-pointer">
+            <div
+              className="absolute top-0 left-0 h-full bg-white group-hover:bg-green-500 rounded-full transition-colors"
+              style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
+            />
+            <input
+              type="range"
+              min="0"
+              max={duration || 0}
+              value={currentTime}
+              onChange={handleSeek}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+          </div>
+          <span className="text-[10px] text-gray-400 font-mono w-8">{formatTime(duration)}</span>
+        </div>
+
+        {/* Controls */}
+        <div className="flex items-center justify-between">
+          {/* Track info mini */}
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-800">
+              {coverImage ? (
+                <img src={coverImage} alt={title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-lg">🎵</div>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-white truncate max-w-[120px]">
+                {cleanTrackName(currentTrack.originalName || currentTrack.name)}
+              </p>
+              <p className="text-[10px] text-gray-500 truncate max-w-[120px]">{title}</p>
+            </div>
+          </div>
+
+          {/* Playback Controls */}
+          <div className="flex items-center gap-3">
+            <button onClick={prevTrack} className="text-gray-400 hover:text-white transition-colors">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
+            </button>
+            <button
+              onClick={togglePlay}
+              className="w-9 h-9 bg-white rounded-full flex items-center justify-center hover:scale-105 transition-transform"
+            >
+              {isPlaying ? (
+                <svg className="w-4 h-4 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+              ) : (
+                <svg className="w-4 h-4 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+              )}
+            </button>
+            <button onClick={nextTrack} disabled={currentTrackIndex === audioFiles.length - 1} className="text-gray-400 hover:text-white disabled:opacity-30 transition-colors">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
+            </button>
+          </div>
+
+          {/* Volume */}
+          <div className="flex items-center gap-2 flex-1 justify-end">
+            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+            <div className="w-20 relative h-1 bg-white/20 rounded-full cursor-pointer hidden sm:block">
+              <div className="absolute top-0 left-0 h-full bg-white rounded-full" style={{ width: `${volume * 100}%` }} />
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={volume}
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes bar1 { 0%, 100% { height: 4px; } 50% { height: 16px; } }
+        @keyframes bar2 { 0%, 100% { height: 8px; } 50% { height: 12px; } }
+        @keyframes bar3 { 0%, 100% { height: 12px; } 50% { height: 6px; } }
+      `}</style>
     </div>
   );
 }

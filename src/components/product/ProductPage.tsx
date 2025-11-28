@@ -22,8 +22,7 @@ interface ProductPageProps {
     isFree: boolean;
     license: string;
     customLicense?: string;
-    visibility: string;
-    status: string;
+    isPublished: boolean;
     author: string;
     authorAvatar?: string;
     authorId?: string;
@@ -299,8 +298,7 @@ export default function ProductPage({
                       <div className="flex justify-between">
                         <span className="text-gray-400">Visibilidad:</span>
                         <span className="text-white">
-                          {product.visibility === 'public' ? 'Público' :
-                           product.visibility === 'unlisted' ? 'No listado' : 'Borrador'}
+                          {product.isListed ? 'Público (Listado)' : 'Privado (No listado)'}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -367,7 +365,7 @@ export default function ProductPage({
             })),
             license: (product as any).license || 'cc-by-4.0',
             customLicense: (product as any).customLicense,
-            visibility: (product as any).visibility || 'public',
+            isListed: (product as any).isListed ?? true,
             additionalImages: (product as any).additionalImages || []
           }}
           isOpen={isEditModalOpen}

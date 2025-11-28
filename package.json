@@ -7,10 +7,13 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "postinstall": "prisma generate",
+    "seed:generate": "tsx scripts/seeding/generate.ts",
+    "seed:manual": "tsx scripts/seeding/seed-manual.ts",
     "test:connections": "npx tsx scripts/test-connections.ts",
     "test:e2e": "npx playwright test --config=testing/playwright.config.ts",
     "test:e2e:headed": "npx playwright test --headed --config=testing/playwright.config.ts",
     "test:e2e:install": "npx playwright install",
+    "diagnostics": "npx tsx scripts/diagnostics/takopi-diagnostics.ts",
     "lint": "eslint"
   },
   "prisma": {

@@ -110,7 +110,7 @@ const initialState: ExploreState = {
   sortBy: 'newest',
   licenseFilter: 'all',
   currentPage: 1,
-  hasMore: true,
+  hasMore: false, // Empieza en false, se actualiza al cargar contenido
 };
 
 function exploreReducer(state: ExploreState, action: ExploreAction): ExploreState {
