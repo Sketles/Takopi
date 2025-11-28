@@ -20,9 +20,16 @@ interface PrintConfig {
 }
 
 export default function PrintingConfigPage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 🔐 Protección de ruta
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login?redirect=/impresion-3d/configurar');
+    }
+  }, [user, authLoading, router]);
 
   const [config, setConfig] = useState<PrintConfig>({
     modelFile: null,

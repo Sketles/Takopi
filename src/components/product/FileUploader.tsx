@@ -82,7 +82,8 @@ export default function FileUploader({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
-  const getFileIcon = (type: string): string => {
+  const getFileIcon = (type: string | undefined): string => {
+    if (!type) return '📁';
     if (type.startsWith('image/')) return '🖼️';
     if (type.startsWith('video/')) return '🎬';
     if (type.startsWith('audio/')) return '🎵';
@@ -296,7 +297,7 @@ export default function FileUploader({
                       )}
                     </div>
                     <div className="text-xs text-gray-400">
-                      {formatFileSize(file.size)} • {file.type.split('/')[1]?.toUpperCase()}
+                      {file.size > 0 ? formatFileSize(file.size) : 'Archivo existente'} • {file.type?.split('/')[1]?.toUpperCase() || 'ARCHIVO'}
                     </div>
                     
                     {/* Barra de progreso */}

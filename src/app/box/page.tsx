@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/shared/Toast';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ProductModal from '@/components/product/ProductModal';
 import { CartItem } from '@/types/cart';
 
 export default function BoxPage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const {
     items: cartItems,
     total: totalPrice,
@@ -28,6 +30,13 @@ export default function BoxPage() {
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  // 🔐 Protección de ruta - Redirigir a login si no está autenticado
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login?redirect=/box');
+    }
+  }, [user, authLoading, router]);
 
   // Funciones para manejar acciones
   const handleRemoveItem = (contentId: string, title: string) => {
@@ -118,6 +127,15 @@ export default function BoxPage() {
       day: 'numeric'
     });
   };
+
+  // Loading state mientras verifica auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+        <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (

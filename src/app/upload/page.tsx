@@ -45,7 +45,7 @@ function UserIcon(props: any) {
   );
 }
 
-// Licencias
+// Licencias (sincronizado con License enum en schema.prisma)
 const licenses = [
   { id: 'personal', label: 'Personal', description: 'Solo uso personal, no comercial.' },
   { id: 'commercial', label: 'Comercial', description: 'Permite uso en proyectos comerciales.' },
@@ -64,11 +64,10 @@ export default function UploadPage() {
     description: '',
     shortDescription: '',
     contentType: '',
-    category: 'Todo',
     price: '0',
     isFree: true,
     license: 'personal',
-    visibility: 'public', // public, unlisted, private
+    isListed: true, // Si aparece en explore/búsqueda
     tags: [] as string[],
   });
 
@@ -228,13 +227,12 @@ export default function UploadPage() {
         description: formData.description,
         shortDescription: formData.shortDescription,
         contentType: formData.contentType,
-        category: formData.category || formData.contentType,
         price: formData.price,
         currency: 'CLP',
         isFree: formData.isFree,
         tags: formData.tags,
         license: formData.license,
-        visibility: formData.visibility,
+        isListed: formData.isListed,
         coverImage: uploadResult.data.coverImage || coverPreview || '/placeholder-cover.jpg',
         files: uploadResult.data.files, // ✨ URLs reales de Vercel Blob
         allowTips: false,
@@ -637,15 +635,15 @@ export default function UploadPage() {
                       {/* Visibilidad del Proyecto */}
                       <div className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5">
                         <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-xl ${formData.visibility === 'public' ? 'bg-green-500/20 text-green-400' : 'bg-gray-700/50 text-gray-400'}`}>
-                            {formData.visibility === 'public' ? <GlobeAltIcon className="w-6 h-6" /> : <LockClosedIcon className="w-6 h-6" />}
+                          <div className={`p-3 rounded-xl ${formData.isListed ? 'bg-green-500/20 text-green-400' : 'bg-gray-700/50 text-gray-400'}`}>
+                            {formData.isListed ? <GlobeAltIcon className="w-6 h-6" /> : <LockClosedIcon className="w-6 h-6" />}
                           </div>
                           <div>
                             <h4 className="font-medium text-white">
-                              {formData.visibility === 'public' ? 'Público (Listado)' : 'Privado (No Listado)'}
+                              {formData.isListed ? 'Público (Listado)' : 'Privado (No Listado)'}
                             </h4>
                             <p className="text-sm text-gray-400 max-w-md">
-                              {formData.visibility === 'public'
+                              {formData.isListed
                                 ? 'Tu producto será visible para todos en el marketplace.'
                                 : 'Solo tú podrás ver este producto. No aparecerá en el marketplace.'}
                               <span className="block mt-1 text-xs text-gray-500">Podrás cambiar esto en cualquier momento desde tu panel.</span>
@@ -653,14 +651,14 @@ export default function UploadPage() {
                           </div>
                         </div>
                         <Switch
-                          checked={formData.visibility === 'public'}
-                          onChange={(checked) => setFormData(prev => ({ ...prev, visibility: checked ? 'public' : 'unlisted' }))}
-                          className={`${formData.visibility === 'public' ? 'bg-green-500' : 'bg-gray-600'
+                          checked={formData.isListed}
+                          onChange={(checked) => setFormData(prev => ({ ...prev, isListed: checked }))}
+                          className={`${formData.isListed ? 'bg-green-500' : 'bg-gray-600'
                             } relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none`}
                         >
                           <span
                             aria-hidden="true"
-                            className={`${formData.visibility === 'public' ? 'translate-x-5' : 'translate-x-0'
+                            className={`${formData.isListed ? 'translate-x-5' : 'translate-x-0'
                               } pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out`}
                           />
                         </Switch>
@@ -771,7 +769,7 @@ export default function UploadPage() {
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Visibilidad</span>
-                  <span className="text-white capitalize">{formData.visibility === 'public' ? 'Público' : 'Oculto'}</span>
+                  <span className="text-white capitalize">{formData.isListed ? 'Público' : 'Oculto'}</span>
                 </div>
               </div>
             </div>

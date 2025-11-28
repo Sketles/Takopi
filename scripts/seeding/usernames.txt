@@ -1,0 +1,35 @@
+# Lista de usernames - uno por línea
+# El script los tomará en orden o al azar según configuración
+# Los emails se generarán automáticamente: username@takopi.com
+
+Sk488
+Luriesse
+Sniper
+Pinkys7
+TP1mazda
+Okko
+OnoIwakura
+Caaaaal
+Lain
+RKOIDE
+AjiloteMX
+Papimicky2
+Uzhuany
+Sushikaly
+DISSampoint4
+Akira
+sxlas03
+Mylody
+_Lokurita_
+x_xs44
+tebanisac
+Moraneo1
+Diegop1nk
+W4ls
+sushimaster
+marmotaloca
+elbicho
+laparka
+mateo2015
+Slowly
+Aberdden33

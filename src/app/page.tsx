@@ -9,6 +9,11 @@ import ProductModal from '@/components/product/ProductModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/shared/Toast';
+import FeaturesGrid from '@/components/landing/FeaturesGrid';
+import ProfitCalculator from '@/components/landing/ProfitCalculator';
+import PrintingService from '@/components/landing/PrintingService';
+import SocialProof from '@/components/landing/SocialProof';
+import FAQ from '@/components/landing/FAQ';
 
 // Particle Background Component
 const ParticleBackground = () => {
@@ -118,7 +123,7 @@ export default function HomePage() {
           const data = result.data || result;
           const items = Array.isArray(data) ? data.slice(0, 6) : [];
           setFeaturedContent(items);
-          
+
           // Cargar likes si hay usuario autenticado
           if (items.length > 0) {
             loadAllLikes(items);
@@ -230,8 +235,7 @@ export default function HomePage() {
       currency: item.currency || 'CLP',
       isFree: item.isFree,
       license: item.license || 'personal',
-      visibility: 'public',
-      status: 'published',
+      isPublished: true,
       author: item.author,
       authorAvatar: item.authorAvatar,
       authorId: item.authorId,
@@ -299,162 +303,20 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Bento Grid Section */}
-        <section className="py-24 px-4 max-w-7xl mx-auto">
-          <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Todo lo que necesitas <br />
-              <span className="bg-gradient-to-r from-gray-400 to-gray-600 bg-clip-text text-transparent">en un solo lugar</span>
-            </h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Un ecosistema diseñado para potenciar tu creatividad y monetizar tu talento.
-            </p>
-          </div>
+        {/* Interactive Features Grid */}
+        <FeaturesGrid />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
-            {/* Large Card - Marketplace */}
-            <div className="md:col-span-2 row-span-2 relative group overflow-hidden rounded-3xl border border-white/10 bg-[#0f0f0f] hover:border-purple-500/30 transition-all duration-500">
-              <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20 group-hover:opacity-30 transition-opacity"></div>
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 to-transparent"></div>
+        {/* Profit Calculator (The "Toy") */}
+        <ProfitCalculator />
 
-              <div className="absolute bottom-0 left-0 right-0 p-10 bg-gradient-to-t from-black via-black/80 to-transparent">
-                <div className="inline-block p-3 rounded-2xl bg-purple-500/20 mb-4 backdrop-blur-md border border-purple-500/20">
-                  <span className="text-3xl">🌍</span>
-                </div>
-                <h3 className="text-3xl font-bold mb-3 text-white">Marketplace Global</h3>
-                <p className="text-gray-400 text-lg max-w-md">Accede a miles de recursos digitales de creadores de todo el mundo. Desde modelos 3D hasta música y scripts.</p>
-              </div>
+        {/* 3D Printing Service Highlight */}
+        <PrintingService />
 
-              {/* Abstract Visual */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px] group-hover:bg-purple-500/20 transition-colors duration-700"></div>
-            </div>
+        {/* Social Proof & Community */}
+        <SocialProof />
 
-            {/* Tall Card - 3D Printing */}
-            <div className="md:col-span-1 row-span-2 relative group overflow-hidden rounded-3xl border border-white/10 bg-[#0f0f0f] hover:border-blue-500/30 transition-all duration-500">
-              <div className="absolute inset-0 flex items-center justify-center">
-                {/* CSS Sphere Effect */}
-                <div className="w-40 h-40 rounded-full bg-gradient-to-br from-blue-400 via-cyan-500 to-blue-900 shadow-[inset_-10px_-10px_20px_rgba(0,0,0,0.5),0_0_30px_rgba(59,130,246,0.3)] group-hover:scale-110 transition-transform duration-700"></div>
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black via-black/50 to-transparent">
-                <h3 className="text-2xl font-bold mb-2 text-white">Impresión 3D</h3>
-                <p className="text-gray-400">Sube tu modelo y recíbelo en casa. Materiales premium y calidad industrial.</p>
-              </div>
-            </div>
-
-            {/* Small Card - Secure */}
-            <div className="relative group overflow-hidden rounded-3xl border border-white/10 bg-[#0f0f0f] hover:bg-white/5 transition-all">
-              <div className="p-8 h-full flex flex-col justify-between relative z-10">
-                <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center text-2xl border border-green-500/20">🔒</div>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">100% Seguro</h3>
-                  <p className="text-sm text-gray-400">Pagos encriptados y protección al comprador.</p>
-                </div>
-              </div>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-[50px] -translate-y-1/2 translate-x-1/2"></div>
-            </div>
-
-            {/* Small Card - Community */}
-            <div className="relative group overflow-hidden rounded-3xl border border-white/10 bg-[#0f0f0f] hover:bg-white/5 transition-all">
-              <div className="p-8 h-full flex flex-col justify-between relative z-10">
-                <div className="w-12 h-12 rounded-xl bg-pink-500/20 flex items-center justify-center text-2xl border border-pink-500/20">👥</div>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">Comunidad</h3>
-                  <p className="text-sm text-gray-400">Conecta con otros creadores y colabora.</p>
-                </div>
-              </div>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-[50px] -translate-y-1/2 translate-x-1/2"></div>
-            </div>
-          </div>
-        </section>
-
-        {/* Featured Content */}
-        <section className="py-24 px-4 max-w-7xl mx-auto relative">
-          {/* Background Glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-purple-900/5 blur-[150px] pointer-events-none"></div>
-
-          <div className="relative z-10 flex justify-between items-end mb-12">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-2">Tendencias</h2>
-              <p className="text-gray-400">Lo más popular de la semana</p>
-            </div>
-            <Link href="/explore" className="group flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors font-medium">
-              Ver todo
-              <span className="group-hover:translate-x-1 transition-transform">→</span>
-            </Link>
-          </div>
-
-          {isLoading ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-96 bg-white/5 rounded-3xl animate-pulse border border-white/5"></div>
-              ))}
-            </div>
-          ) : featuredContent.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredContent.map((content) => {
-                const likeInfo = likesData[content.id] || { isLiked: false, likesCount: content.likes || 0 };
-                return (
-                  <div key={content.id}>
-                    <ContentCard
-                      id={content.id}
-                      title={content.title}
-                      author={content.author}
-                      authorAvatar={content.authorAvatar}
-                      authorId={content.authorId}
-                      contentType={content.contentType || content.type}
-                      category={content.category}
-                      price={content.price}
-                      isFree={content.isFree}
-                      currency={content.currency}
-                      image={content.image}
-                      coverImage={content.coverImage}
-                      description={content.description}
-                      shortDescription={content.shortDescription}
-                      tags={content.tags || []}
-                      likes={likeInfo.likesCount}
-                      views={content.views || 0}
-                      downloads={content.downloads || 0}
-                      createdAt={content.createdAt}
-                      isLiked={likeInfo.isLiked}
-                      onClick={() => openItemModal(content)}
-                      showPrice={true}
-                      showStats={true}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-24 border border-dashed border-white/10 rounded-3xl bg-white/5">
-              <div className="text-4xl mb-4 opacity-50">🔍</div>
-              <p className="text-gray-400 text-lg">Explora el marketplace para ver contenido</p>
-              <Link href="/explore" className="text-purple-400 hover:underline mt-2 inline-block">Ir al Explorador</Link>
-            </div>
-          )}
-        </section>
-
-        {/* Modal de producto */}
-        {selectedItem && (
-          <ProductModal
-            product={transformContentItem(selectedItem)}
-            isOpen={isModalOpen}
-            onClose={closeModal}
-            isOwner={user?.username === selectedItem.author}
-            currentUserId={user?._id}
-            onEdit={() => { }}
-            onDelete={async () => { }}
-            onBuy={() => { }}
-            onAddToBox={handleAddToBox}
-            onLike={async () => { 
-              if (selectedItem) {
-                await loadAllLikes([selectedItem]);
-              }
-            }}
-            onSave={() => { }}
-            onShare={() => { }}
-            source="home"
-          />
-        )}
+        {/* FAQ Section */}
+        <FAQ />
 
         {/* CTA Final */}
         <section className="py-32 px-4 relative overflow-hidden">

@@ -2,6 +2,7 @@
 // Manejo de uploads de archivos a Vercel Blob
 
 import { put, del, list } from '@vercel/blob';
+import { logger } from './logger';
 
 export interface UploadResult {
   url: string;

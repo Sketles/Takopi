@@ -1,5 +1,6 @@
 // Get User Stats UseCase - Obtener estadísticas del usuario
 import { IUserRepository } from '../repositories/user.repository.interface';
+import { logger } from '@/lib/logger';
 
 export interface UserStats {
   contentCount: number;
@@ -16,7 +17,7 @@ export class GetUserStatsUseCase {
   constructor(private repository: IUserRepository) {}
 
   async execute(userId: string): Promise<UserStats> {
-    console.log('🎯 GetUserStatsUseCase: Obteniendo estadísticas', userId);
+    logger.info('GetUserStatsUseCase: Obteniendo estadísticas', { userId });
 
     // Validaciones de negocio
     if (!userId || userId.trim().length === 0) {
@@ -38,7 +39,7 @@ export class GetUserStatsUseCase {
       totalDownloads: 0 // TODO: Calcular desde purchases
     };
 
-    console.log('✅ Estadísticas obtenidas:', userId);
+    logger.info('Estadísticas obtenidas', { userId });
     return stats;
   }
 }

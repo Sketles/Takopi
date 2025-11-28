@@ -1,7 +1,26 @@
 import { useCart as useCartContext } from '@/contexts/CartContext';
 import { CartItem } from '@/types/cart';
 
-// Hook personalizado para operaciones comunes del carrito
+/**
+ * Hook personalizado para operaciones comunes del carrito
+ * 
+ * @returns {Object} Objeto con métodos y estado del carrito
+ * @returns {CartItem[]} items - Array de items en el carrito
+ * @returns {number} total - Total en dinero del carrito
+ * @returns {number} itemCount - Cantidad total de items
+ * @returns {boolean} isLoading - Si el carrito está cargando
+ * @returns {(item: CartItem) => void} addProductToCart - Agregar producto al carrito
+ * @returns {(contentId: string) => void} removeFromCart - Quitar producto del carrito
+ * @returns {() => void} clearCart - Vaciar el carrito
+ * @returns {(contentId: string) => boolean} isProductInCart - Verificar si producto está en carrito
+ * 
+ * @example
+ * const { items, addProductToCart, total } = useCart();
+ * 
+ * const handleAddToCart = (product) => {
+ *   addProductToCart(createCartItem(product));
+ * };
+ */
 export function useCart() {
   const cart = useCartContext();
 
@@ -10,7 +29,7 @@ export function useCart() {
     id: string;
     title: string;
     price: number;
-    author?: string | any;
+    author?: string;
     authorUsername?: string;
     contentType?: string;
     category?: string;
@@ -19,19 +38,14 @@ export function useCart() {
   }): CartItem => {
     // Función para extraer el username del autor de forma segura
     const getAuthorUsername = (): string => {
+      // Priorizar authorUsername si existe y es válido
       if (product.authorUsername && !product.authorUsername.startsWith('data:')) {
         return product.authorUsername;
       }
-      
-      if (product.author) {
-        if (typeof product.author === 'string') {
-          return product.author;
-        }
-        if (typeof product.author === 'object' && product.author.username) {
-          return product.author.username;
-        }
+      // Fallback a author si es string
+      if (product.author && typeof product.author === 'string') {
+        return product.author;
       }
-      
       return 'Usuario';
     };
 
@@ -41,7 +55,7 @@ export function useCart() {
       title: product.title,
       price: product.price || 0,
       coverImage: product.coverImage || '/placeholder-content.jpg',
-      author: typeof product.author === 'string' ? product.author : product.author?.username || '',
+      author: product.author || '',
       authorUsername: getAuthorUsername(),
       contentType: product.contentType || '',
       category: product.category || '',

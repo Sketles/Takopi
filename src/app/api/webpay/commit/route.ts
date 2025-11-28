@@ -37,8 +37,7 @@ async function handleCommit(request: NextRequest) {
     // Verificar si el SDK está disponible
     if (!WebpayPlus) {
       console.error('❌ Transbank SDK not available for commit');
-      const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
-      return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=sdk_error&details=${encodeURIComponent('SDK de Transbank no disponible')}`, 302);
+      return NextResponse.redirect(`${webpayConfig.baseUrl}/payment/result?success=false&error=sdk_error&details=${encodeURIComponent('SDK de Transbank no disponible')}`, 302);
     }
 
     // Configurar transacción usando la API real de Transbank
@@ -54,15 +53,13 @@ async function handleCommit(request: NextRequest) {
       console.log('✅ Transbank commit response:', transbankResponse);
     } catch (error) {
       console.error('❌ Error committing with Transbank:', error);
-      const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
-      return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=transbank_error&details=${encodeURIComponent(error instanceof Error ? error.message : 'Error al confirmar con Transbank')}`, 302);
+      return NextResponse.redirect(`${webpayConfig.baseUrl}/payment/result?success=false&error=transbank_error&details=${encodeURIComponent(error instanceof Error ? error.message : 'Error al confirmar con Transbank')}`, 302);
     }
 
     // Verificar si la transacción fue autorizada por Transbank
     if (!transbankResponse || transbankResponse.status !== 'AUTHORIZED') {
       console.log('❌ Transacción no autorizada por Transbank:', transbankResponse);
-      const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
-      return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=not_authorized&details=${encodeURIComponent('Transacción no autorizada')}`, 302);
+      return NextResponse.redirect(`${webpayConfig.baseUrl}/payment/result?success=false&error=not_authorized&details=${encodeURIComponent('Transacción no autorizada')}`, 302);
     }
 
     // Crear repositories y usecases (Clean Architecture)
@@ -88,23 +85,19 @@ async function handleCommit(request: NextRequest) {
 
 
         // Redirigir a la página de resultado exitoso
-    const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
-        return NextResponse.redirect(`${baseUrl}/payment/result?success=true&transactionId=${transaction.id}&purchaseId=${purchase.id}&amount=${transbankResponse.amount}&currency=CLP&buyOrder=${transbankResponse.buy_order}&authorizationCode=${transbankResponse.authorization_code}`, 302);
+        return NextResponse.redirect(`${webpayConfig.baseUrl}/payment/result?success=true&transactionId=${transaction.id}&purchaseId=${purchase.id}&amount=${transbankResponse.amount}&currency=CLP&buyOrder=${transbankResponse.buy_order}&authorizationCode=${transbankResponse.authorization_code}`, 302);
 
   } catch (error) {
         console.error('❌ Error creating purchase:', error);
-        const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
-        return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=purchase_error&details=${encodeURIComponent(error instanceof Error ? error.message : 'Error desconocido')}`, 302);
+        return NextResponse.redirect(`${webpayConfig.baseUrl}/payment/result?success=false&error=purchase_error&details=${encodeURIComponent(error instanceof Error ? error.message : 'Error desconocido')}`, 302);
       }
     }
     
-    const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
-    return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=transaction_incomplete`, 302);
+    return NextResponse.redirect(`${webpayConfig.baseUrl}/payment/result?success=false&error=transaction_incomplete`, 302);
 
   } catch (error) {
     console.error('❌ Error committing webpay transaction:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
-    const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
-    return NextResponse.redirect(`${baseUrl}/payment/result?success=false&error=server_error&details=${encodeURIComponent(errorMessage)}`, 302);
+    return NextResponse.redirect(`${webpayConfig.baseUrl}/payment/result?success=false&error=server_error&details=${encodeURIComponent(errorMessage)}`, 302);
   }
 }

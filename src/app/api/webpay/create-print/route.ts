@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config/env';
 import { webpayConfig, generateBuyOrder, generateSessionId } from '@/config/webpay';
+import prisma from '@/lib/prisma';
 
 // Importar WebpayPlus
 let WebpayPlus: any;
@@ -84,8 +85,27 @@ export async function POST(request: NextRequest) {
     // Crear transacción en Webpay
     const response = await tx.create(buyOrder, sessionId, amount, returnUrl);
 
-    // Guardar información de la orden en sessionStorage (se hará desde el cliente)
-    // Aquí solo guardamos en base de datos si es necesario
+    // Guardar transacción inicial en base de datos
+    try {
+      await prisma.transaction.create({
+        data: {
+          token: response.token,
+          buyOrder,
+          sessionId,
+          amount,
+          currency: 'CLP',
+          status: 'pending',
+          userId,
+          contentIds: [], // No hay contenido específico
+          url: response.url,
+          returnUrl,
+        },
+      });
+      console.log('✅ Initial transaction saved to database');
+    } catch (dbError) {
+      console.error('⚠️ Error saving initial transaction:', dbError);
+      // Continuar aunque falle el guardado inicial
+    }
 
     console.log('✅ 3D print transaction created:', {
       token: response.token.substring(0, 10) + '...',
@@ -98,6 +118,8 @@ export async function POST(request: NextRequest) {
       token: response.token,
       buyOrder,
       sessionId,
+      printConfig, // Devolver printConfig para que el cliente lo guarde
+      shippingData, // Devolver shippingData para que el cliente lo guarde
       message: 'Transacción de impresión 3D creada exitosamente'
     });
 

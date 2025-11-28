@@ -10,7 +10,6 @@ export interface CreateContentDTO {
   price: number;
   currency: string;
   contentType: string;
-  category: string;
   tags: string[];
   coverImage?: string;
   files?: string[];

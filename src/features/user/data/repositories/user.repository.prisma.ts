@@ -20,7 +20,7 @@ export class UserRepositoryPrisma implements IUserRepository {
       where: { id: userId },
       include: {
         contents: {
-          where: { status: 'published' }, // Only published content
+          where: { isPublished: true }, // Only published content
           orderBy: { createdAt: 'desc' }
         },
         _count: {
@@ -147,6 +147,19 @@ export class UserRepositoryPrisma implements IUserRepository {
     return purchases;
   }
 
+  async getRecentUsers(limit: number): Promise<UserEntity[]> {
+    const users = await prisma.user.findMany({
+      where: {
+        isActive: true,
+        avatar: { not: null } // Only users with avatars
+      },
+      take: limit,
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return users.map(user => this.toEntity(user));
+  }
+
   private toEntity(user: any): UserEntity {
     return new UserEntity(
       user.id,
@@ -154,8 +167,12 @@ export class UserRepositoryPrisma implements IUserRepository {
       user.email,
       user.role,
       user.avatar,
+      user.banner,
       user.bio,
-      user.createdAt.toISOString()
+      user.location,
+      user.createdAt,
+      user.updatedAt,
+      user.isActive
     );
   }
 }

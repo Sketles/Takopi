@@ -27,7 +27,7 @@ interface ProductEditModalProps {
     isFree: boolean;
     license: string;
     customLicense?: string;
-    visibility: string;
+    isListed: boolean;
     tags: string[];
     customTags: string[];
     files: FileItem[];
@@ -56,7 +56,7 @@ export default function ProductEditModal({
     isFree: true,
     license: 'personal',
     customLicense: '',
-    visibility: 'public',
+    isListed: true,
     tags: [] as string[],
     customTags: [] as string[],
     newTag: '',
@@ -64,9 +64,39 @@ export default function ProductEditModal({
   });
 
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [coverImage, setCoverImage] = useState<string>('');
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'files' | 'actions'>('details');
+
+  // Función auxiliar para inferir MIME type desde URL o extensión
+  const inferMimeType = (url: string): string => {
+    const ext = url.split('.').pop()?.toLowerCase() || '';
+    const mimeMap: Record<string, string> = {
+      'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
+      'webp': 'image/webp', 'gif': 'image/gif', 'avif': 'image/avif',
+      'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg',
+      'glb': 'model/gltf-binary', 'gltf': 'model/gltf+json',
+      'mp4': 'video/mp4', 'webm': 'video/webm',
+      'zip': 'application/zip', 'rar': 'application/x-rar-compressed',
+      'json': 'application/json', 'pdf': 'application/pdf'
+    };
+    return mimeMap[ext] || 'application/octet-stream';
+  };
+
+  // Función para extraer nombre de archivo desde URL
+  const extractFileName = (url: string): string => {
+    try {
+      const urlParts = url.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      // Remover timestamp y hash del nombre (ej: 1234567890-abc123-filename.mp3 -> filename.mp3)
+      const cleanName = fileName.replace(/^\d+-[a-z0-9]+-/, '');
+      return decodeURIComponent(cleanName) || 'archivo';
+    } catch {
+      return 'archivo';
+    }
+  };
 
   // Inicializar datos del formulario
   useEffect(() => {
@@ -80,13 +110,41 @@ export default function ProductEditModal({
         isFree: product.isFree ?? true,
         license: product.license || 'personal',
         customLicense: product.customLicense || '',
-        visibility: product.visibility || 'public',
+        isListed: product.isListed ?? true,
         tags: product.tags || [],
         customTags: product.customTags || [],
         newTag: '',
         newCustomTag: ''
       });
-      setFiles(product.files || []);
+      
+      // Establecer cover image actual
+      setCoverImage(product.coverImage || '');
+      
+      // Transformar URLs a FileItems si vienen como strings
+      const rawFiles = product.files || [];
+      const transformedFiles: FileItem[] = rawFiles.map((file: any, index: number) => {
+        // Si ya es un FileItem completo, devolverlo
+        if (typeof file === 'object' && file.id && file.name) {
+          return file;
+        }
+        // Si es una URL (string), transformar a FileItem
+        const url = typeof file === 'string' ? file : file?.url || '';
+        const fileName = extractFileName(url);
+        const mimeType = inferMimeType(url);
+        
+        return {
+          id: `existing-${index}-${Date.now()}`,
+          name: fileName,
+          originalName: fileName,
+          size: 0, // No tenemos el tamaño real desde la URL
+          type: mimeType,
+          url: url,
+          previewUrl: mimeType.startsWith('image/') ? url : undefined,
+          isCover: index === 0 && mimeType.startsWith('image/')
+        };
+      });
+      
+      setFiles(transformedFiles);
     }
   }, [product]);
 
@@ -135,6 +193,65 @@ export default function ProductEditModal({
     setFiles(newFiles);
   };
 
+  // Manejar upload de cover image
+  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar que sea imagen
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor selecciona una imagen válida (JPG, PNG, WEBP, etc.)');
+      return;
+    }
+
+    // Validar tamaño (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La imagen no puede superar los 5MB');
+      return;
+    }
+
+    // Obtener token de autenticación
+    const token = localStorage.getItem('takopi_token');
+    if (!token) {
+      alert('Debes estar logueado para subir imágenes');
+      return;
+    }
+
+    setIsUploadingCover(true);
+    try {
+      const formData = new FormData();
+      formData.append('files', file);
+      formData.append('contentType', 'texturas'); // Usamos texturas para imágenes
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al subir la imagen');
+      }
+
+      const data = await response.json();
+      // El endpoint devuelve data.data.files[0].url o data.data.coverImage
+      const uploadedUrl = data.data?.files?.[0]?.url || data.data?.coverImage;
+      if (uploadedUrl) {
+        setCoverImage(uploadedUrl);
+      } else {
+        throw new Error('No se recibió URL de la imagen');
+      }
+    } catch (error) {
+      console.error('Error uploading cover image:', error);
+      alert(error instanceof Error ? error.message : 'Error al subir la imagen. Intenta de nuevo.');
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
+
   const handleSetCover = (fileId: string) => {
     const updatedFiles = files.map(f => ({ ...f, isCover: f.id === fileId }));
     setFiles(updatedFiles);
@@ -160,7 +277,8 @@ export default function ProductEditModal({
         ...product,
         ...formData,
         files,
-        coverImage: files.find(f => f.isCover)?.url || files[0]?.url,
+        // Usar coverImage del estado si se cambió, sino buscar en archivos o mantener el original
+        coverImage: coverImage || files.find(f => f.isCover)?.url || files[0]?.url || product.coverImage,
         additionalImages: files
           .filter(f => f.type.startsWith('image/') && !f.isCover)
           .map(f => f.url)
@@ -250,183 +368,195 @@ export default function ProductEditModal({
         {/* Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8">
           {activeTab === 'details' && (
-            <div className="space-y-8 animate-fade-in">
-              {/* Título */}
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-300">
-                  Título *
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => handleInputChange('title', e.target.value)}
-                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
-                  placeholder="Título del producto"
-                  maxLength={100}
-                />
-              </div>
+            <div className="space-y-6 animate-fade-in">
+              {/* Row 1: Imagen + Título lado a lado */}
+              <div className="flex gap-6">
+                {/* Imagen de Vista Previa - Compacta */}
+                <div className="shrink-0">
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Portada</label>
+                  <div className="relative group">
+                    <div className="w-28 h-28 rounded-xl overflow-hidden bg-black/40 border border-white/10 flex items-center justify-center">
+                      {coverImage ? (
+                        <img src={coverImage} alt="Vista previa" className="w-full h-full object-cover" />
+                      ) : (
+                        <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                    </div>
+                    {/* Overlay de acciones */}
+                    <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center gap-2">
+                      <label className="cursor-pointer p-2 bg-purple-500/80 rounded-lg hover:bg-purple-500 transition-colors">
+                        <input type="file" accept="image/*" onChange={handleCoverImageUpload} className="hidden" disabled={isUploadingCover} />
+                        {isUploadingCover ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        ) : (
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        )}
+                      </label>
+                      {coverImage && (
+                        <button onClick={() => setCoverImage('')} className="p-2 bg-red-500/80 rounded-lg hover:bg-red-500 transition-colors">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-              {/* Descripción breve */}
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-300">
-                  Descripción breve
-                </label>
-                <textarea
-                  value={formData.shortDescription}
-                  onChange={(e) => handleInputChange('shortDescription', e.target.value)}
-                  className="w-full h-24 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors resize-none"
-                  placeholder="Descripción corta del producto"
-                  maxLength={500}
-                />
+                {/* Título y Descripción breve */}
+                <div className="flex-1 space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-2">Título *</label>
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => handleInputChange('title', e.target.value)}
+                      className="w-full px-4 py-2.5 bg-black/30 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors text-sm"
+                      placeholder="Título del producto"
+                      maxLength={100}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-2">Descripción breve</label>
+                    <input
+                      type="text"
+                      value={formData.shortDescription}
+                      onChange={(e) => handleInputChange('shortDescription', e.target.value)}
+                      className="w-full px-4 py-2.5 bg-black/30 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors text-sm"
+                      placeholder="Breve descripción para las cards"
+                      maxLength={150}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Descripción completa */}
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-300">
-                  Descripción completa *
-                </label>
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-2">Descripción completa *</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
-                  className="w-full h-40 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors resize-none"
+                  className="w-full h-28 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors resize-none text-sm"
                   placeholder="Descripción detallada del producto"
                   maxLength={2000}
                 />
               </div>
 
-              {/* Precio */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="block text-sm font-bold text-gray-300">
-                    Precio (CLP)
-                  </label>
+              {/* Row: Precio + Gratis + Licencia */}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Precio (CLP)</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">$</span>
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">$</span>
                     <input
                       type="number"
                       value={formData.price}
                       onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
                       disabled={formData.isFree}
-                      className="w-full pl-8 pr-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full pl-7 pr-3 py-2.5 bg-black/30 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-40"
                       placeholder="0"
                       min="0"
-                      step="100"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="block text-sm font-bold text-gray-300">
-                    Contenido Gratuito
-                  </label>
-                  <div className="flex items-center gap-3 pt-3">
-                    <button
-                      type="button"
-                      onClick={() => handleInputChange('isFree', !formData.isFree)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                        formData.isFree ? 'bg-purple-500' : 'bg-gray-700'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          formData.isFree ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                    <span className="text-sm font-medium text-white">
-                      {formData.isFree ? 'Gratis' : 'De Pago'}
-                    </span>
-                  </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Tipo</label>
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange('isFree', !formData.isFree)}
+                    className={`w-full py-2.5 px-4 rounded-lg text-sm font-medium transition-all border ${
+                      formData.isFree 
+                        ? 'bg-green-500/20 border-green-500/40 text-green-400' 
+                        : 'bg-purple-500/20 border-purple-500/40 text-purple-400'
+                    }`}
+                  >
+                    {formData.isFree ? '✨ Gratis' : '💰 De Pago'}
+                  </button>
                 </div>
-              </div>
 
-              {/* Licencia */}
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-300">
-                  Licencia
-                </label>
-                <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Licencia</label>
                   <select
                     value={formData.license}
                     onChange={(e) => handleInputChange('license', e.target.value)}
-                    className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-500 transition-colors appearance-none cursor-pointer"
+                    className="w-full px-3 py-2.5 bg-black/30 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition-colors appearance-none cursor-pointer"
                   >
-                    <option value="personal">Uso Personal</option>
+                    <option value="personal">Personal</option>
                     <option value="commercial">Comercial</option>
                     <option value="streaming">Streaming</option>
                     <option value="royalty-free">Libre de Regalías</option>
                     <option value="custom">Personalizada</option>
                   </select>
-
-                  {formData.license === 'custom' && (
-                    <input
-                      type="text"
-                      value={formData.customLicense}
-                      onChange={(e) => handleInputChange('customLicense', e.target.value)}
-                      className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
-                      placeholder="Describe los términos de la licencia personalizada"
-                    />
-                  )}
                 </div>
               </div>
 
-              {/* Visibilidad */}
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-300">
-                  Visibilidad
-                </label>
-                <select
-                  value={formData.visibility}
-                  onChange={(e) => handleInputChange('visibility', e.target.value)}
-                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-500 transition-colors appearance-none cursor-pointer"
-                >
-                  <option value="public">Público</option>
-                  <option value="unlisted">No listado</option>
-                  <option value="draft">Borrador</option>
-                </select>
-              </div>
+              {formData.license === 'custom' && (
+                <input
+                  type="text"
+                  value={formData.customLicense}
+                  onChange={(e) => handleInputChange('customLicense', e.target.value)}
+                  className="w-full px-4 py-2.5 bg-black/30 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors text-sm"
+                  placeholder="Términos de la licencia personalizada"
+                />
+              )}
 
-              {/* Etiquetas */}
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-300">
-                  Etiquetas
-                </label>
-                <div className="space-y-3">
+              {/* Row: Visibilidad + Etiquetas */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Visibilidad</label>
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange('isListed', !formData.isListed)}
+                    className={`w-full py-2.5 px-4 rounded-lg text-sm font-medium transition-all border ${
+                      formData.isListed 
+                        ? 'bg-green-500/20 border-green-500/40 text-green-400' 
+                        : 'bg-gray-500/20 border-gray-500/40 text-gray-400'
+                    }`}
+                  >
+                    {formData.isListed ? '👁️ Público' : '🔒 Privado'}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Agregar etiqueta</label>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={formData.newTag}
                       onChange={(e) => handleInputChange('newTag', e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                      className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
-                      placeholder="Agregar etiqueta"
+                      className="flex-1 px-3 py-2.5 bg-black/30 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors text-sm"
+                      placeholder="Nueva etiqueta"
                     />
                     <button
                       onClick={handleAddTag}
-                      className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-lg border border-white/10 hover:border-white/20 transition-all"
+                      className="px-4 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 font-medium rounded-lg border border-purple-500/30 transition-all text-sm"
                     >
-                      Agregar
+                      +
                     </button>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {formData.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 text-purple-300 text-sm font-medium rounded-lg border border-purple-500/20"
-                      >
-                        #{tag}
-                        <button
-                          onClick={() => handleRemoveTag(index)}
-                          className="text-purple-400 hover:text-white transition-colors"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
                   </div>
                 </div>
               </div>
+
+              {/* Tags display */}
+              {formData.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {formData.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-500/10 text-purple-300 text-xs font-medium rounded-full border border-purple-500/20"
+                    >
+                      #{tag}
+                      <button onClick={() => handleRemoveTag(index)} className="text-purple-400 hover:text-white transition-colors">×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

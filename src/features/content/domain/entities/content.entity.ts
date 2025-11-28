@@ -9,7 +9,6 @@ export class ContentEntity {
     public readonly price: number,
     public readonly currency: string,
     public readonly contentType: string,
-    public readonly category: string,
     public readonly tags: string[],
     public readonly isPublished: boolean,
     public readonly coverImage?: string,
@@ -50,20 +49,9 @@ export class ContentEntity {
       'musica': 'Música',
       'texturas': 'Textura',
       'animaciones': 'Animación',
-      'OBS': 'OBS Widget',
-      'colecciones': 'Colección'
+      'otros': 'Otro'
     };
     return typeMap[this.contentType] || this.contentType;
-  }
-
-  get categoryDisplay(): string {
-    const categoryMap: { [key: string]: string } = {
-      'arquitectura': 'Arquitectura',
-      'texturas': 'Texturas',
-      'audio': 'Audio',
-      'animacion': 'Animación'
-    };
-    return categoryMap[this.category] || this.category;
   }
 }
 

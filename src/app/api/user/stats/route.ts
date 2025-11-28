@@ -3,16 +3,18 @@ import { GetUserStatsUseCase } from '@/features/user/domain/usecases/get-user-st
 import { createUserRepository } from '@/features/user/data/repositories/user.repository';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config/env';
+import { handleApiError } from '@/lib/error-handler';
+import { AuthenticationError } from '@/lib/errors';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 Get User Stats API (Clean Architecture)');
+    logger.info('Get User Stats API: iniciando');
 
     // Obtener token de autorización
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('❌ No valid auth header');
-      return NextResponse.json({ error: 'Token de autorización requerido' }, { status: 401 });
+      throw new AuthenticationError('Token de autorización requerido');
     }
 
     const token = authHeader.split(' ')[1];
@@ -22,10 +24,15 @@ export async function GET(request: NextRequest) {
     try {
       const decoded = jwt.verify(token, config.jwt.secret) as any;
       userId = decoded.userId;
-      console.log('✅ Token valid, userId:', userId);
+      if (!userId) {
+        throw new AuthenticationError('Token inválido: userId no encontrado');
+      }
+      logger.info('Token válido', { userId });
     } catch (error) {
-      console.log('❌ Token invalid:', error);
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+      if (error instanceof AuthenticationError) {
+        throw error;
+      }
+      throw new AuthenticationError('Token inválido o expirado');
     }
 
     // Crear repository y usecase (Clean Architecture)
@@ -35,7 +42,7 @@ export async function GET(request: NextRequest) {
     // Ejecutar caso de uso
     const stats = await usecase.execute(userId);
 
-    console.log('✅ Estadísticas obtenidas:', stats);
+    logger.info('Estadísticas obtenidas exitosamente', { userId });
 
     return NextResponse.json({
       success: true,
@@ -43,11 +50,6 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ Error fetching user stats:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
-    return NextResponse.json(
-      { success: false, error: errorMessage },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

@@ -13,6 +13,7 @@ import ProductModal from '@/components/product/ProductModal';
 import ProductEditModal from '@/components/product/ProductEditModal';
 import PurchasesSection from '@/components/profile/PurchasesSection';
 import CollectionsModal from '@/components/profile/CollectionsModal';
+import FollowersModal from '@/components/profile/FollowersModal';
 
 // Evitar pre-render estático
 export const dynamic = 'force-dynamic';
@@ -52,6 +53,8 @@ function ProfileContent() {
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<'creations' | 'purchases'>('creations');
   const [isCollectionsModalOpen, setIsCollectionsModalOpen] = useState(false);
+  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+  const [followersModalTab, setFollowersModalTab] = useState<'followers' | 'following'>('followers');
   const { user, updateUser } = useAuth();
   const { addToast } = useToast();
   const { createCardProps } = useContentCard();
@@ -420,8 +423,8 @@ function ProfileContent() {
       isFree: creation.isFree,
       license: creation.license || 'personal',
       customLicense: creation.customLicense,
-      visibility: creation.visibility || 'public',
-      status: creation.status || 'published',
+      isListed: creation.isListed ?? true,
+      isPublished: creation.isPublished ?? true,
       author: creation.author || creation.authorUsername || 'Anónimo',
       authorAvatar: creation.authorAvatar,
       authorId: creation.authorId,
@@ -574,7 +577,7 @@ function ProfileContent() {
         setProductToEdit(null);
         
         // Recargar los datos del perfil para asegurar que todo esté actualizado
-        await fetchUserProfile();
+        await loadUserProfile();
         
         addToast({ type: 'success', title: 'Éxito', message: 'Producto actualizado exitosamente' });
       } else {
@@ -740,12 +743,12 @@ function ProfileContent() {
           {/* Stats Bar - Floating Glass */}
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-12">
             {[
-              { label: 'Seguidores', value: realStats ? realStats.followersCount : currentProfile.stats.followers, clickable: false },
-              { label: 'Siguiendo', value: realStats ? realStats.followingCount : currentProfile.stats.following, clickable: false },
+              { label: 'Seguidores', value: realStats ? realStats.followersCount : currentProfile.stats.followers, clickable: true, onClick: () => { setFollowersModalTab('followers'); setIsFollowersModalOpen(true); } },
+              { label: 'Siguiendo', value: realStats ? realStats.followingCount : currentProfile.stats.following, clickable: true, onClick: () => { setFollowersModalTab('following'); setIsFollowersModalOpen(true); } },
               { label: 'Creaciones', value: realStats ? realStats.contentCount : currentProfile.stats.modelsPublished, clickable: false },
               { label: 'Ventas', value: realStats ? realStats.purchaseCount : currentProfile.stats.totalSales, clickable: false },
               { label: 'Corazones', value: realStats ? realStats.totalLikes : currentProfile.stats.heartsReceived, clickable: false },
-              { label: 'Colecciones', value: realStats ? realStats.totalDownloads : currentProfile.stats.pinsCreated, clickable: true, onClick: () => setIsCollectionsModalOpen(true) }
+              { label: 'Colecciones', value: realStats ? realStats.collectionsCount : currentProfile.stats.pinsCreated, clickable: true, onClick: () => setIsCollectionsModalOpen(true) }
             ].map((stat, idx) => (
               <div
                 key={idx}
@@ -946,6 +949,15 @@ function ProfileContent() {
       <CollectionsModal
         isOpen={isCollectionsModalOpen}
         onClose={() => setIsCollectionsModalOpen(false)}
+      />
+
+      {/* Followers/Following Modal */}
+      <FollowersModal
+        isOpen={isFollowersModalOpen}
+        onClose={() => setIsFollowersModalOpen(false)}
+        userId={user?._id || ''}
+        username={currentProfile.username}
+        initialTab={followersModalTab}
       />
 
     </Layout>

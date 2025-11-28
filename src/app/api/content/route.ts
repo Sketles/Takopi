@@ -133,8 +133,6 @@ export async function POST(request: NextRequest) {
       currency: requestBody.currency || 'CLP',
       isFree: requestBody.isFree || false,
       contentType: requestBody.contentType,
-      category: requestBody.category,
-      subcategory: requestBody.subcategory,
       tags: requestBody.tags || [],
       customTags: requestBody.customTags || [],
       coverImage: requestBody.coverImage,
@@ -142,8 +140,6 @@ export async function POST(request: NextRequest) {
       files: requestBody.files || [],
       license: requestBody.license || 'personal',
       customLicense: requestBody.customLicense,
-      visibility: requestBody.visibility || 'public',
-      status: 'published', // ✅ Cambiar a published para que aparezca
       isPublished: true, // ✅ Publicar automáticamente
       allowTips: requestBody.allowTips || false,
       allowCommissions: requestBody.allowCommissions || false
@@ -167,7 +163,6 @@ export async function POST(request: NextRequest) {
       isFree: newContent.isFree,
       currency: newContent.currency,
       contentType: newContent.contentType,
-      category: newContent.category,
       tags: newContent.tags,
       coverImage: newContent.coverImage,
       files: newContent.files,

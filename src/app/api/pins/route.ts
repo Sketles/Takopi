@@ -3,28 +3,37 @@ import { TogglePinUseCase } from '@/features/social/domain/usecases/toggle-pin.u
 import { createPinRepository } from '@/features/social/data/repositories/pin.repository';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config/env';
+import { handleApiError } from '@/lib/error-handler';
+import { AuthenticationError, ValidationError } from '@/lib/errors';
+import { logger } from '@/lib/logger';
 
 // POST - Dar o quitar pin a un contenido
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 Pin API (Clean Architecture)');
+    logger.info('Pin API POST: procesando');
 
     // Verificar autenticación
     const token = request.headers.get('Authorization')?.replace('Bearer ', '');
     if (!token) {
-      console.log('❌ No token provided');
-      return NextResponse.json({ success: false, error: 'Token requerido' }, { status: 401 });
+      throw new AuthenticationError('Token requerido');
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
-    const userId = decoded.userId;
+    let userId: string;
+    try {
+      const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+      userId = decoded.userId;
+    } catch (error) {
+      throw new AuthenticationError('Token inválido');
+    }
 
-    const { contentId, isPublic } = await request.json();
-    console.log('🔍 Pin request:', { userId, contentId, isPublic });
+    const body = await request.json();
+    const { contentId, isPublic } = body;
 
     if (!contentId) {
-      return NextResponse.json({ success: false, error: 'ID de contenido requerido' }, { status: 400 });
+      throw new ValidationError('ID de contenido requerido');
     }
+
+    logger.info('Pin toggle request', { userId, contentId, isPublic });
 
     // Crear repository y usecase (Clean Architecture)
     const repository = createPinRepository();
@@ -33,7 +42,7 @@ export async function POST(request: NextRequest) {
     // Ejecutar caso de uso
     const result = await usecase.execute(userId, contentId, isPublic ?? true);
 
-    console.log('✅ Pin toggled:', result);
+    logger.info('Pin toggled exitosamente', { userId, contentId, pinned: result.pinned });
 
     return NextResponse.json({
       success: true,
@@ -45,12 +54,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ Pin API error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
-    return NextResponse.json({
-      success: false,
-      error: errorMessage
-    }, { status: 500 });
+    return handleApiError(error);
   }
 }
 

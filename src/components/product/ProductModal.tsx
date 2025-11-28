@@ -11,6 +11,21 @@ import DescriptionClamp from './DescriptionClamp';
 import CommentsSection from './CommentsSection';
 import ProductEditModal from './ProductEditModal';
 
+/**
+ * ProductModalProps - Props para el modal de detalles de producto
+ * @interface ProductModalProps
+ * @property {Object} product - Datos del contenido/producto
+ * @property {string} product.id - ID único del contenido
+ * @property {string} product.title - Título del contenido
+ * @property {string} product.description - Descripción larga
+ * @property {string} product.contentType - Tipo de contenido (MODEL_3D, MUSIC, etc)
+ * @property {number} product.price - Precio en moneda indicada
+ * @property {boolean} product.isFree - Si es contenido gratuito
+ * @property {string} product.author - Nombre del autor
+ * @property {boolean} isOpen - Si el modal está visible
+ * @property {() => void} onClose - Callback para cerrar el modal
+ * @property {(item: any) => void} [onAddToCart] - Callback al agregar al carrito
+ */
 interface ProductModalProps {
   product: {
     id: string;
@@ -24,8 +39,7 @@ interface ProductModalProps {
     isFree: boolean;
     license: string;
     customLicense?: string;
-    visibility: string;
-    status: string;
+    isPublished: boolean;
     author: string;
     authorAvatar?: string;
     authorId?: string;

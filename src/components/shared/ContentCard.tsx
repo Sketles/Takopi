@@ -7,7 +7,41 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import DefaultCover from './DefaultCover';
 
-// Interfaces para tipado
+/**
+ * ContentCardProps - Props para la tarjeta de contenido
+ * 
+ * @interface ContentCardProps
+ * @property {string} id - ID único del contenido
+ * @property {string} title - Título del contenido
+ * @property {string} [author] - Nombre del autor
+ * @property {string} [authorId] - ID del autor
+ * @property {string} contentType - Tipo (MODEL_3D, MUSIC, DIGITAL_ART, etc)
+ * @property {string} category - Categoría del contenido
+ * @property {number | string} [price] - Precio (número o string formateado)
+ * @property {boolean} [isFree] - Si es contenido gratuito
+ * @property {string} [image] - URL de imagen de preview
+ * @property {string} [coverImage] - URL de imagen de portada
+ * @property {'default' | 'compact' | 'featured'} [variant] - Estilo de la tarjeta
+ * @property {boolean} [showPrice] - Mostrar precio
+ * @property {boolean} [showStats] - Mostrar estadísticas (likes, vistas, etc)
+ * @property {boolean} [showAuthor] - Mostrar nombre del autor
+ * @property {() => void} [onClick] - Callback al hacer click
+ * @property {(id: string) => void} [onAddToCart] - Callback para agregar al carrito
+ * @property {(id: string) => void} [onLike] - Callback para dar like
+ * @property {(id: string) => void} [onPin] - Callback para dar pin
+ * 
+ * @example
+ * <ContentCard
+ *   id="content-123"
+ *   title="3D Model"
+ *   author="John Doe"
+ *   contentType="MODEL_3D"
+ *   price={29.99}
+ *   variant="featured"
+ *   onClick={() => openProductModal(content)}
+ *   onAddToCart={handleAddToCart}
+ * />
+ */
 interface ContentCardProps {
   // Datos del contenido
   id: string;
@@ -301,26 +335,28 @@ const ContentCard = memo(function ContentCard({
 
   return (
     <div
-      className={`group relative flex flex-col bg-[#0f0f0f] border border-white/5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(168,85,247,0.2)] hover:border-purple-500/30 ${className}`}
+      className={`group relative flex flex-col bg-[#0f0f0f] border border-white/5 rounded-3xl overflow-hidden transition-all duration-200 ease-out hover:-translate-y-1.5 hover:shadow-[0_16px_32px_-12px_rgba(168,85,247,0.25)] hover:border-purple-500/40 hover:bg-[#111111] ${className}`}
       onClick={onClick}
     >
       {/* Imagen de la creación */}
       <div className={`relative aspect-[4/3] overflow-hidden ${imageClassName}`}>
         {/* Overlay gradiente al hacer hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"></div>
 
         {/* Imagen principal o fallback */}
         {getMainImage && !imageError && !getMainImage?.includes('/placeholder-') ? (
           <img
             src={getMainImage}
             alt={title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            loading="lazy"
+            decoding="async"
+            className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
             onError={() => setImageError(true)}
           />
         ) : (
           <DefaultCover
             contentType={contentType || 'modelos3d'}
-            className="w-full h-full transition-transform duration-700 group-hover:scale-110"
+            className="w-full h-full transition-transform duration-300 ease-out group-hover:scale-105"
           />
         )}
 
@@ -336,16 +372,16 @@ const ContentCard = memo(function ContentCard({
         <button
           onClick={handleLike}
           disabled={isLikeLoading}
-          className={`absolute top-4 right-16 z-20 p-2 rounded-full backdrop-blur-md border transition-all duration-300 ${currentIsLiked
-            ? 'bg-red-500/20 border-red-500/50 text-red-500'
-            : 'bg-black/40 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
+          className={`absolute top-4 right-16 z-20 p-2 rounded-full backdrop-blur-md border transition-all duration-150 ease-out active:scale-90 ${currentIsLiked
+            ? 'bg-red-500/20 border-red-500/50 text-red-500 hover:bg-red-500/30'
+            : 'bg-black/40 border-white/10 text-white/70 hover:bg-white/15 hover:text-white hover:border-white/20'
             }`}
         >
           {isLikeLoading ? (
             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
           ) : (
             <svg
-              className={`w-5 h-5 transition-transform duration-300 ${currentIsLiked ? 'fill-current scale-110' : 'fill-none stroke-current'}`}
+              className={`w-5 h-5 transition-transform duration-150 ease-out ${currentIsLiked ? 'fill-current scale-110' : 'fill-none stroke-current'}`}
               viewBox="0 0 24 24" strokeWidth="2"
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
@@ -357,9 +393,9 @@ const ContentCard = memo(function ContentCard({
         <button
           onClick={handlePin}
           disabled={isPinLoading}
-          className={`absolute top-4 right-4 z-20 p-2 rounded-full backdrop-blur-md border transition-all duration-300 ${currentIsPinned
-            ? 'bg-purple-500/20 border-purple-500/50 text-purple-500'
-            : 'bg-black/40 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
+          className={`absolute top-4 right-4 z-20 p-2 rounded-full backdrop-blur-md border transition-all duration-150 ease-out active:scale-90 ${currentIsPinned
+            ? 'bg-purple-500/20 border-purple-500/50 text-purple-500 hover:bg-purple-500/30'
+            : 'bg-black/40 border-white/10 text-white/70 hover:bg-white/15 hover:text-white hover:border-white/20'
             }`}
         >
           {isPinLoading ? (

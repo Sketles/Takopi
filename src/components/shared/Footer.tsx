@@ -71,7 +71,7 @@ export default function Footer() {
         <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
           <p>&copy; 2025 Takopi. Todos los derechos reservados.</p>
           <div className="flex gap-6">
-            <span>Hecho con 💜 en Chile</span>
+            <span style={{ color: '#663399' }}>663399GC</span>
           </div>
         </div>
       </div>
