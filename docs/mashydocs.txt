@@ -1,0 +1,2744 @@
+Text to 3D API
+Text to 3D API is a feature that allows you to integrate Meshy's Text to 3D capabilities into your own application. In this section, you'll find all the information you need to get started with this API.
+
+The workflow of Text to 3D involves two stages: the preview stage and the refine stage. In the preview stage, a base mesh is generated with no texture applied, allowing you to evaluate the geometry. In the refine stage, the preview mesh is textured based on the text prompt.
+
+POST
+/openapi/v2/text-to-3d
+Create a Text to 3D Preview Task
+This endpoint allows you to create a new Text to 3D Preview task. This task costs 20 credits for Meshy-6 models and 5 credits for other models. Refer to The Text to 3D Task Object to see which properties are included with Text to 3D task object.
+
+Parameters
+Required attributes
+Name
+mode
+Type
+string
+Description
+This field should be set to "preview" when creating a preview task.
+
+Name
+prompt
+Type
+string
+Description
+Describe what kind of object the 3D model is. Maximum 600 characters.
+
+Optional attributes
+Name
+art_style
+Type
+string
+Description
+Describe your desired art style of the object.
+
+Available values:
+
+realistic: Realistic style
+sculpture: Sculpture style
+Default to realistic if not specified.
+
+Note that enable_pbr should be set to false when using Sculpture style, as Sculpture style generates its own set of PBR maps.
+
+Name
+seed
+Type
+integer
+Description
+Seed of the task. When you use the same prompt and seed, you will generate the same result in most cases. However, the same seed may occasionally produce different results from a previous task due to our software and hardware updates.
+
+Name
+ai_model
+Type
+string
+Description
+ID of the model to use.
+
+Available values:
+
+meshy-4
+meshy-5
+latest: Meshy 6 Preview
+Default to latest if not specified.
+
+Name
+topology
+Type
+string
+Description
+Specify the topology of the generated model.
+
+Available values:
+
+quad: Generate a quad-dominant mesh.
+triangle: Generate a decimated triangle mesh.
+Default to triangle if not specified.
+
+Name
+target_polycount
+Type
+integer
+Description
+Specify the target number of polygons in the generated model. The actual number of polygons may deviate from the target depending on the complexity of the geometry.
+
+The valid value range varies depending on the user tier:
+
+100 to 300,000 (inclusive)
+Default to 30,000 if not specified.
+
+Name
+should_remesh
+Type
+boolean
+Description
+The should_remesh flag controls whether to enable the remesh phase.
+
+When set to false, it directly returns an unprocessed triangular mesh, ignoring topology and target_polycount.
+
+Default to true if not specified.
+
+Note that if should_remesh is enabled, the model will be remeshed to whatever target_polycount is set to. To achieve the highest-precision meshes, set should_remesh to false.
+
+Name
+symmetry_mode
+Type
+string
+Description
+The symmetry_mode field controls symmetry behavior during the model generation process.
+
+The valid values are:
+
+off: Disables symmetry.
+auto: Automatically determines and applies symmetry based on input geometry.
+on: Enforces symmetry during generation.
+Default to auto if not specified.
+
+Name
+is_a_t_pose
+Type
+boolean
+Description
+Whether to generate the model in an A/T pose.
+
+Default to false if not specified.
+
+Name
+moderation
+Type
+boolean
+Description
+When set to true, the input content will automatically be screened for potentially harmful content. If harmful content is detected, the task will not proceed to generation.
+
+The text from prompt will be screened.
+
+Defaults to false if not specified.
+
+Returns
+The result property of the response contains the task id of the newly created Text to 3D task.
+
+Request
+cURL
+JavaScript
+Python
+POST
+/openapi/v2/text-to-3d
+curl https://api.meshy.ai/openapi/v2/text-to-3d \
+  -H 'Authorization: Bearer ${YOUR_API_KEY}' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "mode": "preview",
+  "prompt": "a monster mask",
+  "art_style": "realistic",
+  "should_remesh": true
+}'
+
+Copy
+Copied!
+Response
+{
+  "result": "018a210d-8ba4-705c-b111-1f1776f7f578"
+}
+
+Copy
+Copied!
+POST
+/openapi/v2/text-to-3d
+Create a Text to 3D Refine Task
+This endpoint allows you to create a new Text to 3D Refine task.
+
+Parameters
+Required attributes
+Name
+mode
+Type
+string
+Description
+This field should be set to "refine" when creating a refine task.
+
+Name
+preview_task_id
+Type
+string
+Description
+The corresponding preview task id.
+
+The status of the given preview task must be SUCCEEDED.
+
+Optional attributes
+Name
+enable_pbr
+Type
+boolean
+Description
+Generate PBR Maps (metallic, roughness, normal) in addition to the base color.
+
+Default to false if not specified.
+
+Note that enable_pbr should be set to false when using Sculpture style, as Sculpture style generates its own set of PBR maps.
+
+Name
+texture_prompt
+Type
+string
+Description
+Provide an additional text prompt to guide the texturing process. Maximum 600 characters.
+
+Name
+texture_image_url
+Type
+string
+Description
+Provide a 2d image to guide the texturing process. We currently support .jpg, .jpeg, and .png formats.
+
+There are two ways to provide the image:
+
+Publicly accessible URL: A URL that is accessible from the public internet
+Data URI: A base64-encoded data URI of the image. Example of a data URI: data:image/jpeg;base64,<your base64-encoded image data>
+Image texturing may not work optimally if there are substantial geometry differences between the original asset and uploaded image. Only one of texture_image_url or texture_prompt may be used to guide the texturing process. If both parameters are provided, then texture_prompt will be used to texture the model by default. Texturing via either text or image will cost 10 credits per task.
+
+Name
+ai_model
+Type
+string
+Description
+ID of the model to use for refining.
+
+Available values:
+
+meshy-5
+latest: Meshy 6 Preview
+meshy-4
+Default to latest if not specified.
+
+This parameter is only applicable when the corresponding preview task was generated with meshy-5 or latest (Meshy 6 Preview). If the preview task used meshy-4, this parameter is invalid.
+
+Name
+moderation
+Type
+boolean
+Description
+When set to true, the input content will automatically be screened for potentially harmful content. If harmful content is detected, the task will not proceed to generation.
+
+Both the text from texture_prompt and the image from texture_image_url will be screened.
+
+Defaults to false if not specified.
+
+Returns
+The result property of the response contains the task id of the newly created Text to 3D task.
+
+Request
+cURL
+JavaScript
+Python
+POST
+/openapi/v2/text-to-3d
+curl https://api.meshy.ai/openapi/v2/text-to-3d \
+  -H 'Authorization: Bearer ${YOUR_API_KEY}' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "mode": "refine",
+  "preview_task_id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "enable_pbr": true
+}'
+
+Copy
+Copied!
+Response
+{
+  "result": "018a210d-8ba4-705c-b111-1f1776f7f578"
+}
+
+Copy
+Copied!
+GET
+/openapi/v2/text-to-3d/:id
+Retrieve a Text to 3D Task
+This endpoint allows you to retrieve a Text to 3D task given a valid task id. Refer to The Text to 3D Task Object to see which properties are included with Text to 3D task object.
+
+This endpoint works for both preview and refine tasks.
+
+Parameters
+Name
+id
+Type
+path
+Description
+Unique identifier for the Text to 3D task to retrieve.
+
+Returns
+The response contains the Text to 3D task object. Check The Text to 3D Task Object section for details.
+
+Examples
+Mode	Sample Model
+Preview	Preview model
+Refine	Refined model
+Request
+cURL
+JavaScript
+Python
+GET
+/openapi/v2/text-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578
+curl https://api.meshy.ai/openapi/v2/text-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578 \
+-H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response
+{
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "model_urls": {
+    "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+    "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+    "obj": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.obj?Expires=***",
+    "mtl": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.mtl?Expires=***",
+    "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***"
+  },
+  "thumbnail_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.png?Expires=***",
+  "prompt": "a monster mask",
+  "art_style": "realistic",
+  "progress": 100,
+  "started_at": 1692771667037,
+  "created_at": 1692771650657,
+  "finished_at": 1692771669037,
+  "status": "SUCCEEDED",
+  "texture_urls": [
+    {
+      "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***"
+    }
+  ],
+  "preceding_tasks": 0,
+  "task_error": {
+    "message": ""
+  }
+}
+
+Copy
+Copied!
+DELETE
+/openapi/v2/text-to-3d/:id
+Delete a Text to 3D Task
+This endpoint permanently deletes a Text to 3D task, including all associated models and data. This action is irreversible.
+
+Path Parameters
+Name
+id
+Type
+path
+Description
+The ID of the Text to 3D task to delete.
+
+Returns
+Returns 200 OK on success.
+
+Request
+cURL
+JavaScript
+Python
+DELETE
+/openapi/v2/text-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578
+curl --request DELETE \
+  --url https://api.meshy.ai/openapi/v2/text-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578 \
+  -H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response
+// Returns 200 Ok on success.
+
+Copy
+Copied!
+GET
+/v2/text-to-3d
+List Text to 3D Tasks
+This endpoint allows you to retrieve a list of Text to 3D tasks.
+
+Parameters
+Optional attributes
+Name
+page_num
+Type
+integer
+Description
+Page number for pagination. Starts and defaults to 1.
+
+Name
+page_size
+Type
+integer
+Description
+Page size limit. Defaults to 10 items. Maximum allowed is 50 items.
+
+Name
+sort_by
+Type
+string
+Description
+Field to sort by. Available values:
+
++created_at: Sort by creation time in ascending order.
+-created_at: Sort by creation time in descending order.
+Returns
+Returns a paginated list of The Text to 3D Task Objects.
+
+Request
+cURL
+JavaScript
+Python
+GET
+/openapi/v2/text-to-3d
+curl https://api.meshy.ai/openapi/v2/text-to-3d?page_size=10 \
+-H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response
+[
+  {
+    "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+    "model_urls": {
+      "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+      "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+      "obj": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.obj?Expires=***",
+      "mtl": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.mtl?Expires=***",
+      "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***"
+    },
+    "thumbnail_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.png?Expires=***",
+    "prompt": "a monster mask",
+    "art_style": "realistic",
+    "progress": 100,
+    "started_at": 1692771667037,
+    "created_at": 1692771650657,
+    "finished_at": 1692771669037,
+    "status": "SUCCEEDED",
+    "texture_urls": [
+      {
+        "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***"
+      }
+    ],
+    "preceding_tasks": 0,
+    "task_error": {
+      "message": ""
+    }
+  }
+]
+
+Copy
+Copied!
+GET
+/openapi/v2/text-to-3d/:id/stream
+Stream a Text to 3D Task
+This endpoint streams real-time updates for a Text to 3D task using Server-Sent Events (SSE).
+
+Parameters
+Name
+id
+Type
+path
+Description
+Unique identifier for the Text to 3D task to stream.
+
+Returns
+Returns a stream of The Text to 3D Task Objects as Server-Sent Events.
+
+For PENDING or IN_PROGRESS tasks, the response stream will only include necessary progress and status fields.
+
+Request
+cURL
+JavaScript
+Python
+GET
+/openapi/v2/text-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578/stream
+curl -N https://api.meshy.ai/openapi/v2/text-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578/stream \
+-H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response Stream
+// Error event example
+event: error
+data: {
+  "status_code": 404,
+  "message": "Task not found"
+}
+
+// Message event examples illustrate task progress.
+// For PENDING or IN_PROGRESS tasks, the response stream will not include all fields.
+event: message
+data: {
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "progress": 0,
+  "status": "PENDING"
+}
+
+event: message
+data: {
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "progress": 50,
+  "status": "IN_PROGRESS"
+}
+
+event: message
+data: {
+"id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+"progress": 100,
+"status": "SUCCEEDED",
+"created_at": 1692771650657,
+"started_at": 1692771667037,
+"finished_at": 1692771669037,
+"model_urls": {
+  "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***"
+},
+"texture_urls": [
+  {
+    "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***",
+    "metallic": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_metallic.png?Expires=XXX",
+    "normal": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_roughness.png?Expires=XXX",
+    "roughness": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_normal.png?Expires=XXX"
+  }
+],
+"preceding_tasks": 0,
+"task_error": {
+    "message": ""
+  }
+}
+
+Copy
+Copied!
+The Text to 3D Task Object
+The Text to 3D Task object is a work unit that Meshy keeps track of to generate a 3D model from a text input. There are two stages of the Text to 3D API, preview and refine. Preview stage is for generating a mesh-only 3D model, and refine stage is for generating a textured 3D model based on the preview stage's result.
+
+The object has the following properties:
+
+Properties
+Name
+id
+Type
+string
+Description
+Unique identifier for the task. While we use a k-sortable UUID for task ids as the implementation detail, you should not make any assumptions about the format of the id.
+
+Name
+model_urls
+Type
+object
+Description
+Downloadable URL to the textured 3D model file generated by Meshy. The property for a format will be omitted if the format is not generated instead of returning an empty string.
+
+Name
+glb
+Type
+string
+Description
+Downloadable URL to the GLB file.
+
+Name
+fbx
+Type
+string
+Description
+Downloadable URL to the FBX file.
+
+Name
+usdz
+Type
+string
+Description
+Downloadable URL to the USDZ file.
+
+Name
+obj
+Type
+string
+Description
+Downloadable URL to the OBJ file.
+
+Name
+mtl
+Type
+string
+Description
+Downloadable URL to the MTL file.
+
+Name
+prompt
+Type
+string
+Description
+This is unmodified prompt that was used to create the task.
+
+Name
+negative_prompt
+Type
+string
+Description
+Deprecated field maintained for backward compatibility. This field has no functional impact on generated models.
+
+Name
+art_style
+Type
+string
+Description
+This is unmodified art_style that was used to create the preview task.
+
+Name
+texture_richness
+Type
+string
+Description
+Deprecated field maintained for backward compatibility. This field has no functional impact on generated models.
+
+Name
+texture_prompt
+Type
+string
+Description
+Additional text prompt provided to guide the texturing process during the refine stage.
+
+Name
+texture_image_url
+Type
+string
+Description
+Downloadable URL to the texture image that was used to guide the texturing process.
+
+Name
+thumbnail_url
+Type
+string
+Description
+Downloadable URL to the thumbnail image of the model file.
+
+Name
+video_url
+Type
+string
+Description
+Downloadable URL to the preview video.
+
+Name
+progress
+Type
+integer
+Description
+Progress of the task. If the task is not started yet, this property will be 0. Once the task has succeeded, this will become 100.
+
+Name
+seed
+Type
+integer
+Description
+Seed of the task. When you use the same prompt and seed, you will generate the same result in most cases. However, the same seed may occasionally produce different results from a previous task due to our software and hardware updates.
+
+Name
+started_at
+Type
+timestamp
+Description
+Timestamp of when the task was started, in milliseconds. If the task is not started yet, this property will be 0.
+
+A timestamp represents the number of milliseconds elapsed since January 1, 1970 UTC, following the RFC 3339 standard. For example, Friday, September 1, 2023 12:00:00 PM GMT is represented as 1693569600000. This applies to all timestamps in Meshy API.
+
+Name
+created_at
+Type
+timestamp
+Description
+Timestamp of when the task was created, in milliseconds.
+
+Name
+finished_at
+Type
+timestamp
+Description
+Timestamp of when the task was finished, in milliseconds. If the task is not finished yet, this property will be 0.
+
+Name
+status
+Type
+string
+Description
+Status of the task. Possible values are one of PENDING, IN_PROGRESS, SUCCEEDED, FAILED, CANCELED.
+
+Name
+texture_urls
+Type
+array
+Description
+An array of texture URL objects that are generated from the task. Normally this only contains one texture URL object. Each texture URL has the following properties:
+
+Name
+base_color
+Type
+string
+Description
+Downloadable URL to the base color map image.
+
+Name
+metallic
+Type
+string
+Description
+Downloadable URL to the metallic map image.
+
+If the task is created with enable_pbr: false, this property will be omitted.
+
+Name
+normal
+Type
+string
+Description
+Downloadable URL to the normal map image.
+
+If the task is created with enable_pbr: false, this property will be omitted.
+
+Name
+roughness
+Type
+string
+Description
+Downloadable URL to the roughness map image.
+
+If the task is created with enable_pbr: false, this property will be omitted.
+
+Name
+preceding_tasks
+Type
+integer
+Description
+The count of preceding tasks.
+
+The value of this field is meaningful only if the task status is PENDING.
+
+Name
+task_error
+Type
+object
+Description
+Error object that contains the error message if the task failed. The message property should be empty if the task succeeded.
+
+Name
+message
+Type
+string
+Description
+Detailed error message.
+
+Example Text to 3D Task Object
+{
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "model_urls": {
+    "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+    "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+    "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***",
+    "obj": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.obj?Expires=***",
+    "mtl": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.mtl?Expires=***"
+  },
+  "prompt": "a monster mask",
+  "art_style": "realistic",
+  "texture_richness": "high",
+  "texture_prompt": "green slimy skin with scales and warts",
+  "texture_image_url": "",
+  "thumbnail_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.png?Expires=***",
+  "video_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.mp4?Expires=***",
+  "progress": 1,
+  "seed": 1234,
+  "started_at": 1692771667037,
+  "created_at": 1692771650657,
+  "finished_at": 1692771669037,
+  "status": "SUCCEEDED",
+  "texture_urls": [
+    {
+      "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***",
+      "metallic": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_metallic.png?Expires=XXX",
+      "normal": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_roughness.png?Expires=XXX",
+      "roughness": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_normal.png?Expires=XXX"
+    }
+  ],
+  "preceding_tasks": 0,
+  "task_error": {
+    "message": ""
+  }
+}
+
+
+
+-----------------------------------------------------
+
+
+
+
+
+
+Image to 3D API
+Image to 3D API is a feature that allows you to integrate Meshy's Image to 3D capabilities into your own application. In this section, you'll find all the information you need to get started with this API.
+
+POST
+/openapi/v1/image-to-3d
+Create an Image to 3D Task
+This endpoint allows you to create a new Image to 3D task. Refer to The Image to 3D Task Object to see which properties are included with Image to 3D task object.
+
+Parameters
+Required attributes
+Name
+image_url
+Type
+string
+Description
+Provide an image for Meshy to use in model creation. We currently support .jpg, .jpeg, and .png formats.
+
+There are two ways to provide the image:
+
+Publicly accessible URL: A URL that is accessible from the public internet.
+Data URI: A base64-encoded data URI of the image. Example of a data URI: data:image/jpeg;base64,<your base64-encoded image data>.
+Optional attributes
+Name
+ai_model
+Type
+string
+Description
+ID of the model to use.
+
+Available values:
+
+meshy-4
+meshy-5
+latest: Meshy 6 Preview
+Default to latest if not specified.
+
+Name
+topology
+Type
+string
+Description
+Specify the topology of the generated model.
+
+Available values:
+
+quad: Generate a quad-dominant mesh.
+triangle: Generate a decimated triangle mesh.
+Default to triangle if not specified.
+
+Name
+target_polycount
+Type
+integer
+Description
+Specify the target number of polygons in the generated model. The actual number of polygons may deviate from the target depending on the complexity of the geometry.
+
+The valid value range varies depending on the user tier:
+
+100 to 300,000 (inclusive)
+Default to 30,000 if not specified.
+
+Name
+symmetry_mode
+Type
+string
+Description
+The symmetry_mode field controls symmetry behavior during the model generation process.
+
+The valid values are:
+
+off: Disables symmetry.
+auto: Automatically determines and applies symmetry based on input geometry.
+on: Enforces symmetry during generation.
+Default to auto if not specified.
+
+Name
+should_remesh
+Type
+boolean
+Description
+The should_remesh flag controls whether to enable the remesh phase.
+
+When set to false, it directly returns a triangular mesh, ignoring topology and target_polycount.
+
+Default to true if not specified.
+
+Note that if should_remesh is enabled, the model will be remeshed to whatever target_polycount is set to. To achieve the highest-precision meshes, set should_remesh to false.
+
+Name
+save_pre_remeshed_model
+Type
+boolean
+Description
+When set to true, Meshy also stores an extra GLB file before the remesh phase completes. Only takes effect when should_remesh is true.
+
+Default to false if not specified.
+
+Name
+should_texture
+Type
+boolean
+Description
+The should_texture flag determines if textures are generated. Setting it to false skips the texture phase, providing a mesh without textures. This costs 20 credits for Meshy-6 models and 5 credits for other models. Setting it to true adds texture generation, costing an additional 10 credits. Default to true if not specified.
+
+The parameters enable_pbr, texture_prompt, and texture_image_url all require should_texture to be true to function.
+
+When ai_model is latest and should_texture is true, texturing uses Meshy-6-preview by default.
+
+Name
+enable_pbr
+Type
+boolean
+Description
+Generate PBR Maps (metallic, roughness, normal) in addition to the base color.
+
+Default to false if not specified.
+
+Name
+is_a_t_pose
+Type
+boolean
+Description
+Whether to generate the model in an A/T pose.
+
+Default to false if not specified.
+
+Name
+texture_prompt
+Type
+string
+Description
+Provide a text prompt to guide the texturing process. Maximum 600 characters.
+
+Name
+texture_image_url
+Type
+string
+Description
+Provide a 2d image to guide the texturing process. We currently support .jpg, .jpeg, and .png formats.
+
+There are two ways to provide the image:
+
+Publicly accessible URL: A URL that is accessible from the public internet
+Data URI: A base64-encoded data URI of the image. Example of a data URI: data:image/jpeg;base64,<your base64-encoded image data>
+Image texturing may not work optimally if there are substantial geometry differences between the original asset and uploaded image. Only one of texture_image_url or texture_prompt may be used to guide the texturing process. If both parameters are provided, then texture_prompt will be used to texture the model by default. Texturing via either text or image will cost 10 credits per task.
+
+Name
+moderation
+Type
+boolean
+Description
+When set to true, the input content will automatically be screened for potentially harmful content. If harmful content is detected, the task will not proceed to generation.
+
+The content from the image_url, texture_image_url, and texture_prompt inputs will be screened.
+
+Defaults to false if not specified.
+
+Returns
+The result property of the response contains the task id of the newly created Image to 3D task.
+
+Request
+cURL
+JavaScript
+Python
+POST
+/openapi/v1/image-to-3d
+curl https://api.meshy.ai/openapi/v1/image-to-3d \
+  -X POST \
+  -H "Authorization: Bearer ${YOUR_API_KEY}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "image_url": "<your publicly accessible image url or base64-encoded data URI>",
+    "enable_pbr": true,
+    "should_remesh": true,
+    "should_texture": true,
+    "save_pre_remeshed_model": true
+  }'
+
+
+ ## Using Data URI example
+curl https://api.meshy.ai/openapi/v1/image-to-3d \
+  -X POST \
+  -H "Authorization: Bearer ${YOUR_API_KEY}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "image_url": "data:image/png;base64,${YOUR_BASE64_ENCODED_IMAGE_DATA}",
+    "enable_pbr": true,
+    "should_remesh": true,
+    "should_texture": true,
+    "save_pre_remeshed_model": true
+  }'
+
+Copy
+Copied!
+Response
+{
+  "result": "018a210d-8ba4-705c-b111-1f1776f7f578"
+}
+
+Copy
+Copied!
+GET
+/openapi/v1/image-to-3d/:id
+Retrieve an Image to 3D Task
+This endpoint allows you to retrieve an Image to 3D task given a valid task id. Refer to The Image to 3D Task Object to see which properties are included with Image to 3D task object.
+
+Parameters
+Name
+id
+Type
+path
+Description
+Unique identifier for the Image to 3D task to retrieve.
+
+Returns
+The response contains the Image to 3D task object. Check The Image to 3D Task Object section for details.
+
+Request
+cURL
+JavaScript
+Python
+GET
+/openapi/v1/image-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578
+curl https://api.meshy.ai/openapi/v1/image-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578 \
+  -H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response
+{
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "model_urls": {
+    "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+    "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+    "obj": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.obj?Expires=***",
+    "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***",
+    "pre_remeshed_glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/pre_remeshed_model.glb?Expires=***"
+  },
+  "thumbnail_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.png?Expires=***",
+  "texture_prompt": "",
+  "progress": 100,
+  "started_at": 1692771667037,
+  "created_at": 1692771650657,
+  "expires_at": 1692771679037,
+  "finished_at": 1692771669037,
+  "status": "SUCCEEDED",
+  "texture_urls": [
+    {
+      "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***",
+      "metallic": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_metallic.png?Expires=XXX",
+      "normal": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_roughness.png?Expires=XXX",
+      "roughness": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_normal.png?Expires=XXX"
+    }
+  ],
+  "preceding_tasks": 0,
+  "task_error": {
+    "message": ""
+  }
+}
+
+Copy
+Copied!
+DELETE
+/openapi/v1/image-to-3d/:id
+Delete an Image to 3D Task
+This endpoint permanently deletes an Image to 3D task, including all associated models and data. This action is irreversible.
+
+Path Parameters
+Name
+id
+Type
+path
+Description
+The ID of the Image to 3D task to delete.
+
+Returns
+Returns 200 OK on success.
+
+Request
+cURL
+JavaScript
+Python
+DELETE
+/openapi/v1/image-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578
+curl --request DELETE \
+  --url https://api.meshy.ai/openapi/v1/image-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578 \
+  -H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response
+// Returns 200 Ok on success.
+
+Copy
+Copied!
+GET
+/v1/image-to-3d
+List Image to 3D Tasks
+This endpoint allows you to retrieve a list of Image to 3D tasks.
+
+Parameters
+Optional attributes
+Name
+page_num
+Type
+integer
+Description
+Page number for pagination. Starts and defaults to 1.
+
+Name
+page_size
+Type
+integer
+Description
+Page size limit. Defaults to 10 items. Maximum allowed is 50 items.
+
+Name
+sort_by
+Type
+string
+Description
+Field to sort by. Available values:
+
++created_at: Sort by creation time ascendly.
+-created_at: Sort by creation time descendly.
+Returns
+Returns a paginated list of The Image to 3D Task Objects.
+
+Request
+cURL
+JavaScript
+Python
+GET
+/openapi/v1/image-to-3d
+curl https://api.meshy.ai/openapi/v1/image-to-3d?page_size=10 \
+-H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response
+[
+  {
+    "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+    "model_urls": {
+      "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+      "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+      "obj": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.obj?Expires=***",
+      "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***",
+      "pre_remeshed_glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/pre_remeshed_model.glb?Expires=***"
+    },
+    "thumbnail_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.png?Expires=***",
+    "texture_prompt": "",
+    "progress": 100,
+    "started_at": 1692771667037,
+    "created_at": 1692771650657,
+    "expires_at": 1692771679037,
+    "finished_at": 1692771669037,
+    "status": "SUCCEEDED",
+    "texture_urls": [
+      {
+        "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***",
+        "metallic": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_metallic.png?Expires=XXX",
+        "normal": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_roughness.png?Expires=XXX",
+        "roughness": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_normal.png?Expires=XXX"
+      }
+    ],
+    "preceding_tasks": 0,
+    "task_error": {
+      "message": ""
+    }
+  }
+]
+
+Copy
+Copied!
+GET
+/openapi/v1/image-to-3d/:id/stream
+Stream an Image to 3D Task
+This endpoint streams real-time updates for an Image to 3D task using Server-Sent Events (SSE).
+
+Parameters
+Name
+id
+Type
+path
+Description
+Unique identifier for the Image to 3D task to stream.
+
+Returns
+Returns a stream of The Image to 3D Task Objects as Server-Sent Events.
+
+For PENDING or IN_PROGRESS tasks, the response stream will only include necessary progress and status fields.
+
+Request
+cURL
+JavaScript
+Python
+GET
+/openapi/v1/image-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578/stream
+curl -N https://api.meshy.ai/openapi/v1/image-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578/stream \
+-H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response Stream
+// Error event example
+event: error
+data: {
+  "status_code": 404,
+  "message": "Task not found"
+}
+
+// Message event examples illustrate task progress.
+// For PENDING or IN_PROGRESS tasks, the response stream will not include all fields.
+event: message
+data: {
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "progress": 0,
+  "status": "PENDING"
+}
+
+event: message
+data: {
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "model_urls": {
+  "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+  "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+  "obj": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.obj?Expires=***",
+  "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***",
+  "pre_remeshed_glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/pre_remeshed_model.glb?Expires=***"
+  },
+  "thumbnail_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.png?Expires=***",
+  "texture_prompt": "",
+  "progress": 100,
+  "started_at": 1692771667037,
+  "created_at": 1692771650657,
+  "expires_at": 1692771679037,
+  "finished_at": 1692771669037,
+  "status": "SUCCEEDED",
+  "texture_urls": [
+    {
+      "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***",
+      "metallic": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_metallic.png?Expires=XXX",
+      "normal": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_roughness.png?Expires=XXX",
+      "roughness": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_normal.png?Expires=XXX"
+    }
+  ],
+  "preceding_tasks": 0,
+  "task_error": {
+    "message": ""
+  }
+}
+
+Copy
+Copied!
+The Image to 3D Task Object
+The Image to 3D Task object is a work unit that Meshy keeps track of to generate a 3D model from an image input. The object has the following properties:
+
+Properties
+Name
+id
+Type
+string
+Description
+Unique identifier for the task. While we use a k-sortable UUID for task ids as the implementation detail, you should not make any assumptions about the format of the id.
+
+Name
+model_urls
+Type
+object
+Description
+Downloadable URL to the textured 3D model file generated by Meshy. The property for a format will be omitted if the format is not generated instead of returning an empty string.
+
+Name
+glb
+Type
+string
+Description
+Downloadable URL to the GLB file.
+
+Name
+fbx
+Type
+string
+Description
+Downloadable URL to the FBX file.
+
+Name
+obj
+Type
+string
+Description
+Downloadable URL to the OBJ file.
+
+Name
+usdz
+Type
+string
+Description
+Downloadable URL to the USDZ file.
+
+Name
+mtl
+Type
+string
+Description
+Downloadable URL to the MTL file, returned alongside OBJ exports when textures are present.
+
+Name
+pre_remeshed_glb
+Type
+string
+Description
+Downloadable URL to the original GLB output before remeshing.
+
+Available only when the task was created with both should_remesh: true and save_pre_remeshed_model: true.
+
+When should_remesh is false, model_urls.glb already corresponds to the original mesh and no pre_remeshed_glb is produced.
+When should_remesh is true and save_pre_remeshed_model is true, model_urls.glb stores the remeshed output while model_urls.pre_remeshed_glb stores the mesh captured before remeshing.
+Name
+thumbnail_url
+Type
+string
+Description
+Downloadable URL to the thumbnail image of the model file.
+
+Name
+texture_prompt
+Type
+string
+Description
+The text prompt that was used to guide the texturing process.
+
+Name
+texture_image_url
+Type
+string
+Description
+Downloadable URL to the texture image that was used to guide the texturing process.
+
+Name
+progress
+Type
+integer
+Description
+Progress of the task. If the task is not started yet, this property will be 0. Once the task has succeeded, this will become 100.
+
+Name
+started_at
+Type
+timestamp
+Description
+Timestamp of when the task was started, in miliseconds. If the task is not started yet, this property will be 0.
+
+A timestamp represents the number of milliseconds elapsed since January 1, 1970 UTC, following the RFC 3339 standard. For example, Friday, September 1, 2023 12:00:00 PM GMT is represented as 1693569600000. This applies to all timestamps in Meshy API.
+
+Name
+created_at
+Type
+timestamp
+Description
+Timestamp of when the task was created, in miliseconds.
+
+Name
+expires_at
+Type
+timestamp
+Description
+Timestamp of when the task result expires, in miliseconds.
+
+Name
+finished_at
+Type
+timestamp
+Description
+Timestamp of when the task was finished, in miliseconds. If the task is not finished yet, this property will be 0.
+
+Name
+status
+Type
+string
+Description
+Status of the task. Possible values are one of PENDING, IN_PROGRESS, SUCCEEDED, FAILED, CANCELED.
+
+Name
+texture_urls
+Type
+array
+Description
+An array of texture URL objects that are generated from the task. Normally this only contains one texture URL object. Each texture URL has the following properties:
+
+Name
+base_color
+Type
+string
+Description
+Downloadable URL to the base color map image.
+
+Name
+metallic
+Type
+string
+Description
+Downloadable URL to the metallic map image.
+
+If the task is created with enable_pbr: false, this property will be omitted.
+
+Name
+normal
+Type
+string
+Description
+Downloadable URL to the normal map image.
+
+If the task is created with enable_pbr: false, this property will be omitted.
+
+Name
+roughness
+Type
+string
+Description
+Downloadable URL to the roughness map image.
+
+If the task is created with enable_pbr: false, this property will be omitted.
+
+Name
+preceding_tasks
+Type
+integer
+Description
+The count of preceding tasks.
+
+The value of this field is meaningful only if the task status is PENDING.
+
+Name
+task_error
+Type
+object
+Description
+Error object that contains the error message if the task failed. The message property should be empty if the task succeeded.
+
+Name
+message
+Type
+string
+Description
+Detailed error message.
+
+Example Image to 3D Task Object
+{
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "model_urls": {
+    "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+    "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+    "obj": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.obj?Expires=***",
+    "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***",
+    "pre_remeshed_glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/pre_remeshed_model.glb?Expires=***"
+  },
+  "thumbnail_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.png?Expires=***",
+  "texture_prompt": "",
+  "texture_image_url": "",
+  "progress": 1,
+  "started_at": 1692771667037,
+  "created_at": 1692771650657,
+  "expires_at": 1692771679037,
+  "finished_at": 1692771669037,
+  "status": "SUCCEEDED",
+  "texture_urls": [
+    {
+      "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***",
+      "metallic": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_metallic.png?Expires=XXX",
+      "normal": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_roughness.png?Expires=XXX",
+      "roughness": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_normal.png?Expires=XXX"
+    }
+  ],
+  "preceding_tasks": 0,
+  "task_error": {
+    "message": ""
+  },
+}
+
+Copy
+Copied!
+Multi-Image to 3D API
+Multi-Image to 3D API is a feature that allows you to integrate Meshy's Multi-Image to 3D capabilities into your own application. In this section, you'll find all the information you need to get started with this API.
+
+POST
+/openapi/v1/multi-image-to-3d
+Create a Multi-Image to 3D Task
+This endpoint allows you to create a new Multi-Image to 3D task. Refer to The Multi-Image to 3D Task Object to see which properties are included with Multi-Image to 3D task object. Please note that Multi-Image to 3D's mesh generation is only available with the Meshy-5 model, while texture generation supports Meshy-6-preview model.
+
+Parameters
+Required attributes
+Name
+image_urls
+Type
+array
+Description
+Provide 1 to 4 images for Meshy to use in model creation. We currently support .jpg, .jpeg, and .png formats. All images should depict the same object from different angles for best results.
+
+There are two ways to provide each image:
+
+Publicly accessible URL: A URL that is accessible from the public internet.
+Data URI: A base64-encoded data URI of the image. Example of a data URI: data:image/jpeg;base64,<your base64-encoded image data>.
+Optional attributes
+Name
+ai_model
+Type
+string
+Description
+ID of the model to use.
+
+Available values:
+
+meshy-5
+latest: Meshy 6 Preview (texture)
+Default to latest if not specified.
+
+Name
+topology
+Type
+string
+Description
+Specify the topology of the generated model.
+
+Available values:
+
+quad: Generate a quad-dominant mesh.
+triangle: Generate a decimated triangle mesh.
+Default to triangle if not specified.
+
+Name
+target_polycount
+Type
+integer
+Description
+Specify the target number of polygons in the generated model. The actual number of polygons may deviate from the target depending on the complexity of the geometry.
+
+The valid value range varies depending on the user tier:
+
+100 to 300,000 (inclusive)
+Default to 30,000 if not specified.
+
+Name
+symmetry_mode
+Type
+string
+Description
+The symmetry_mode field controls symmetry behavior during the model generation process.
+
+The valid values are:
+
+off: Disables symmetry.
+auto: Automatically determines and applies symmetry based on input geometry.
+on: Enforces symmetry during generation.
+Default to auto if not specified.
+
+Name
+should_remesh
+Type
+boolean
+Description
+The should_remesh flag controls whether to enable the remesh phase.
+
+When set to false, it directly returns a triangular mesh, ignoring topology and target_polycount.
+
+Default to true if not specified.
+
+Note that if should_remesh is enabled, the model will be remeshed to whatever target_polycount is set to. To achieve the highest-precision meshes, set should_remesh to false.
+
+Name
+save_pre_remeshed_model
+Type
+boolean
+Description
+When set to true, Meshy also stores an extra GLB file before the remesh phase completes. Only takes effect when should_remesh is true.
+
+Default to false if not specified.
+
+Name
+should_texture
+Type
+boolean
+Description
+The should_texture flag determines if textures are generated. Setting it to false skips the texture phase, providing a mesh without textures for 5 credits. Setting it to true adds texture generation, costing an additional 10 credits. Default to true if not specified.
+
+The parameters enable_pbr, texture_prompt, and texture_image_url all require should_texture to be true to function.
+
+When should_texture is true, texturing uses Meshy-6-preview by default while mesh generation continues to run on Meshy-5.
+
+Name
+enable_pbr
+Type
+boolean
+Description
+Generate PBR Maps (metallic, roughness, normal) in addition to the base color.
+
+Default to false if not specified.
+
+Name
+is_a_t_pose
+Type
+boolean
+Description
+Whether to generate the model in an A/T pose.
+
+Default to false if not specified.
+
+Name
+texture_prompt
+Type
+string
+Description
+Provide a text prompt to guide the texturing process. Maximum 600 characters.
+
+Name
+texture_image_url
+Type
+string
+Description
+Provide a 2d image to guide the texturing process. We currently support .jpg, .jpeg, and .png formats.
+
+There are two ways to provide the image:
+
+Publicly accessible URL: A URL that is accessible from the public internet
+Data URI: A base64-encoded data URI of the image. Example of a data URI: data:image/jpeg;base64,<your base64-encoded image data>
+Image texturing may not work optimally if there are substantial geometry differences between the original asset and uploaded image. Only one of texture_image_url or texture_prompt may be used to guide the texturing process. If both parameters are provided, then texture_prompt will be used to texture the model by default. Texturing via either text or image will cost 10 credits per task.
+
+Name
+moderation
+Type
+boolean
+Description
+When set to true, the input content will automatically be screened for potentially harmful content. If harmful content is detected, the task will not proceed to generation.
+
+Each image from image_urls and the text from texture_prompt will be screened.
+
+Defaults to false if not specified.
+
+Returns
+The result property of the response contains the task id of the newly created Multi-Image to 3D task.
+
+Request
+cURL
+JavaScript
+Python
+POST
+/openapi/v1/multi-image-to-3d
+curl https://api.meshy.ai/openapi/v1/multi-image-to-3d \
+  -X POST \
+  -H "Authorization: Bearer ${YOUR_API_KEY}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "image_urls": [
+      "<your publicly accessible image url or base64-encoded data URI>",
+      "<your second publicly accessible image url or base64-encoded data URI>"
+    ],
+    "should_remesh": true,
+    "should_texture": true,
+    "save_pre_remeshed_model": true,
+    "enable_pbr": true
+  }'
+
+
+ ## Using Data URI example
+curl https://api.meshy.ai/openapi/v1/multi-image-to-3d \
+  -X POST \
+  -H "Authorization: Bearer ${YOUR_API_KEY}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "image_urls": [
+      "data:image/png;base64,${YOUR_BASE64_ENCODED_IMAGE_DATA_1}",
+      "data:image/png;base64,${YOUR_BASE64_ENCODED_IMAGE_DATA_2}"
+    ],
+    "should_remesh": true,
+    "should_texture": true,
+    "save_pre_remeshed_model": true,
+    "enable_pbr": true
+  }'
+
+Copy
+Copied!
+Response
+{
+  "result": "018a210d-8ba4-705c-b111-1f1776f7f578"
+}
+
+Copy
+Copied!
+GET
+/openapi/v1/multi-image-to-3d/:id
+Retrieve a Multi-Image to 3D Task
+This endpoint allows you to retrieve a Multi-Image to 3D task given a valid task id. Refer to The Multi-Image to 3D Task Object to see which properties are included with Multi-Image to 3D task object.
+
+Parameters
+Name
+id
+Type
+path
+Description
+Unique identifier for the Multi-Image to 3D task to retrieve.
+
+Returns
+The response contains the Multi-Image to 3D task object. Check The Multi-Image to 3D Task Object section for details.
+
+Request
+cURL
+JavaScript
+Python
+GET
+/openapi/v1/multi-image-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578
+curl https://api.meshy.ai/openapi/v1/multi-image-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578 \
+  -H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response
+{
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "model_urls": {
+    "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+    "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+    "obj": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.obj?Expires=***",
+    "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***",
+    "pre_remeshed_glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/pre_remeshed_model.glb?Expires=***"
+  },
+  "thumbnail_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.png?Expires=***",
+  "texture_prompt": "",
+  "progress": 100,
+  "started_at": 1692771667037,
+  "created_at": 1692771650657,
+  "expires_at": 1692771679037,
+  "finished_at": 1692771669037,
+  "status": "SUCCEEDED",
+  "texture_urls": [
+    {
+      "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***",
+      "metallic": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_metallic.png?Expires=XXX",
+      "normal": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_roughness.png?Expires=XXX",
+      "roughness": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_normal.png?Expires=XXX"
+    }
+  ],
+  "preceding_tasks": 0,
+  "task_error": {
+    "message": ""
+  }
+}
+
+Copy
+Copied!
+DELETE
+/openapi/v1/multi-image-to-3d/:id
+Delete a Multi-Image to 3D Task
+This endpoint permanently deletes a Multi-Image to 3D task, including all associated models and data. This action is irreversible.
+
+Path Parameters
+Name
+id
+Type
+path
+Description
+The ID of the Multi-Image to 3D task to delete.
+
+Returns
+Returns 200 OK on success.
+
+Request
+cURL
+JavaScript
+Python
+DELETE
+/openapi/v1/multi-image-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578
+curl --request DELETE \
+  --url https://api.meshy.ai/openapi/v1/multi-image-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578 \
+  -H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response
+// Returns 200 Ok on success.
+
+Copy
+Copied!
+GET
+/v1/multi-image-to-3d
+List Multi-Image to 3D Tasks
+This endpoint allows you to retrieve a list of Multi-Image to 3D tasks.
+
+Parameters
+Optional attributes
+Name
+page_num
+Type
+integer
+Description
+Page number for pagination. Starts and defaults to 1.
+
+Name
+page_size
+Type
+integer
+Description
+Page size limit. Defaults to 10 items. Maximum allowed is 50 items.
+
+Name
+sort_by
+Type
+string
+Description
+Field to sort by. Available values:
+
++created_at: Sort by creation time ascendly.
+-created_at: Sort by creation time descendly.
+Returns
+Returns a paginated list of The Multi-Image to 3D Task Objects.
+
+Request
+cURL
+JavaScript
+Python
+GET
+/openapi/v1/multi-image-to-3d
+curl https://api.meshy.ai/openapi/v1/multi-image-to-3d?page_size=10 \
+-H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response
+[
+  {
+    "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+    "model_urls": {
+      "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+      "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+      "obj": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.obj?Expires=***",
+      "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***",
+      "pre_remeshed_glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/pre_remeshed_model.glb?Expires=***"
+    },
+    "thumbnail_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.png?Expires=***",
+    "texture_prompt": "",
+    "progress": 100,
+    "started_at": 1692771667037,
+    "created_at": 1692771650657,
+    "expires_at": 1692771679037,
+    "finished_at": 1692771669037,
+    "status": "SUCCEEDED",
+    "texture_urls": [
+      {
+        "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***",
+        "metallic": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_metallic.png?Expires=XXX",
+        "normal": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_roughness.png?Expires=XXX",
+        "roughness": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_normal.png?Expires=XXX"
+      }
+    ],
+    "preceding_tasks": 0,
+    "task_error": {
+      "message": ""
+    }
+  }
+]
+
+Copy
+Copied!
+GET
+/openapi/v1/multi-image-to-3d/:id/stream
+Stream a Multi-Image to 3D Task
+This endpoint streams real-time updates for a Multi-Image to 3D task using Server-Sent Events (SSE).
+
+Parameters
+Name
+id
+Type
+path
+Description
+Unique identifier for the Multi-Image to 3D task to stream.
+
+Returns
+Returns a stream of The Multi-Image to 3D Task Objects as Server-Sent Events.
+
+For PENDING or IN_PROGRESS tasks, the response stream will only include necessary progress and status fields.
+
+Request
+cURL
+JavaScript
+Python
+GET
+/openapi/v1/multi-image-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578/stream
+curl -N https://api.meshy.ai/openapi/v1/multi-image-to-3d/018a210d-8ba4-705c-b111-1f1776f7f578/stream \
+-H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response Stream
+// Error event example
+event: error
+data: {
+  "status_code": 404,
+  "message": "Task not found"
+}
+
+// Message event examples illustrate task progress.
+// For PENDING or IN_PROGRESS tasks, the response stream will not include all fields.
+event: message
+data: {
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "progress": 0,
+  "status": "PENDING"
+}
+
+event: message
+data: {
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "model_urls": {
+  "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+  "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+  "obj": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.obj?Expires=***",
+  "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***",
+  "pre_remeshed_glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/pre_remeshed_model.glb?Expires=***"
+  },
+  "thumbnail_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.png?Expires=***",
+  "texture_prompt": "",
+  "progress": 100,
+  "started_at": 1692771667037,
+  "created_at": 1692771650657,
+  "expires_at": 1692771679037,
+  "finished_at": 1692771669037,
+  "status": "SUCCEEDED",
+  "texture_urls": [
+    {
+      "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***",
+      "metallic": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_metallic.png?Expires=XXX",
+      "normal": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_roughness.png?Expires=XXX",
+      "roughness": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_normal.png?Expires=XXX"
+    }
+  ],
+  "preceding_tasks": 0,
+  "task_error": {
+    "message": ""
+  }
+}
+
+Copy
+Copied!
+The Multi-Image to 3D Task Object
+The Multi-Image to 3D Task object is a work unit that Meshy keeps track of to generate a 3d model from multiple images (between 1 to 4 inclusive). The images should be of the same object, ideally from different views or angles. The object has the following properties:
+
+Properties
+Name
+id
+Type
+string
+Description
+Unique identifier for the task. While we use a k-sortable UUID for task ids as the implementation detail, you should not make any assumptions about the format of the id.
+
+Name
+model_urls
+Type
+object
+Description
+Downloadable URL to the textured 3D model file generated by Meshy. The property for a format will be omitted if the format is not generated instead of returning an empty string.
+
+Name
+glb
+Type
+string
+Description
+Downloadable URL to the GLB file.
+
+Name
+fbx
+Type
+string
+Description
+Downloadable URL to the FBX file.
+
+Name
+obj
+Type
+string
+Description
+Downloadable URL to the OBJ file.
+
+Name
+usdz
+Type
+string
+Description
+Downloadable URL to the USDZ file.
+
+Name
+mtl
+Type
+string
+Description
+Downloadable URL to the MTL file, returned alongside OBJ exports when textures are present.
+
+Name
+pre_remeshed_glb
+Type
+string
+Description
+Downloadable URL to the original GLB output before remeshing.
+
+Available only when the task was created with both should_remesh: true and save_pre_remeshed_model: true.
+
+When should_remesh is false, model_urls.glb already corresponds to the original mesh and no pre_remeshed_glb is produced.
+When should_remesh is true and save_pre_remeshed_model is true, model_urls.glb stores the remeshed output while model_urls.pre_remeshed_glb stores the mesh captured before remeshing.
+Name
+thumbnail_url
+Type
+string
+Description
+Downloadable URL to the thumbnail image of the model file.
+
+Name
+texture_prompt
+Type
+string
+Description
+The text prompt that was used to guide the texturing process.
+
+Name
+progress
+Type
+integer
+Description
+Progress of the task. If the task is not started yet, this property will be 0. Once the task has succeeded, this will become 100.
+
+Name
+started_at
+Type
+timestamp
+Description
+Timestamp of when the task was started, in miliseconds. If the task is not started yet, this property will be 0.
+
+A timestamp represents the number of milliseconds elapsed since January 1, 1970 UTC, following the RFC 3339 standard. For example, Friday, September 1, 2023 12:00:00 PM GMT is represented as 1693569600000. This applies to all timestamps in Meshy API.
+
+Name
+created_at
+Type
+timestamp
+Description
+Timestamp of when the task was created, in miliseconds.
+
+Name
+expires_at
+Type
+timestamp
+Description
+Timestamp of when the task result expires, in miliseconds.
+
+Name
+finished_at
+Type
+timestamp
+Description
+Timestamp of when the task was finished, in miliseconds. If the task is not finished yet, this property will be 0.
+
+Name
+status
+Type
+string
+Description
+Status of the task. Possible values are one of PENDING, IN_PROGRESS, SUCCEEDED, FAILED, CANCELED.
+
+Name
+texture_urls
+Type
+array
+Description
+An array of texture URL objects that are generated from the task. Normally this only contains one texture URL object. Each texture URL has the following properties:
+
+Name
+base_color
+Type
+string
+Description
+Downloadable URL to the base color map image.
+
+Name
+metallic
+Type
+string
+Description
+Downloadable URL to the metallic map image.
+
+If the task is created with enable_pbr: false, this property will be omitted.
+
+Name
+normal
+Type
+string
+Description
+Downloadable URL to the normal map image.
+
+If the task is created with enable_pbr: false, this property will be omitted.
+
+Name
+roughness
+Type
+string
+Description
+Downloadable URL to the roughness map image.
+
+If the task is created with enable_pbr: false, this property will be omitted.
+
+Name
+preceding_tasks
+Type
+integer
+Description
+The count of preceding tasks.
+
+The value of this field is meaningful only if the task status is PENDING.
+
+Name
+task_error
+Type
+object
+Description
+Error object that contains the error message if the task failed. The message property should be empty if the task succeeded.
+
+Name
+message
+Type
+string
+Description
+Detailed error message.
+
+Example Multi-Image to 3D Task Object
+{
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "model_urls": {
+    "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+    "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+    "obj": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.obj?Expires=***",
+    "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***",
+    "pre_remeshed_glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/pre_remeshed_model.glb?Expires=***"
+  },
+  "thumbnail_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.png?Expires=***",
+  "texture_prompt": "",
+  "progress": 1,
+  "started_at": 1692771667037,
+  "created_at": 1692771650657,
+  "expires_at": 1692771679037,
+  "finished_at": 1692771669037,
+  "status": "SUCCEEDED",
+  "texture_urls": [
+    {
+      "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***",
+      "metallic": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_metallic.png?Expires=XXX",
+      "normal": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_roughness.png?Expires=XXX",
+      "roughness": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_normal.png?Expires=XXX"
+    }
+  ],
+  "preceding_tasks": 0,
+  "task_error": {
+    "message": ""
+  },
+}
+
+Retexture API
+Retexture API is a feature that allows you to integrate Meshy's AI retexturing capabilities into your own application. In this section, you'll find all the information you need to get started with this API.
+
+POST
+/openapi/v1/retexture
+Create a Retexture Task
+This endpoint allows you to create a new Retexture task. Refer to The Retexture Task Object to see which properties are included with Retexture task object.
+
+Parameters
+Required attributes
+Name
+input_task_id
+Type
+string
+Description
+The ID of the completed Image to 3D or Text to 3D task you wish to retexture. This task must be one of the following tasks: Text to 3D Preview, Text to 3D Refine, Image to 3D or Remesh. In addition, it must be run using the meshy-4 or meshy-5 AI model and have a status of SUCCEEDED.
+
+Required if model_url is not provided. If both model_url and input_task_id are provided, then input_task_id will be used by default.
+
+Name
+model_url
+Type
+string
+Description
+Provide a 3D model for Meshy to texture. Supported formats: .glb, .gltf, .obj, .fbx, .stl.
+
+There are two ways to provide the model:
+
+Publicly accessible URL: A URL that is accessible from the public internet.
+Data URI: A base64-encoded data URI of the model. Use MIME type application/octet-stream. Example: data:application/octet-stream;base64,<your base64-encoded model data>.
+Required if input_task_id is not provided.
+
+Meshy will validate and only accept 3D models in supported formats, passing an unsupported format with model_url will result in a 400 error.
+
+Name
+text_style_prompt
+Type
+string
+Description
+Describe your desired texture style of the object using text. Maximum 600 characters.
+
+Required if image_style_url is not provided. If both image_style_url and text_style_prompt are provided, then image_style_url will be used to texture the model by default.
+
+Name
+image_style_url
+Type
+string
+Description
+Provide a 2d image to guide the texturing process. We currently support .jpg, .jpeg, and .png formats.
+
+There are two ways to provide the image:
+
+Publicly accessible URL: A URL that is accessible from the public internet
+Data URI: A base64-encoded data URI of the image. Example of a data URI: data:image/jpeg;base64,<your base64-encoded image data>
+Required if text_style_prompt is not provided. Image texturing may not work optimally if there are substantial geometry differences between the original asset and uploaded image.
+
+Optional attributes
+Name
+ai_model
+Type
+string
+Description
+ID of the AI model to use for retexturing.
+
+Available values:
+
+latest: Meshy 6 Preview
+meshy-4
+meshy-5
+Default to latest if not specified.
+
+Name
+enable_original_uv
+Type
+boolean
+Description
+Use the original UV of the model instead of generating new UVs. When enabled, Meshy preserves existing textures from the uploaded model. If the model has no original UV, the quality of the output might not be as good. Default to true if not specified.
+
+Name
+enable_pbr
+Type
+boolean
+Description
+Generate PBR Maps (metallic, roughness, normal) in addition to the base color.
+
+Default to false if not specified.
+
+Returns
+The result property of the response contains the task id of the newly created Retexture task.
+
+Request
+cURL
+JavaScript
+Python
+POST
+/openapi/v1/retexture
+## Using text texturing and input model example
+curl https://api.meshy.ai/openapi/v1/retexture \
+  -H "Authorization: Bearer ${YOUR_API_KEY}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model_url": "https://cdn.meshy.ai/model/example_model_2.glb",
+    "text_style_prompt": "red fangs, Samurai outfit that fused with japanese batik style",
+    "enable_original_uv": true,
+    "enable_pbr": true
+  }'
+
+ ## Using image texturing and input task example
+curl https://api.meshy.ai/openapi/v1/retexture \
+  -H "Authorization: Bearer ${YOUR_API_KEY}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "input_task_id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+    "image_style_url": "https://cdn.meshy.ai/image/example_image.jpg",
+    "enable_original_uv": true,
+    "enable_pbr": true
+  }'
+
+Copy
+Copied!
+Response
+{
+  "result": "018a210d-8ba4-705c-b111-1f1776f7f578"
+}
+
+Copy
+Copied!
+GET
+/openapi/v1/retexture/:id
+Retrieve a Retexture Task
+This endpoint allows you to retrieve a Retexture task given a valid task id. Refer to The Retexture Task Object to see which properties are included with Retexture task object.
+
+Parameters
+Name
+id
+Type
+path
+Description
+Unique identifier for the Retexture task to retrieve.
+
+Returns
+The response contains the Retexture task object. Check The Retexture Task Object section for details.
+
+Request
+cURL
+JavaScript
+Python
+GET
+/openapi/v1/retexture/018a210d-8ba4-705c-b111-1f1776f7f578
+curl https://api.meshy.ai/openapi/v1/retexture/018a210d-8ba4-705c-b111-1f1776f7f578 \
+  -H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response
+{
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "model_urls": {
+    "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+    "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+    "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***"
+  },
+  "thumbnail_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.png?Expires=***",
+  "text_style_prompt": "red fangs, Samurai outfit that fused with japanese batik style",
+  "texture_image_url": "",
+  "progress": 100,
+  "started_at": 1692771667037,
+  "created_at": 1692771650657,
+  "expires_at": 1692771679037,
+  "finished_at": 1692771669037,
+  "status": "SUCCEEDED",
+  "texture_urls": [
+    {
+      "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***",
+      "metallic": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_metallic.png?Expires=XXX",
+      "normal": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_normal.png?Expires=XXX",
+      "roughness": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_roughness.png?Expires=XXX"
+    }
+  ],
+  "task_error": {
+    "message": ""
+  }
+}
+
+Copy
+Copied!
+DELETE
+/openapi/v1/retexture/:id
+Delete a Retexture Task
+This endpoint permanently deletes a retexture task, including all associated models and data. This action is irreversible.
+
+Path Parameters
+Name
+id
+Type
+path
+Description
+The ID of the retexture task to delete.
+
+Returns
+Returns 200 OK on success.
+
+Request
+cURL
+JavaScript
+Python
+DELETE
+/openapi/v1/retexture/a43b5c6d-7e8f-901a-234b-567c890d1e2f
+curl --request DELETE \
+  --url https://api.meshy.ai/openapi/v1/retexture/a43b5c6d-7e8f-901a-234b-567c890d1e2f \
+  -H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response
+// Returns 200 Ok on success.
+
+Copy
+Copied!
+GET
+/openapi/v1/retexture
+List Retexture Tasks
+This endpoint allows you to retrieve a list of Retexture tasks.
+
+Parameters
+Optional attributes
+Name
+page_num
+Type
+integer
+Description
+Page number for pagination. Starts and defaults to 1.
+
+Name
+page_size
+Type
+integer
+Description
+Page size limit. Defaults to 10 items. Maximum allowed is 50 items.
+
+Name
+sort_by
+Type
+string
+Description
+Field to sort by. Available values:
+
++created_at: Sort by creation time in ascending order.
+-created_at: Sort by creation time in descending order.
+Returns
+Returns a paginated list of The Retexture Task Objects.
+
+Request
+cURL
+JavaScript
+Python
+GET
+/openapi/v1/retexture
+curl https://api.meshy.ai/openapi/v1/retexture?page_size=10 \
+-H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response
+[
+  {
+    "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+    "model_urls": {
+      "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+      "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+      "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***"
+    },
+    "thumbnail_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.png?Expires=***",
+    "text_style_prompt": "red fangs, Samurai outfit that fused with japanese batik style",
+    "progress": 100,
+    "started_at": 1692771667037,
+    "created_at": 1692771650657,
+    "expires_at": 1692771679037,
+    "finished_at": 1692771669037,
+    "status": "SUCCEEDED",
+    "texture_urls": [
+      {
+        "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***",
+        "metallic": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_metallic.png?Expires=XXX",
+        "normal": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_normal.png?Expires=XXX",
+        "roughness": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_roughness.png?Expires=XXX"
+      }
+    ],
+    "preceding_tasks": 0,
+    "task_error": {
+      "message": ""
+    }
+  }
+]
+
+Copy
+Copied!
+GET
+/openapi/v1/retexture/:id/stream
+Stream a Retexture Task
+This endpoint streams real-time updates for a Retexture task using Server-Sent Events (SSE).
+
+Parameters
+Name
+id
+Type
+path
+Description
+Unique identifier for the Retexture task to stream.
+
+Returns
+Returns a stream of The Retexture Task Objects as Server-Sent Events.
+
+For PENDING or IN_PROGRESS tasks, the response stream will only include necessary progress and status fields.
+
+Request
+cURL
+JavaScript
+Python
+GET
+/openapi/v1/retexture/018a210d-8ba4-705c-b111-1f1776f7f578/stream
+curl -N https://api.meshy.ai/openapi/v1/retexture/018a210d-8ba4-705c-b111-1f1776f7f578/stream \
+-H "Authorization: Bearer ${YOUR_API_KEY}"
+
+Copy
+Copied!
+Response Stream
+// Error event example
+event: error
+data: {
+  "status_code": 404,
+  "message": "Task not found"
+}
+
+// Message event examples illustrate task progress.
+// For PENDING or IN_PROGRESS tasks, the response stream will not include all fields.
+event: message
+data: {
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "progress": 0,
+  "status": "PENDING"
+}
+
+event: message
+data: {
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "progress": 50,
+  "status": "IN_PROGRESS"
+}
+
+event: message
+data: {
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "progress": 100,
+  "status": "SUCCEEDED",
+  "created_at": 1692771650657,
+  "started_at": 1692771667037,
+  "finished_at": 1692771669037,
+  "model_urls": {
+    "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+    "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+    "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***"
+  },
+  "texture_urls": [
+    {
+      "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***",
+      "metallic": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_metallic.png?Expires=XXX",
+      "normal": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_normal.png?Expires=XXX",
+      "roughness": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_roughness.png?Expires=XXX"
+    }
+  ],
+  "preceding_tasks": 0,
+  "task_error": {
+    "message": ""
+  }
+}
+
+Copy
+Copied!
+The Retexture Task Object
+The Retexture Task object is a work unit that Meshy uses to generate a 3D texture from a either text or image inputs. The model has the following properties:
+
+Properties
+Name
+id
+Type
+string
+Description
+Unique identifier for the task. While we use a k-sortable UUID for task ids as the implementation detail, you should not make any assumptions about the format of the id.
+
+Name
+model_urls
+Type
+object
+Description
+Downloadable URL to the textured 3D model file generated by Meshy.
+
+Name
+glb
+Type
+string
+Description
+Downloadable URL to the GLB file.
+
+Name
+fbx
+Type
+string
+Description
+Downloadable URL to the FBX file.
+
+Name
+usdz
+Type
+string
+Description
+Downloadable URL to the USDZ file.
+
+Name
+text_style_prompt
+Type
+string
+Description
+This is the text prompt that was used to create the texturing task.
+
+Name
+image_style_url
+Type
+string
+Description
+This is the image input that was used to create the texturing task.
+
+Name
+thumbnail_url
+Type
+string
+Description
+Downloadable URL to the thumbnail image of the model file.
+
+Name
+progress
+Type
+integer
+Description
+Progress of the task. If the task is not started yet, this property will be 0. Once the task has succeeded, this will become 100.
+
+Name
+started_at
+Type
+timestamp
+Description
+Timestamp of when the task was started, in miliseconds. If the task is not started yet, this property will be 0.
+
+A timestamp represents the number of milliseconds elapsed since January 1, 1970 UTC, following the RFC 3339 standard. For example, Friday, September 1, 2023 12:00:00 PM GMT is represented as 1693569600000. This applies to all timestamps in Meshy API.
+
+Name
+created_at
+Type
+timestamp
+Description
+Timestamp of when the task was created, in miliseconds.
+
+Name
+expires_at
+Type
+timestamp
+Description
+Timestamp of when the task result expires, in miliseconds.
+
+Name
+finished_at
+Type
+timestamp
+Description
+Timestamp of when the task was finished, in miliseconds. If the task is not finished yet, this property will be 0.
+
+Name
+status
+Type
+string
+Description
+Status of the task. Possible values are one of PENDING, IN_PROGRESS, SUCCEEDED, FAILED, CANCELED.
+
+Name
+texture_urls
+Type
+array
+Description
+An array of texture URL objects that are generated from the task. Normally this only contains one texture URL object. Each texture URL has the following properties:
+
+Name
+base_color
+Type
+string
+Description
+Downloadable URL to the base color map image.
+
+Name
+metallic
+Type
+string
+Description
+Downloadable URL to the metallic map image.
+
+If the task is created with enable_pbr: false, this property will be omitted.
+
+Name
+normal
+Type
+string
+Description
+Downloadable URL to the normal map image.
+
+If the task is created with enable_pbr: false, this property will be omitted.
+
+Name
+roughness
+Type
+string
+Description
+Downloadable URL to the roughness map image.
+
+If the task is created with enable_pbr: false, this property will be omitted.
+
+Name
+preceding_tasks
+Type
+integer
+Description
+The count of preceding tasks.
+
+This property only presents when the task status is PENDING.
+
+Name
+task_error
+Type
+object
+Description
+Error object that contains the error message if the task failed. The message property should be empty if the task succeeded.
+
+Name
+message
+Type
+string
+Description
+Detailed error message.
+
+Example Retexture Task Model
+{
+  "id": "018a210d-8ba4-705c-b111-1f1776f7f578",
+  "model_urls": {
+    "glb": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.glb?Expires=***",
+    "fbx": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.fbx?Expires=***",
+    "usdz": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/model.usdz?Expires=***"
+  },
+  "text_style_prompt": "red fangs, Samurai outfit that fused with japanese batik style",
+  "image_style_url": "https://assets.meshy.ai/***/image/example_image.jpg?Expires=***",
+  "thumbnail_url": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/preview.png?Expires=***",
+  "progress": 1,
+  "started_at": 1692771667037,
+  "created_at": 1692771650657,
+  "expires_at": 1692771679037,
+  "finished_at": 1692771669037,
+  "status": "SUCCEEDED",
+  "texture_urls": [
+    {
+      "base_color": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0.png?Expires=***",
+      "metallic": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_metallic.png?Expires=XXX",
+      "normal": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_normal.png?Expires=XXX",
+      "roughness": "https://assets.meshy.ai/***/tasks/018a210d-8ba4-705c-b111-1f1776f7f578/output/texture_0_roughness.png?Expires=XXX"
+    }
+  ],
+  "preceding_tasks": 0,
+  "task_error": {
+    "message": ""
+  }
+}
+
+Copy
+Copied!
+Previous
+Rigging & Animation
+Next
+Balance
+© 2025 Meshy LLC. All rights reserved.
+
+Join our Discord server
+Follow us on Twitter
+Subscribe on YouTube
+Follow us on Instagram
+Follow us on TikTok
+Follow us on LinkedIn
