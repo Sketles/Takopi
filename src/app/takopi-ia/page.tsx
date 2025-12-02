@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAIGenerator, type GenerationTask } from '@/hooks';
-import { useRequireAuth, useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
+import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
+import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/shared/Layout';
 import ModelViewer3D from '@/components/ModelViewer3D';
 import Image from 'next/image';
@@ -286,8 +288,9 @@ function AIModelViewer({ task, isGenerating, isRefining, isLoadingHistory, inclu
 // ============================================================================
 
 export default function TakopiIAPage() {
-  // Proteger la ruta
-  const { isReady, user } = useRequireAuth();
+  // Auth sin redirección automática - permitir ver la página sin login
+  const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
 
   const {
     isGenerating, task: currentTask, history, balance, error,
@@ -317,13 +320,19 @@ export default function TakopiIAPage() {
   // Tarea a mostrar: la seleccionada del historial o la actual
   const displayTask = selectedTask || currentTask;
 
+  // Cargar historial y balance solo si está autenticado
   useEffect(() => {
+    if (!user) {
+      setBalanceLoading(false);
+      return;
+    }
+    
     const init = async () => {
       await Promise.all([loadHistory(), loadBalance()]);
       setBalanceLoading(false);
     };
     init();
-  }, [loadHistory, loadBalance]);
+  }, [loadHistory, loadBalance, user]);
 
   // Limpiar selección cuando hay una nueva generación
   useEffect(() => {
@@ -441,6 +450,12 @@ export default function TakopiIAPage() {
   };
 
   const handleGenerate = async () => {
+    // Verificar autenticación antes de generar
+    if (!user) {
+      router.push(`/auth/login?redirect=${encodeURIComponent('/takopi-ia')}`);
+      return;
+    }
+    
     if (mode === 'text-to-3d' && !prompt.trim()) return;
     if (mode === 'image-to-3d' && !image) return;
     
