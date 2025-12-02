@@ -26,25 +26,25 @@ export default function FAQ() {
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
     return (
-        <section className="py-24 px-4 max-w-3xl mx-auto">
-            <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">Preguntas Frecuentes</h2>
-                <p className="text-gray-400">Resolvemos tus dudas antes de empezar.</p>
+        <section className="py-16 sm:py-20 lg:py-24 px-4 max-w-3xl mx-auto">
+            <div className="text-center mb-8 sm:mb-10 lg:mb-12">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">Preguntas Frecuentes</h2>
+                <p className="text-gray-400 text-sm sm:text-base">Resolvemos tus dudas antes de empezar.</p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
                 {faqs.map((faq, index) => (
                     <div
                         key={index}
-                        className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden"
+                        className="rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 overflow-hidden"
                     >
                         <button
                             onClick={() => setActiveIndex(activeIndex === index ? null : index)}
-                            className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
+                            className="w-full px-4 sm:px-6 py-4 sm:py-5 flex items-center justify-between text-left hover:bg-white/5 transition-colors gap-4"
                         >
-                            <span className="font-medium text-white text-lg">{faq.question}</span>
-                            <span className={`transform transition-transform duration-300 text-purple-400 ${activeIndex === index ? 'rotate-180' : ''}`}>
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                            <span className="font-medium text-white text-base sm:text-lg">{faq.question}</span>
+                            <span className={`transform transition-transform duration-300 text-purple-400 flex-shrink-0 ${activeIndex === index ? 'rotate-180' : ''}`}>
+                                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </span>
                         </button>
 
@@ -56,7 +56,7 @@ export default function FAQ() {
                                     exit={{ height: 0, opacity: 0 }}
                                     transition={{ duration: 0.3, ease: "easeInOut" }}
                                 >
-                                    <div className="px-6 pb-6 text-gray-400 leading-relaxed border-t border-white/5 pt-4">
+                                    <div className="px-4 sm:px-6 pb-4 sm:pb-6 text-gray-400 leading-relaxed border-t border-white/5 pt-3 sm:pt-4 text-sm sm:text-base">
                                         {faq.answer}
                                     </div>
                                 </motion.div>

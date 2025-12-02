@@ -301,17 +301,55 @@ export default function TakopiIAPage() {
   const [prompt, setPrompt] = useState('');
   const [aiModel, setAiModel] = useState('meshy-4');
   const [image, setImage] = useState<File | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(true);
+
+  // Formatos soportados por Meshy API
+  const MESHY_SUPPORTED_FORMATS = ['image/jpeg', 'image/jpg', 'image/png'];
+  const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+
+  // Validar imagen para Meshy
+  const validateImageForMeshy = (file: File): string | null => {
+    // Validar tipo MIME
+    if (!MESHY_SUPPORTED_FORMATS.includes(file.type)) {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      return `Formato "${ext?.toUpperCase() || 'desconocido'}" no soportado. Meshy solo acepta JPG y PNG.`;
+    }
+    // Validar tamaño
+    if (file.size > MAX_IMAGE_SIZE) {
+      const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+      return `Imagen muy grande (${sizeMB}MB). Máximo 10MB.`;
+    }
+    return null;
+  };
+
+  // Handler para selección de imagen con validación
+  const handleImageSelect = (file: File | null) => {
+    setImageError(null);
+    if (!file) {
+      setImage(null);
+      return;
+    }
+    const error = validateImageForMeshy(file);
+    if (error) {
+      setImageError(error);
+      setImage(null);
+      // Auto-limpiar error después de 5 segundos
+      setTimeout(() => setImageError(null), 5000);
+      return;
+    }
+    setImage(file);
+  };
   const [selectedTask, setSelectedTask] = useState<GenerationTask | null>(null);
   const [loadingTask, setLoadingTask] = useState(false);
   const [showSuccessBadge, setShowSuccessBadge] = useState(false);
-  const [includeTextures, setIncludeTextures] = useState(true);
+  const [includeTextures, setIncludeTextures] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<GenerationTask | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const { authDelete } = useAuthenticatedFetch();
+  const { authDelete, getToken } = useAuthenticatedFetch();
   
   // Ref para trackear si debe auto-refinar cuando termine el preview
   const shouldAutoRefineRef = useRef(false);
@@ -381,13 +419,34 @@ export default function TakopiIAPage() {
     }
   }, [currentTask?.status, currentTask?.taskType, currentTask?.mode, currentTask?.taskId, isRefining, refine, loadBalance]);
   
-  // Detectar cuando refine termina
+  // Detectar cuando refine termina y actualizar historial
   useEffect(() => {
     if (currentTask?.taskType === 'text-to-3d-refine' && 
         ['SUCCEEDED', 'FAILED', 'CANCELED'].includes(currentTask?.status || '')) {
       setIsRefining(false);
+      // Recargar historial para mostrar el modelo con texturas
+      loadHistory();
     }
-  }, [currentTask?.taskType, currentTask?.status]);
+  }, [currentTask?.taskType, currentTask?.status, loadHistory]);
+
+  // Actualizar historial cuando CUALQUIER tarea termina (no solo refine)
+  useEffect(() => {
+    if (currentTask && ['SUCCEEDED', 'FAILED', 'CANCELED'].includes(currentTask.status)) {
+      // Pequeño delay para asegurar que el backend actualizó
+      const timer = setTimeout(() => loadHistory(), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentTask?.status, currentTask?.id, loadHistory]);
+
+  // Si selectedTask está en el historial y se actualizó, sincronizar
+  useEffect(() => {
+    if (selectedTask) {
+      const updatedTask = history.find(h => h.id === selectedTask.id);
+      if (updatedTask && updatedTask.status !== selectedTask.status) {
+        setSelectedTask(updatedTask);
+      }
+    }
+  }, [history, selectedTask]);
 
   // Mostrar badge "Listo" por 2 segundos cuando termina una generación (refine o final)
   useEffect(() => {
@@ -435,7 +494,17 @@ export default function TakopiIAPage() {
 
   // Seleccionar tarea del historial (obtiene URLs frescas)
   const handleSelectFromHistory = async (task: GenerationTask) => {
-    if (task.status !== 'SUCCEEDED') return;
+    // Si es la tarea actual en progreso, limpiar selección para mostrar el progreso
+    if (currentTask && task.id === currentTask.id) {
+      setSelectedTask(null);
+      return;
+    }
+
+    // Si la tarea está en progreso (no es la actual), no hacer nada
+    // El usuario verá el indicador de loading en el historial
+    if (!['SUCCEEDED', 'FAILED', 'CANCELED'].includes(task.status)) {
+      return;
+    }
 
     setLoadingTask(true);
     setIsRefining(false);
@@ -448,6 +517,18 @@ export default function TakopiIAPage() {
       setLoadingTask(false);
     }
   };
+
+  // Función para volver a ver el progreso actual
+  const handleBackToCurrentTask = () => {
+    setSelectedTask(null);
+  };
+
+  // Determinar si hay una tarea en progreso que no estamos viendo
+  const hasActiveTaskNotViewing = currentTask && 
+    !['SUCCEEDED', 'FAILED', 'CANCELED'].includes(currentTask.status) && 
+    selectedTask !== null;
+
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const handleGenerate = async () => {
     // Verificar autenticación antes de generar
@@ -467,10 +548,46 @@ export default function TakopiIAPage() {
       lastRefineTaskIdRef.current = null;
       console.log('✅ shouldAutoRefineRef seteado a TRUE');
     }
+
+    let imageUrl: string | undefined;
+
+    // Si es image-to-3d, primero subir la imagen a Blob
+    if (mode === 'image-to-3d' && image) {
+      try {
+        setIsUploadingImage(true);
+        const formData = new FormData();
+        formData.append('file', image);
+
+        const token = getToken();
+        const response = await fetch('/api/upload/ai-image', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Error al subir imagen');
+        }
+
+        const data = await response.json();
+        imageUrl = data.url;
+        console.log('✅ Imagen subida:', imageUrl);
+      } catch (err) {
+        console.error('❌ Error subiendo imagen:', err);
+        setIsUploadingImage(false);
+        return;
+      } finally {
+        setIsUploadingImage(false);
+      }
+    }
     
     await generate({
       type: mode,
       prompt: prompt.trim(),
+      imageUrl,
       aiModel: aiModel as 'meshy-4' | 'meshy-5' | 'latest',
     });
     setTimeout(() => loadBalance(), 2000);
@@ -598,7 +715,7 @@ export default function TakopiIAPage() {
                       className={`aspect-square rounded-3xl border-2 border-dashed cursor-pointer transition-all duration-300 flex flex-col items-center justify-center relative overflow-hidden group ${image ? 'border-purple-500/50 bg-purple-500/5' : 'border-white/10 bg-black/20 hover:border-purple-500/30 hover:bg-white/5'
                         }`}
                     >
-                      <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] || null)} className="hidden" />
+                      <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png" onChange={(e) => handleImageSelect(e.target.files?.[0] || null)} className="hidden" />
                       {image ? (
                         <>
                           <img src={URL.createObjectURL(image)} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
@@ -615,10 +732,20 @@ export default function TakopiIAPage() {
                             <span className="text-3xl">📷</span>
                           </div>
                           <p className="text-gray-400 font-medium">Sube tu imagen</p>
-                          <p className="text-gray-600 text-xs mt-1">PNG, JPG hasta 10MB</p>
+                          <p className="text-gray-600 text-xs mt-1">Solo PNG o JPG (máx 10MB)</p>
                         </>
                       )}
                     </div>
+                    {/* Error de imagen */}
+                    {imageError && (
+                      <div className="mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-2">
+                        <span className="text-red-400 text-lg">⚠️</span>
+                        <div>
+                          <p className="text-red-400 text-sm font-medium">{imageError}</p>
+                          <p className="text-red-400/60 text-xs mt-1">Convierte tu imagen a JPG o PNG e intenta de nuevo.</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -665,15 +792,20 @@ export default function TakopiIAPage() {
               <div className="mt-8">
                 <button
                   onClick={handleGenerate}
-                  disabled={isGenerating || (mode === 'text-to-3d' && !prompt.trim()) || (mode === 'image-to-3d' && !image)}
-                  className={`w-full py-5 rounded-2xl font-black text-lg tracking-wide transition-all duration-500 relative overflow-hidden group ${isGenerating || (mode === 'text-to-3d' && !prompt.trim()) || (mode === 'image-to-3d' && !image)
+                  disabled={isGenerating || isUploadingImage || (mode === 'text-to-3d' && !prompt.trim()) || (mode === 'image-to-3d' && !image)}
+                  className={`w-full py-5 rounded-2xl font-black text-lg tracking-wide transition-all duration-500 relative overflow-hidden group ${isGenerating || isUploadingImage || (mode === 'text-to-3d' && !prompt.trim()) || (mode === 'image-to-3d' && !image)
                     ? 'bg-white/5 text-gray-600 cursor-not-allowed border border-white/5'
                     : 'bg-white text-black hover:scale-[1.02] shadow-[0_0_40px_rgba(255,255,255,0.2)]'
                     }`}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-shimmer" />
                   <span className="relative flex items-center justify-center gap-3">
-                    {isGenerating ? (
+                    {isUploadingImage ? (
+                      <>
+                        <span className="w-5 h-5 border-2 border-gray-400 border-t-black rounded-full animate-spin" />
+                        SUBIENDO IMAGEN...
+                      </>
+                    ) : isGenerating ? (
                       <>
                         <span className="w-5 h-5 border-2 border-gray-400 border-t-black rounded-full animate-spin" />
                         MATERIALIZANDO...
@@ -711,6 +843,19 @@ export default function TakopiIAPage() {
                     GENERACIÓN COMPLETADA
                   </span>
                 </div>
+              )}
+
+              {/* Botón "Volver al progreso" cuando hay una tarea activa y estás viendo el historial */}
+              {hasActiveTaskNotViewing && (
+                <button
+                  onClick={handleBackToCurrentTask}
+                  className="absolute top-8 left-1/2 -translate-x-1/2 z-30 px-6 py-3 bg-purple-600/90 hover:bg-purple-500 backdrop-blur-xl border border-purple-400/30 rounded-full shadow-[0_0_30px_rgba(168,85,247,0.4)] transition-all hover:scale-105 animate-pulse"
+                >
+                  <span className="text-white font-bold tracking-wide flex items-center gap-2">
+                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    {isRefining ? 'TEXTURIZANDO...' : 'GENERANDO...'} — Ver Progreso
+                  </span>
+                </button>
               )}
 
               <AIModelViewer 
@@ -754,14 +899,17 @@ export default function TakopiIAPage() {
                 const thumbSrc = getProxiedUrl(t.thumbnailUrl);
                 const hasTextures = t.taskType === 'text-to-3d-refine' || t.taskType === 'image-to-3d' || t.mode === 'refine';
                 const isInProgress = !['SUCCEEDED', 'FAILED', 'CANCELED'].includes(t.status);
+                const isCurrentTask = currentTask?.id === t.id;
+                const isViewingThis = selectedTask?.id === t.id || (isCurrentTask && !selectedTask);
                 
                 return (
                 <div
                   key={t.id}
-                  onClick={() => t.status === 'SUCCEEDED' && handleSelectFromHistory(t)}
+                  onClick={() => handleSelectFromHistory(t)}
                   className={`w-16 h-16 shrink-0 rounded-2xl overflow-visible transition-all duration-300 relative group ${
-                    isInProgress ? 'cursor-wait' : t.status === 'SUCCEEDED' ? 'cursor-pointer' : 'cursor-not-allowed'
-                  } ${selectedTask?.id === t.id
+                    isInProgress && !isCurrentTask ? 'cursor-wait' : 
+                    t.status === 'SUCCEEDED' || isCurrentTask ? 'cursor-pointer' : 'cursor-not-allowed'
+                  } ${isViewingThis
                     ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-black scale-105'
                     : 'opacity-60 hover:opacity-100 hover:scale-110'
                     }`}

@@ -26,37 +26,37 @@ export default function ProfitCalculator() {
     };
 
     return (
-        <section className="py-24 px-4 relative overflow-hidden">
+        <section className="py-16 sm:py-20 lg:py-24 px-4 relative overflow-hidden">
             {/* Background Elements */}
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[#0a0a0a] to-[#111] -z-10"></div>
-            <div className="absolute top-1/4 right-0 w-96 h-96 bg-green-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+            <div className="absolute top-1/4 right-0 w-64 sm:w-80 lg:w-96 h-64 sm:h-80 lg:h-96 bg-green-500/10 rounded-full blur-[80px] sm:blur-[100px] lg:blur-[120px] pointer-events-none"></div>
 
-            <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16 items-center">
 
                 {/* Text Content */}
-                <div className="space-y-6">
+                <div className="space-y-5 sm:space-y-6 text-center lg:text-left">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-medium">
                         <span>💰</span> Monetiza tu talento
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-bold leading-tight">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
                         Calcula tu potencial <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-600">
                             de ganancias
                         </span>
                     </h2>
-                    <p className="text-gray-400 text-lg leading-relaxed">
+                    <p className="text-gray-400 text-base sm:text-lg leading-relaxed max-w-lg mx-auto lg:mx-0">
                         Takopi te da las herramientas para vivir de tu arte. Sin costos ocultos, solo una comisión justa cuando vendes.
                         Juega con los números y visualiza tu futuro.
                     </p>
 
-                    <ul className="space-y-4 pt-4">
+                    <ul className="space-y-3 sm:space-y-4 pt-4 text-left max-w-md mx-auto lg:mx-0">
                         {[
                             "Pagos seguros vía Transbank",
                             "Retiros directos a tu cuenta bancaria",
                             "Panel de control de ventas en tiempo real"
                         ].map((item, i) => (
-                            <li key={i} className="flex items-center gap-3 text-gray-300">
-                                <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xs">✓</div>
+                            <li key={i} className="flex items-center gap-3 text-gray-300 text-sm sm:text-base">
+                                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xs flex-shrink-0">✓</div>
                                 {item}
                             </li>
                         ))}
@@ -64,12 +64,12 @@ export default function ProfitCalculator() {
                 </div>
 
                 {/* Interactive Calculator Card */}
-                <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-600 rounded-3xl blur-xl opacity-20"></div>
-                    <div className="relative bg-[#1a1a1a]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
+                <div className="relative order-first lg:order-last">
+                    <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl sm:rounded-3xl blur-xl opacity-20"></div>
+                    <div className="relative bg-[#1a1a1a]/80 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-6 md:p-8 shadow-2xl">
 
                         {/* Sliders */}
-                        <div className="space-y-8 mb-10">
+                        <div className="space-y-6 sm:space-y-8 mb-8 sm:mb-10">
                             <style jsx>{`
                                 input[type=range] {
                                     -webkit-appearance: none;

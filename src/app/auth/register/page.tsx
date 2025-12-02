@@ -232,7 +232,7 @@ export default function RegisterPage() {
                 WebkitTextFillColor: "white",
                 caretColor: "white"
               }}
-              placeholder="••••••••"
+              placeholder="Mínimo 6 caracteres"
             />
             <button
               type="button"

@@ -159,7 +159,7 @@ function LoginForm() {
                   WebkitTextFillColor: "white",
                   caretColor: "white"
                 }}
-                placeholder="••••••••"
+                placeholder="Ingresa tu contraseña"
               />
               <button
                 type="button"

@@ -39,18 +39,18 @@ const features = [
 
 export default function FeaturesGrid() {
     return (
-        <section className="py-24 px-4 max-w-7xl mx-auto">
-            <div className="text-center mb-16 space-y-4">
-                <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
-                    Todo lo que necesitas <br />
+        <section className="py-16 sm:py-20 lg:py-24 px-4 max-w-7xl mx-auto">
+            <div className="text-center mb-10 sm:mb-12 lg:mb-16 space-y-3 sm:space-y-4">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+                    Todo lo que necesitas <br className="hidden sm:block" />
                     <span className="bg-gradient-to-r from-gray-200 to-gray-500 bg-clip-text text-transparent">en un solo ecosistema</span>
                 </h2>
-                <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+                <p className="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto px-2 sm:px-0">
                     Diseñado para creadores, coleccionistas y soñadores.
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[280px]">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 auto-rows-[220px] sm:auto-rows-[250px] md:auto-rows-[280px]">
                 {features.map((feature, index) => (
                     <motion.div
                         key={index}
@@ -76,9 +76,9 @@ export default function FeaturesGrid() {
                         <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-20 transition-opacity duration-500 mix-blend-overlay`}></div>
 
                         {/* Content */}
-                        <div className="relative z-10 h-full p-8 flex flex-col justify-between">
+                        <div className="relative z-10 h-full p-5 sm:p-6 md:p-8 flex flex-col justify-between">
                             <div className={`
-                w-14 h-14 rounded-2xl flex items-center justify-center text-3xl 
+                w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center text-2xl sm:text-3xl 
                 bg-white/10 backdrop-blur-md border border-white/20
                 shadow-lg group-hover:scale-110 transition-transform duration-300
               `}>
@@ -86,10 +86,10 @@ export default function FeaturesGrid() {
                             </div>
 
                             <div>
-                                <h3 className="text-2xl font-bold text-white mb-2 drop-shadow-md">
+                                <h3 className="text-xl sm:text-2xl font-bold text-white mb-1.5 sm:mb-2 drop-shadow-md">
                                     {feature.title}
                                 </h3>
-                                <p className="text-gray-300 group-hover:text-white transition-colors drop-shadow-sm">
+                                <p className="text-sm sm:text-base text-gray-300 group-hover:text-white transition-colors drop-shadow-sm">
                                     {feature.description}
                                 </p>
                             </div>

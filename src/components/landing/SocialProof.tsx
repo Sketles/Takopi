@@ -43,16 +43,16 @@ export default function SocialProof() {
     const marqueeItems = [...displayItems, ...displayItems];
 
     return (
-        <section className="py-24 px-4 border-t border-white/5 bg-[#0a0a0a] overflow-hidden">
-            <div className="max-w-7xl mx-auto text-center mb-16">
-                <h2 className="text-3xl md:text-5xl font-bold mb-6">
+        <section className="py-16 sm:py-20 lg:py-24 px-4 border-t border-white/5 bg-[#0a0a0a] overflow-hidden">
+            <div className="max-w-7xl mx-auto text-center mb-10 sm:mb-12 lg:mb-16">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6">
                     Únete a la revolución <br />
                     <span className="text-purple-500">creativa</span>
                 </h2>
             </div>
 
             {/* Stats Grid */}
-            <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 mb-20">
+            <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8 mb-12 sm:mb-16 lg:mb-20">
                 {stats.map((stat, index) => (
                     <motion.div
                         key={index}
@@ -60,23 +60,23 @@ export default function SocialProof() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: index * 0.1 }}
-                        className="text-center p-6 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
+                        className="text-center p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
                     >
-                        <div className="text-3xl mb-2">{stat.icon}</div>
-                        <div className="text-3xl md:text-4xl font-black text-white mb-1">{stat.value}</div>
-                        <div className="text-sm text-gray-400 font-medium">{stat.label}</div>
+                        <div className="text-2xl sm:text-3xl mb-1.5 sm:mb-2">{stat.icon}</div>
+                        <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white mb-0.5 sm:mb-1">{stat.value}</div>
+                        <div className="text-xs sm:text-sm text-gray-400 font-medium">{stat.label}</div>
                     </motion.div>
                 ))}
             </div>
 
             {/* Infinite Avatar Scroll */}
-            <div className="relative w-full max-w-6xl mx-auto overflow-hidden py-10 mask-gradient">
+            <div className="relative w-full max-w-6xl mx-auto overflow-hidden py-6 sm:py-8 lg:py-10 mask-gradient">
                 {/* Gradient Masks for smooth fade out at edges */}
-                <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#0a0a0a] to-transparent z-10 pointer-events-none"></div>
-                <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10 pointer-events-none"></div>
+                <div className="absolute inset-y-0 left-0 w-16 sm:w-24 lg:w-32 bg-gradient-to-r from-[#0a0a0a] to-transparent z-10 pointer-events-none"></div>
+                <div className="absolute inset-y-0 right-0 w-16 sm:w-24 lg:w-32 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10 pointer-events-none"></div>
 
                 <motion.div
-                    className="flex gap-8 w-max"
+                    className="flex gap-4 sm:gap-6 lg:gap-8 w-max"
                     animate={{ x: "-50%" }}
                     transition={{
                         repeat: Infinity,
@@ -89,7 +89,7 @@ export default function SocialProof() {
                         <div
                             key={i}
                             className={`
-                                w-16 h-16 rounded-full border-4 border-[#0a0a0a] shadow-lg flex-shrink-0 
+                                w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-full border-2 sm:border-4 border-[#0a0a0a] shadow-lg flex-shrink-0 
                                 flex items-center justify-center overflow-hidden
                                 ${item.isPlaceholder ? item.color : 'bg-gray-800'}
                                 hover:scale-110 transition-transform cursor-pointer

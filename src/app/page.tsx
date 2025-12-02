@@ -254,48 +254,48 @@ export default function HomePage() {
     <Layout>
       <div className="min-h-screen bg-[#0a0a0a] text-white selection:bg-purple-500/30">
         {/* Hero Section with Particles */}
-        <div className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+        <div className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center justify-center overflow-hidden">
           {/* Background Gradients */}
           <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 via-[#0a0a0a] to-[#0a0a0a] z-0"></div>
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none"></div>
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+          <div className="absolute top-0 left-1/4 w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 bg-purple-600/20 rounded-full blur-[80px] sm:blur-[100px] lg:blur-[120px] pointer-events-none"></div>
+          <div className="absolute bottom-0 right-1/4 w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 bg-blue-600/10 rounded-full blur-[80px] sm:blur-[100px] lg:blur-[120px] pointer-events-none"></div>
 
           <ParticleBackground />
 
           {/* Content */}
-          <div className="relative z-10 text-center px-4 max-w-5xl mx-auto space-y-8">
+          <div className="relative z-10 text-center px-4 sm:px-6 max-w-5xl mx-auto space-y-6 sm:space-y-8">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md animate-fade-in-down hover:bg-white/10 transition-colors cursor-default">
+            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md animate-fade-in-down hover:bg-white/10 transition-colors cursor-default">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
-              <span className="text-sm font-medium text-gray-300 tracking-wide">Marketplace V1.0 + Impresión 3D</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-300 tracking-wide">Marketplace V1.0 + Impresión 3D</span>
             </div>
 
-            <h1 className="text-7xl md:text-9xl font-black tracking-tighter animate-fade-in leading-[0.9] mb-6">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-tighter animate-fade-in leading-[0.9] mb-4 sm:mb-6">
               <span className="bg-gradient-to-r from-purple-400 via-fuchsia-400 to-purple-600 bg-clip-text text-transparent drop-shadow-[0_0_50px_rgba(168,85,247,0.5)]">
                 TAKOPI
               </span>
               <br />
-              <span className="text-4xl md:text-6xl font-bold text-white tracking-tight">
+              <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white tracking-tight">
                 Marketplace Digital
               </span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto font-light leading-relaxed animate-fade-in-up delay-100">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto font-light leading-relaxed animate-fade-in-up delay-100 px-2 sm:px-0">
               Takopi es la plataforma definitiva para creadores. Compra y vende assets digitales, o lleva tus modelos 3D a la realidad con nuestro servicio de impresión de vanguardia.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-5 justify-center pt-8 animate-fade-in-up delay-200">
-              <Link href="/explore" className="group relative px-8 py-4 bg-white text-black rounded-xl font-bold text-lg hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] overflow-hidden">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 justify-center pt-6 sm:pt-8 animate-fade-in-up delay-200 px-2 sm:px-0">
+              <Link href="/explore" className="group relative px-6 sm:px-8 py-3.5 sm:py-4 bg-white text-black rounded-xl font-bold text-base sm:text-lg hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
-                <span className="relative flex items-center gap-2">
+                <span className="relative flex items-center justify-center gap-2">
                   Explorar Marketplace
                   <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                 </span>
               </Link>
-              <Link href="/impresion-3d" className="group px-8 py-4 bg-white/5 border border-white/10 text-white rounded-xl font-bold text-lg hover:bg-white/10 hover:scale-105 transition-all backdrop-blur-md flex items-center justify-center gap-2">
+              <Link href="/impresion-3d" className="group px-6 sm:px-8 py-3.5 sm:py-4 bg-white/5 border border-white/10 text-white rounded-xl font-bold text-base sm:text-lg hover:bg-white/10 hover:scale-105 transition-all backdrop-blur-md flex items-center justify-center gap-2">
                 <span>Servicio de Impresión 3D</span>
                 <div className="w-2 h-2 rounded-full bg-purple-500 group-hover:shadow-[0_0_10px_#a855f7] transition-shadow"></div>
               </Link>
@@ -319,18 +319,18 @@ export default function HomePage() {
         <FAQ />
 
         {/* CTA Final */}
-        <section className="py-32 px-4 relative overflow-hidden">
+        <section className="py-16 sm:py-24 lg:py-32 px-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] to-purple-900/20"></div>
           <div className="max-w-4xl mx-auto text-center relative z-10">
-            <h2 className="text-5xl md:text-7xl font-bold mb-8 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 sm:mb-8 tracking-tight">
               Comienza Tu <br />
               <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Viaje Creativo</span>
             </h2>
-            <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-8 sm:mb-12 max-w-2xl mx-auto px-2 sm:px-0">
               Únete a la comunidad de creadores más innovadora de Latinoamérica.
             </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <Link href="/auth/register" className="px-10 py-5 bg-white text-black rounded-2xl font-bold text-xl hover:scale-105 transition-transform shadow-2xl">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4 sm:px-0">
+              <Link href="/auth/register" className="px-8 sm:px-10 py-4 sm:py-5 bg-white text-black rounded-2xl font-bold text-lg sm:text-xl hover:scale-105 transition-transform shadow-2xl">
                 Crear Cuenta Gratis
               </Link>
             </div>
