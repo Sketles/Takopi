@@ -26,6 +26,9 @@ import ParticlesBackground from '@/components/shared/ParticlesBackground';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/shared/Toast';
 import MediaViewer from '@/components/shared/MediaViewer';
+import { useClientUpload } from '@/hooks/useClientUpload';
+import { validateCoverImage, validateContentFile, validateFiles } from '@/lib/fileValidation';
+import { FileErrorToastContainer, useFileErrorToasts } from '@/components/shared/FileErrorToast';
 
 // Tipos de contenido
 const contentTypes = [
@@ -85,6 +88,9 @@ export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
+  // Hook para toasts de errores de archivos
+  const { toasts: fileErrorToasts, addToast: addFileError, dismissToast: dismissFileError } = useFileErrorToasts();
+
   // Redireccionar si no hay usuario
   useEffect(() => {
     if (!authLoading && !user) {
@@ -120,17 +126,49 @@ export default function UploadPage() {
     setFormData(prev => ({ ...prev, tags: prev.tags.filter(tag => tag !== tagToRemove) }));
   };
 
-  // Manejo de Archivos
+  // Manejo de Archivos con validación
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      setFiles(prev => [...prev, ...newFiles]);
+      
+      // Validar archivos
+      const { validFiles, errors } = validateFiles(newFiles, formData.contentType || 'otros');
+      
+      // Mostrar errores
+      errors.forEach(({ error }) => {
+        addFileError({
+          title: error.title,
+          message: error.message,
+          suggestion: error.suggestion,
+          type: 'error',
+        });
+      });
+      
+      // Agregar solo archivos válidos
+      if (validFiles.length > 0) {
+        setFiles(prev => [...prev, ...validFiles]);
+      }
     }
   };
 
   const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      // Validar imagen de portada
+      const validation = validateCoverImage(file);
+      if (!validation.valid && validation.error) {
+        addFileError({
+          title: validation.error.title,
+          message: validation.error.message,
+          suggestion: validation.error.suggestion,
+          type: 'error',
+        });
+        // Limpiar input
+        e.target.value = '';
+        return;
+      }
+      
       setCoverImage(file);
       const reader = new FileReader();
       reader.onload = (e) => setCoverPreview(e.target?.result as string);
@@ -154,7 +192,24 @@ export default function UploadPage() {
     setIsDragging(false);
     if (e.dataTransfer.files) {
       const newFiles = Array.from(e.dataTransfer.files);
-      setFiles(prev => [...prev, ...newFiles]);
+      
+      // Validar archivos
+      const { validFiles, errors } = validateFiles(newFiles, formData.contentType || 'otros');
+      
+      // Mostrar errores
+      errors.forEach(({ error }) => {
+        addFileError({
+          title: error.title,
+          message: error.message,
+          suggestion: error.suggestion,
+          type: 'error',
+        });
+      });
+      
+      // Agregar solo archivos válidos
+      if (validFiles.length > 0) {
+        setFiles(prev => [...prev, ...validFiles]);
+      }
     }
   };
 
@@ -172,7 +227,10 @@ export default function UploadPage() {
   const isStep2Valid = files.length > 0 && formData.description;
   const isStep3Valid = true; // Siempre válido por defaults
 
-  // Submit
+  // Hook para upload directo a Vercel Blob (sin límite de 4.5MB)
+  const { uploadFiles, uploadSingleFile, isUploading: isUploadingFiles, progress: uploadProgress } = useClientUpload();
+
+  // Submit con Client-Side Upload (soporta archivos hasta 500MB)
   const handleSubmit = async () => {
     if (!user) {
       addToast({
@@ -192,34 +250,53 @@ export default function UploadPage() {
         throw new Error('No se encontró token de autenticación');
       }
 
-      // 2. Subir archivos a Vercel Blob
-      const formDataToUpload = new FormData();
-
-      files.forEach(file => {
-        formDataToUpload.append('files', file);
-      });
-
+      // 2. Validar archivos antes de subir
+      // Validar portada
       if (coverImage) {
-        formDataToUpload.append('coverImage', coverImage);
+        const coverValidation = validateCoverImage(coverImage);
+        if (!coverValidation.valid && coverValidation.error) {
+          addFileError({
+            title: coverValidation.error.title,
+            message: coverValidation.error.message,
+            suggestion: coverValidation.error.suggestion,
+            type: 'error',
+          });
+          setIsSubmitting(false);
+          return;
+        }
       }
 
-      formDataToUpload.append('contentType', formData.contentType);
-
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formDataToUpload
-      });
-
-      const uploadResult = await uploadResponse.json();
-
-      if (!uploadResponse.ok || !uploadResult.success) {
-        throw new Error(uploadResult.error || 'Error al subir archivos');
+      // Validar archivos de contenido
+      const { validFiles, errors: fileErrors } = validateFiles(files, formData.contentType);
+      if (fileErrors.length > 0) {
+        fileErrors.forEach(({ error }) => {
+          addFileError({
+            title: error.title,
+            message: error.message,
+            suggestion: error.suggestion,
+            type: 'error',
+          });
+        });
+        setIsSubmitting(false);
+        return;
       }
 
-      console.log('✅ Archivos subidos a Vercel Blob:', uploadResult.data);
+      // 3. Subir archivos directamente a Vercel Blob (CLIENT-SIDE UPLOAD)
+      // Esto evita el límite de 4.5MB de las Serverless Functions
+      console.log('📤 Iniciando upload directo a Vercel Blob...');
+      
+      // Subir archivos principales
+      const uploadedFiles = await uploadFiles(validFiles, formData.contentType);
+      console.log(`✅ ${uploadedFiles.length} archivo(s) subido(s) a Vercel Blob`);
+
+      // Subir imagen de portada
+      let coverImageUrl = coverPreview || '/placeholder-cover.jpg';
+      if (coverImage) {
+        console.log('📤 Subiendo imagen de portada...');
+        const uploadedCover = await uploadSingleFile(coverImage, 'covers');
+        coverImageUrl = uploadedCover.url;
+        console.log('✅ Portada subida:', coverImageUrl);
+      }
 
       // 3. Preparar payload con URLs reales de Vercel Blob
       const payload = {
@@ -233,8 +310,15 @@ export default function UploadPage() {
         tags: formData.tags,
         license: formData.license,
         isListed: formData.isListed,
-        coverImage: uploadResult.data.coverImage || coverPreview || '/placeholder-cover.jpg',
-        files: uploadResult.data.files, // ✨ URLs reales de Vercel Blob
+        coverImage: coverImageUrl,
+        files: uploadedFiles.map(f => ({
+          name: f.name,
+          originalName: f.originalName,
+          size: f.size,
+          type: f.type,
+          url: f.url,
+          previewUrl: f.previewUrl
+        })),
         allowTips: false,
         allowCommissions: false
       };
@@ -248,6 +332,14 @@ export default function UploadPage() {
         },
         body: JSON.stringify(payload)
       });
+
+      // Verificar si la respuesta es JSON válido
+      const responseContentType = response.headers.get('content-type');
+      if (!responseContentType || !responseContentType.includes('application/json')) {
+        const textError = await response.text();
+        console.error('❌ Respuesta no-JSON del servidor:', textError);
+        throw new Error(`Error del servidor: ${textError.substring(0, 100)}`);
+      }
 
       const result = await response.json();
 
@@ -283,6 +375,9 @@ export default function UploadPage() {
   return (
     <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden font-sans selection:bg-purple-500/30">
       <ParticlesBackground />
+      
+      {/* Toast de errores de archivos */}
+      <FileErrorToastContainer toasts={fileErrorToasts} onDismiss={dismissFileError} />
 
       <div className="relative z-10 max-w-[1600px] mx-auto px-4 py-8 lg:py-12 min-h-screen flex flex-col">
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -694,11 +789,27 @@ export default function UploadPage() {
                 ) : (
                   <button
                     onClick={handleSubmit}
-                    disabled={isSubmitting}
-                    className="group flex items-center gap-3 px-10 py-4 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:shadow-[0_0_30px_rgba(147,51,234,0.5)] hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isSubmitting || isUploadingFiles}
+                    className="group flex items-center gap-3 px-10 py-4 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:shadow-[0_0_30px_rgba(147,51,234,0.5)] hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
                   >
-                    <span>{isSubmitting ? 'Publicando...' : 'Publicar Proyecto'}</span>
-                    {!isSubmitting && <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+                    {/* Barra de progreso de upload */}
+                    {isUploadingFiles && (
+                      <div 
+                        className="absolute left-0 top-0 h-full bg-white/20 transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    )}
+                    <span className="relative z-10">
+                      {isUploadingFiles 
+                        ? `Subiendo... ${uploadProgress}%` 
+                        : isSubmitting 
+                          ? 'Guardando...' 
+                          : 'Publicar Proyecto'}
+                    </span>
+                    {!isSubmitting && !isUploadingFiles && <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />}
+                    {(isSubmitting || isUploadingFiles) && (
+                      <ArrowPathIcon className="w-5 h-5 animate-spin relative z-10" />
+                    )}
                   </button>
                 )}
               </div>
@@ -723,7 +834,7 @@ export default function UploadPage() {
                   description={formData.shortDescription || 'Descripción del proyecto...'}
                   shortDescription={formData.shortDescription || 'Descripción del proyecto...'}
                   contentType={formData.contentType || 'modelos3d'}
-                  category={formData.category}
+                  category={formData.contentType || 'modelos3d'}
                   price={formData.isFree ? 'Gratis' : formData.price}
                   isFree={formData.isFree}
                   coverImage={coverPreview || undefined}

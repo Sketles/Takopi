@@ -78,15 +78,39 @@ function ModelViewerWrapper({ children, onLoad, onError, ...rest }: any) {
     const el = modelViewerRef.current;
     if (!el) return;
 
-    const handleLoad = () => onLoad?.();
-    const handleError = (e: CustomEvent) => onError?.(e);
+    const handleLoad = () => {
+      try { console.log('🟢 model-viewer event: load'); } catch { }
+      onLoad?.();
+    };
+    const handleError = (e: CustomEvent) => {
+      try { console.log('🔴 model-viewer event: error', e?.detail); } catch { }
+      onError?.(e);
+    };
 
     el.addEventListener('load', handleLoad as any);
     el.addEventListener('error', handleError as any);
 
+    // Polling para detectar cuando el modelo está listo
+    // model-viewer a veces no dispara el evento 'load' correctamente
+    const checkInterval = setInterval(() => {
+      // Verificar si el modelo está renderizado (tiene un modelViewer interno con scene)
+      if (el.loaded || el.modelIsVisible || (el as any).model) {
+        console.log('🟢 model-viewer cargado (detectado por polling)');
+        clearInterval(checkInterval);
+        onLoad?.();
+      }
+    }, 500);
+
+    // Limpiar después de 30 segundos máximo
+    const maxTimeout = setTimeout(() => {
+      clearInterval(checkInterval);
+    }, 30000);
+
     return () => {
       el.removeEventListener('load', handleLoad as any);
       el.removeEventListener('error', handleError as any);
+      clearInterval(checkInterval);
+      clearTimeout(maxTimeout);
     };
   }, [onLoad, onError, isLoaded]);
 
@@ -172,28 +196,52 @@ export default function ModelViewer3D({
 
   // Resetear estado cuando cambie el src
   useEffect(() => {
+    console.log('🔄 ModelViewer3D: src cambió, reseteando estado...', src?.substring(0, 60));
     setIsLoading(true);
     setHasError(false);
   }, [src]);
 
+  // Log inicial para debug
+  useEffect(() => {
+    console.log('🧩 ModelViewer3D inicializado:', { src, alt, width, height });
+  }, [src, alt, width, height]);
+
   // Verificar soporte de WebGL
   useEffect(() => {
-    try {
-      const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-      setIsWebGLSupported(!!gl);
-    } catch {
-      setIsWebGLSupported(false);
-    }
+    const checkWebGLSupport = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        setIsWebGLSupported(!!gl);
+      } catch (e) {
+        setIsWebGLSupported(false);
+      }
+    };
+
+    checkWebGLSupport();
   }, []);
 
+  // Timeout para detectar si el modelo no carga
+  useEffect(() => {
+    if (!isLoading || !src) return;
+    
+    const timeoutId = setTimeout(() => {
+      if (isLoading) {
+        console.warn('⚠️ ModelViewer3D: Timeout de carga (15s), el modelo puede estar tardando mucho:', src?.substring(0, 60));
+      }
+    }, 15000);
+    
+    return () => clearTimeout(timeoutId);
+  }, [isLoading, src]);
+
   const handleLoad = () => {
+    console.log('✅ ModelViewer3D: Modelo cargado exitosamente!', src?.substring(0, 80));
     setIsLoading(false);
     setHasError(false);
 
-    // Extraer animaciones disponibles
+    // Extract animations
     const viewer = modelViewerRef.current;
-    if (viewer?.availableAnimations?.length > 0) {
+    if (viewer && viewer.availableAnimations && viewer.availableAnimations.length > 0) {
       setAnimations(viewer.availableAnimations);
       setSelectedAnimation(viewer.availableAnimations[0]);
     } else {
@@ -204,9 +252,12 @@ export default function ModelViewer3D({
   };
 
   const handleError = (event: CustomEvent) => {
+    const errorDetail = event.detail;
+    console.error('❌ ModelViewer3D error:', errorDetail);
+    console.error('❌ URL que falló:', src);
     setIsLoading(false);
     setHasError(true);
-    onError?.(event.detail?.message || 'Error cargando modelo 3D');
+    onError?.(errorDetail?.message || 'Error cargando modelo 3D');
   };
 
   // Si no hay soporte de WebGL, hay error o no hay src, mostrar estado de carga

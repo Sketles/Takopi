@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import FileUploader from './FileUploader';
+import { useClientUpload } from '@/hooks/useClientUpload';
+import { validateCoverImage } from '@/lib/fileValidation';
+import { FileErrorToastContainer, useFileErrorToasts } from '@/components/shared/FileErrorToast';
 
 interface FileItem {
   id: string;
@@ -69,6 +72,9 @@ export default function ProductEditModal({
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'files' | 'actions'>('details');
+
+  // Hook para toasts de errores de archivos
+  const { toasts: fileErrorToasts, addToast: addFileError, dismissToast: dismissFileError } = useFileErrorToasts();
 
   // Función auxiliar para inferir MIME type desde URL o extensión
   const inferMimeType = (url: string): string => {
@@ -193,60 +199,54 @@ export default function ProductEditModal({
     setFiles(newFiles);
   };
 
-  // Manejar upload de cover image
+  // Hook para upload directo a Vercel Blob
+  const { uploadSingleFile } = useClientUpload();
+
+  // Manejar upload de cover image (Client-Side Upload - sin límite de 4.5MB)
   const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar que sea imagen
-    if (!file.type.startsWith('image/')) {
-      alert('Por favor selecciona una imagen válida (JPG, PNG, WEBP, etc.)');
+    // Validar con el sistema de validación
+    const validation = validateCoverImage(file);
+    if (!validation.valid && validation.error) {
+      addFileError({
+        title: validation.error.title,
+        message: validation.error.message,
+        suggestion: validation.error.suggestion,
+        type: 'error',
+      });
+      // Limpiar input
+      e.target.value = '';
       return;
     }
 
-    // Validar tamaño (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen no puede superar los 5MB');
-      return;
-    }
-
-    // Obtener token de autenticación
+    // Verificar token
     const token = localStorage.getItem('takopi_token');
     if (!token) {
-      alert('Debes estar logueado para subir imágenes');
+      addFileError({
+        title: 'Sesión requerida',
+        message: 'Debes iniciar sesión para subir imágenes',
+        type: 'warning',
+      });
       return;
     }
 
     setIsUploadingCover(true);
     try {
-      const formData = new FormData();
-      formData.append('files', file);
-      formData.append('contentType', 'texturas'); // Usamos texturas para imágenes
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Error al subir la imagen');
-      }
-
-      const data = await response.json();
-      // El endpoint devuelve data.data.files[0].url o data.data.coverImage
-      const uploadedUrl = data.data?.files?.[0]?.url || data.data?.coverImage;
-      if (uploadedUrl) {
-        setCoverImage(uploadedUrl);
-      } else {
-        throw new Error('No se recibió URL de la imagen');
-      }
+      // Upload directo a Vercel Blob (evita límite de 4.5MB)
+      console.log('📤 Subiendo cover image directamente a Blob...');
+      const uploaded = await uploadSingleFile(file, 'covers');
+      setCoverImage(uploaded.url);
+      console.log('✅ Cover subida:', uploaded.url);
     } catch (error) {
       console.error('Error uploading cover image:', error);
-      alert(error instanceof Error ? error.message : 'Error al subir la imagen. Intenta de nuevo.');
+      addFileError({
+        title: 'Error al subir',
+        message: error instanceof Error ? error.message : 'No se pudo subir la imagen',
+        suggestion: 'Intenta de nuevo o usa otra imagen',
+        type: 'error',
+      });
     } finally {
       setIsUploadingCover(false);
     }
@@ -321,12 +321,16 @@ export default function ProductEditModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity duration-300"
-        onClick={onCancel}
-      />
+    <>
+      {/* Toast de errores de archivos */}
+      <FileErrorToastContainer toasts={fileErrorToasts} onDismiss={dismissFileError} />
+      
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity duration-300"
+          onClick={onCancel}
+        />
 
       {/* Modal */}
       <div className="relative w-full max-w-4xl bg-[#0a0a0a] rounded-3xl border border-white/10 shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -656,6 +660,7 @@ export default function ProductEditModal({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

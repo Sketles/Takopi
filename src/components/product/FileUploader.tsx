@@ -2,6 +2,9 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { useToast } from '@/components/shared/Toast';
+import { upload } from '@vercel/blob/client';
+import { validateContentFile } from '@/lib/fileValidation';
+import { FileErrorToastContainer, useFileErrorToasts } from '@/components/shared/FileErrorToast';
 
 interface FileItem {
   id: string;
@@ -42,6 +45,9 @@ export default function FileUploader({
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { addToast } = useToast();
+  
+  // Hook para toasts de errores de archivos
+  const { toasts: fileErrorToasts, addToast: addFileError, dismissToast: dismissFileError } = useFileErrorToasts();
 
   // Formatos permitidos según tipo de contenido
   const getAllowedFormats = (contentType: string) => {
@@ -118,28 +124,27 @@ export default function FileUploader({
 
   const handleFiles = async (newFiles: File[]) => {
     const validFiles: File[] = [];
-    const errors: string[] = [];
 
-    // Validar archivos
+    // Validar archivos con el nuevo sistema
     newFiles.forEach(file => {
-      const error = validateFile(file);
-      if (error) {
-        errors.push(`${file.name}: ${error}`);
+      const validation = validateContentFile(file, contentType);
+      if (!validation.valid && validation.error) {
+        addFileError({
+          title: validation.error.title,
+          message: validation.error.message,
+          suggestion: validation.error.suggestion,
+          type: 'error',
+        });
       } else {
         validFiles.push(file);
       }
     });
 
-    // Mostrar errores si los hay
-    if (errors.length > 0) {
-      addToast({ type: 'error', title: 'Error de archivo', message: errors.join('\n') });
-    }
-
-    // Procesar archivos válidos
+    // Procesar archivos válidos con upload real a Vercel Blob
     for (const file of validFiles) {
       const fileId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
       
-      // Crear objeto de archivo
+      // Crear objeto de archivo temporal
       const fileItem: FileItem = {
         id: fileId,
         name: file.name,
@@ -151,43 +156,60 @@ export default function FileUploader({
         uploadProgress: 0
       };
 
-      // Agregar a la lista
-      onFilesChange([...files, fileItem]);
+      // Agregar a la lista inmediatamente para mostrar progreso
+      const currentFiles = [...files, fileItem];
+      onFilesChange(currentFiles);
       setUploadingFiles(prev => new Set([...prev, fileId]));
 
-      // Simular subida (aquí iría la lógica real de subida)
       try {
-        await simulateUpload(file, fileId, (progress) => {
-          const updatedFiles = files.map(f =>
-            f.id === fileId ? { ...f, uploadProgress: progress } : f
-          );
-          onFilesChange(updatedFiles);
+        // Upload real a Vercel Blob (Client-Side - sin límite de 4.5MB)
+        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const pathname = `content/${contentType}/${Date.now()}-${safeName}`;
+
+        const blob = await upload(pathname, file, {
+          access: 'public',
+          handleUploadUrl: '/api/upload/client',
+          onUploadProgress: (progressEvent) => {
+            const progress = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+            // Actualizar progreso en el archivo específico
+            onFilesChange(currentFiles.map(f =>
+              f.id === fileId ? { ...f, uploadProgress: progress } : f
+            ));
+          },
         });
 
-        // Marcar como completado
-        const completedFiles = files.map(f =>
+        // Marcar como completado con URL real de Vercel Blob
+        onFilesChange(currentFiles.map(f =>
           f.id === fileId 
             ? { 
                 ...f, 
                 isUploading: false, 
-                url: URL.createObjectURL(file),
-                previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
+                url: blob.url,
+                previewUrl: file.type.startsWith('image/') ? blob.url : undefined,
+                uploadProgress: 100
               } 
             : f
-        );
-        onFilesChange(completedFiles);
+        ));
+
+        console.log(`✅ Archivo subido: ${file.name} -> ${blob.url}`);
+        
       } catch (error) {
+        console.error('❌ Error subiendo archivo:', error);
         // Marcar como error
-        const errorFiles = files.map(f =>
+        onFilesChange(currentFiles.map(f =>
           f.id === fileId 
             ? { 
                 ...f, 
                 isUploading: false, 
-                error: 'Error al subir el archivo'
+                error: error instanceof Error ? error.message : 'Error al subir el archivo'
               } 
             : f
-        );
-        onFilesChange(errorFiles);
+        ));
+        addToast({ 
+          type: 'error', 
+          title: 'Error de upload', 
+          message: `No se pudo subir ${file.name}: ${error instanceof Error ? error.message : 'Error desconocido'}` 
+        });
       } finally {
         setUploadingFiles(prev => {
           const newSet = new Set(prev);
@@ -196,21 +218,6 @@ export default function FileUploader({
         });
       }
     }
-  };
-
-  const simulateUpload = (file: File, fileId: string, onProgress: (progress: number) => void): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += Math.random() * 30;
-        if (progress >= 100) {
-          progress = 100;
-          clearInterval(interval);
-          resolve();
-        }
-        onProgress(progress);
-      }, 200);
-    });
   };
 
   const handleSetCover = (fileId: string) => {
@@ -230,40 +237,44 @@ export default function FileUploader({
   };
 
   return (
-    <div className={`space-y-4 ${className}`}>
-      {/* Zona de drop */}
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
-          isDragOver
-            ? 'border-purple-400 bg-purple-500/10'
-            : 'border-gray-600 hover:border-gray-500 bg-gray-800/30'
-        }`}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept={allowedFormats.join(',')}
-          onChange={handleFileInput}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-        />
-        
-        <div className="space-y-2">
-          <div className="text-4xl">📁</div>
-          <div className="text-lg font-medium text-white">
-            Arrastra archivos aquí o haz clic para seleccionar
-          </div>
-          <div className="text-sm text-gray-400">
-            Formatos permitidos: {allowedFormats.map(f => f.split('/')[1]).join(', ')}
-          </div>
-          <div className="text-xs text-gray-500">
-            Máximo {maxFileSize}MB por archivo
+    <>
+      {/* Toast de errores de archivos */}
+      <FileErrorToastContainer toasts={fileErrorToasts} onDismiss={dismissFileError} />
+      
+      <div className={`space-y-4 ${className}`}>
+        {/* Zona de drop */}
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
+            isDragOver
+              ? 'border-purple-400 bg-purple-500/10'
+              : 'border-gray-600 hover:border-gray-500 bg-gray-800/30'
+          }`}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={allowedFormats.join(',')}
+            onChange={handleFileInput}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+          
+          <div className="space-y-2">
+            <div className="text-4xl">📁</div>
+            <div className="text-lg font-medium text-white">
+              Arrastra archivos aquí o haz clic para seleccionar
+            </div>
+            <div className="text-sm text-gray-400">
+              Formatos permitidos: {allowedFormats.map(f => f.split('/')[1]).join(', ')}
+            </div>
+            <div className="text-xs text-gray-500">
+              Máximo {maxFileSize}MB por archivo
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Lista de archivos */}
       {files.length > 0 && (
@@ -377,6 +388,7 @@ export default function FileUploader({
           <div className="text-sm">Arrastra archivos aquí o haz clic para seleccionar</div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

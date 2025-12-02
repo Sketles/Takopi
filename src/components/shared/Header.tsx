@@ -63,7 +63,8 @@ export default function Header() {
             {[
               { name: 'Inicio', path: '/' },
               { name: 'Explorar', path: '/explore' },
-              { name: 'Impresión 3D', path: '/impresion-3d' }
+              { name: 'Impresión 3D', path: '/impresion-3d' },
+              { name: 'Takopi IA', path: '/takopi-ia' }
             ].map((item) => (
               <Link
                 key={item.path}
@@ -202,7 +203,8 @@ export default function Header() {
               {[
                 { name: 'Inicio', path: '/' },
                 { name: 'Explorar', path: '/explore' },
-                { name: 'Impresión 3D', path: '/impresion-3d' }
+                { name: 'Impresión 3D', path: '/impresion-3d' },
+                { name: 'Takopi IA', path: '/takopi-ia' }
               ].map((item) => (
                 <Link
                   key={item.path}
