@@ -94,7 +94,7 @@ export default function RegisterPage() {
       title="Crear Cuenta"
       subtitle="Únete a la comunidad de Takopi"
     >
-      <form className="space-y-5" onSubmit={handleSubmit}>
+      <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
         <AnimatePresence mode="wait">
           {error && (
             <motion.div
@@ -113,7 +113,7 @@ export default function RegisterPage() {
 
         {/* Username Input */}
         <div className="relative group">
-          <label className="block text-xs font-medium text-gray-400 mb-2 ml-1 tracking-wide">NOMBRE DE USUARIO</label>
+          <label className="block text-xs font-medium text-gray-400 mb-1.5 sm:mb-2 ml-1 tracking-wide">NOMBRE DE USUARIO</label>
           <motion.div
             variants={inputVariants}
             animate={focusedField === 'username' ? 'focused' : 'unfocused'}
@@ -134,7 +134,7 @@ export default function RegisterPage() {
               onChange={handleChange}
               onFocus={() => setFocusedField('username')}
               onBlur={() => setFocusedField(null)}
-              className="block w-full pl-12 pr-4 py-4 bg-transparent text-white placeholder-gray-600 focus:outline-none text-sm font-medium transition-all"
+              className="block w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-4 bg-transparent text-white placeholder-gray-600 focus:outline-none text-sm font-medium transition-all"
               style={{
                 WebkitBoxShadow: "0 0 0 30px #131313 inset",
                 WebkitTextFillColor: "white",
@@ -147,7 +147,7 @@ export default function RegisterPage() {
 
         {/* Email Input */}
         <div className="relative group">
-          <label className="block text-xs font-medium text-gray-400 mb-2 ml-1 tracking-wide">EMAIL</label>
+          <label className="block text-xs font-medium text-gray-400 mb-1.5 sm:mb-2 ml-1 tracking-wide">EMAIL</label>
           <motion.div
             variants={inputVariants}
             animate={focusedField === 'email' ? 'focused' : 'unfocused'}
@@ -168,7 +168,7 @@ export default function RegisterPage() {
               onChange={handleChange}
               onFocus={() => setFocusedField('email')}
               onBlur={() => setFocusedField(null)}
-              className="block w-full pl-12 pr-4 py-4 bg-transparent text-white placeholder-gray-600 focus:outline-none text-sm font-medium transition-all"
+              className="block w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-4 bg-transparent text-white placeholder-gray-600 focus:outline-none text-sm font-medium transition-all"
               style={{
                 WebkitBoxShadow: "0 0 0 30px #131313 inset",
                 WebkitTextFillColor: "white",
@@ -181,14 +181,14 @@ export default function RegisterPage() {
 
         {/* Role Selection */}
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-3 ml-1 tracking-wide">SELECCIONA TU ROL</label>
-          <div className="grid grid-cols-3 gap-3">
+          <label className="block text-xs font-medium text-gray-400 mb-2 sm:mb-3 ml-1 tracking-wide">SELECCIONA TU ROL</label>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {roles.map((role) => (
               <button
                 key={role.id}
                 type="button"
                 onClick={() => handleRoleSelect(role.id)}
-                className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-300 relative overflow-hidden group ${formData.role === role.id
+                className={`flex flex-col items-center justify-center p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border transition-all duration-300 relative overflow-hidden group ${formData.role === role.id
                     ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-[0_0_20px_rgba(168,85,247,0.2)]'
                     : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20'
                   }`}
@@ -196,8 +196,8 @@ export default function RegisterPage() {
                 {formData.role === role.id && (
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-transparent pointer-events-none" />
                 )}
-                <span className="text-2xl mb-2 filter drop-shadow-md group-hover:scale-110 transition-transform duration-300">{role.icon}</span>
-                <span className="text-xs font-bold tracking-wide">{role.label}</span>
+                <span className="text-xl sm:text-2xl mb-1 sm:mb-2 filter drop-shadow-md group-hover:scale-110 transition-transform duration-300">{role.icon}</span>
+                <span className="text-[10px] sm:text-xs font-bold tracking-wide">{role.label}</span>
               </button>
             ))}
           </div>
@@ -205,7 +205,7 @@ export default function RegisterPage() {
 
         {/* Password Input */}
         <div className="relative group">
-          <label className="block text-xs font-medium text-gray-400 mb-2 ml-1 tracking-wide">CONTRASEÑA</label>
+          <label className="block text-xs font-medium text-gray-400 mb-1.5 sm:mb-2 ml-1 tracking-wide">CONTRASEÑA</label>
           <motion.div
             variants={inputVariants}
             animate={focusedField === 'password' ? 'focused' : 'unfocused'}
@@ -226,7 +226,7 @@ export default function RegisterPage() {
               onChange={handleChange}
               onFocus={() => setFocusedField('password')}
               onBlur={() => setFocusedField(null)}
-              className="block w-full pl-12 pr-12 py-4 bg-transparent text-white placeholder-gray-600 focus:outline-none text-sm font-medium transition-all"
+              className="block w-full pl-11 sm:pl-12 pr-12 py-3 sm:py-4 bg-transparent text-white placeholder-gray-600 focus:outline-none text-sm font-medium transition-all"
               style={{
                 WebkitBoxShadow: "0 0 0 30px #131313 inset",
                 WebkitTextFillColor: "white",
@@ -258,7 +258,7 @@ export default function RegisterPage() {
           whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={isLoading}
-          className="w-full mt-2 flex justify-center py-4 px-4 border border-transparent rounded-2xl shadow-[0_0_20px_rgba(168,85,247,0.2)] text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
+          className="w-full mt-1 sm:mt-2 flex justify-center py-3 sm:py-4 px-4 border border-transparent rounded-xl sm:rounded-2xl shadow-[0_0_20px_rgba(168,85,247,0.2)] text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
         >
           <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
           <span className="relative flex items-center gap-2">

@@ -231,10 +231,10 @@ export default function ModelViewer3D({
       {/* Controls Toggle Button */}
       <button
         onClick={() => setShowControls(!showControls)}
-        className="absolute top-4 right-4 z-20 p-2 bg-purple-600/80 hover:bg-purple-600 rounded-lg text-white transition-colors controls-toggle shadow-lg backdrop-blur-sm"
+        className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20 p-1.5 sm:p-2 bg-purple-600/80 hover:bg-purple-600 rounded-lg text-white transition-colors controls-toggle shadow-lg backdrop-blur-sm"
         title="Herramientas de Inspección"
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
@@ -242,7 +242,7 @@ export default function ModelViewer3D({
 
       {/* Controls Panel */}
       {showControls && (
-        <div className="absolute top-16 right-4 z-20 bg-[#0f0f0f]/95 backdrop-blur-md rounded-xl p-4 border border-white/10 min-w-[260px] shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-12 sm:top-16 right-2 sm:right-4 z-20 bg-[#0f0f0f]/95 backdrop-blur-md rounded-xl p-3 sm:p-4 border border-white/10 w-[220px] sm:min-w-[260px] max-h-[60vh] overflow-y-auto shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-top-2 duration-200">
           <h3 className="text-white text-sm font-bold mb-4 flex items-center gap-2 border-b border-white/10 pb-2">
             <span className="text-purple-400">⚡</span>
             Inspector 3D
@@ -430,7 +430,7 @@ export function ModelViewerModal({
   src,
   alt = 'Modelo 3D completo',
   width = "100%",
-  height = "520px",
+  height = "100%",
   autoRotate = true,
   cameraControls = true
 }: {
@@ -449,7 +449,7 @@ export function ModelViewerModal({
       height={height}
       autoRotate={autoRotate}
       cameraControls={cameraControls}
-      className="rounded-xl overflow-hidden"
+      className="rounded-xl overflow-hidden min-h-[280px] sm:min-h-[350px]"
     />
   );
 }

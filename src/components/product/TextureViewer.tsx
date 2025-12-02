@@ -96,7 +96,7 @@ export default function TextureViewer({ files, title, coverImage, className = ''
 
   if (!currentImage) {
     return (
-      <div className={`w-full h-full flex items-center justify-center bg-gray-900/50 rounded-xl ${className}`}>
+      <div className={`w-full h-full flex items-center justify-center bg-transparent ${className}`}>
         <div className="text-center text-gray-400">
           <div className="text-4xl mb-2">🖼️</div>
           <div className="text-lg font-medium">No hay imágenes disponibles</div>
@@ -106,42 +106,21 @@ export default function TextureViewer({ files, title, coverImage, className = ''
   }
 
   return (
-    <div className={`w-full h-full bg-gradient-to-br from-gray-900/90 to-purple-900/50 rounded-xl overflow-hidden ${className}`}>
-      {/* Header con título y controles */}
-      <div className="p-4 border-b border-gray-700/50">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-white text-lg font-semibold">{title}</h3>
-            <p className="text-gray-400 text-sm">
-              {currentImageIndex + 1} de {allImages.length} imágenes
-            </p>
-          </div>
-          <button
-            onClick={toggleFullscreen}
-            className="p-2 bg-gray-700/50 hover:bg-gray-600/50 rounded-lg transition-colors"
-            title="Pantalla completa"
-          >
-            <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Visor principal */}
-      <div className="relative flex-1 min-h-[400px] bg-gray-800/30">
+    <div className={`w-full h-full bg-transparent overflow-hidden flex flex-col ${className}`}>
+      {/* Visor principal - usa calc para dejar espacio a miniaturas */}
+      <div className="relative flex-1 min-h-0 flex items-center justify-center overflow-hidden">
         {/* Imagen principal */}
-        <div className="relative w-full h-full flex items-center justify-center p-4">
+        <div className="absolute inset-0 flex items-center justify-center p-4 pt-12">
           {imageLoading[currentImageIndex] && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400"></div>
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-400"></div>
             </div>
           )}
           
           <img
             src={currentImage.url}
             alt={currentImage.originalName || currentImage.name}
-            className={`max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-opacity duration-300 ${
+            className={`max-w-full max-h-full object-contain rounded-lg transition-opacity duration-300 ${
               imageLoading[currentImageIndex] ? 'opacity-0' : 'opacity-100'
             }`}
             onLoad={() => handleImageLoad(currentImageIndex)}
@@ -155,10 +134,10 @@ export default function TextureViewer({ files, title, coverImage, className = ''
               <button
                 onClick={prevImage}
                 disabled={currentImageIndex === 0}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 p-2 sm:p-3 bg-black/50 hover:bg-black/70 text-white rounded-full disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 title="Imagen anterior"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
@@ -166,77 +145,62 @@ export default function TextureViewer({ files, title, coverImage, className = ''
               <button
                 onClick={nextImage}
                 disabled={currentImageIndex === allImages.length - 1}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 p-2 sm:p-3 bg-black/50 hover:bg-black/70 text-white rounded-full disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 title="Siguiente imagen"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </>
           )}
 
-          {/* Información de la imagen */}
-          <div className="absolute bottom-4 left-4 right-4 bg-black/70 backdrop-blur-sm rounded-lg p-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-white font-medium truncate">
-                  {currentImage.originalName || currentImage.name}
-                </p>
-                <p className="text-gray-300 text-sm">
-                  {formatFileSize(currentImage.size)}
-                </p>
-              </div>
-              {allImages.length > 1 && (
-                <div className="flex items-center gap-2">
-                  {isOwner ? (
-                    <button
-                      onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = currentImage.url;
-                        link.download = currentImage.originalName || currentImage.name;
-                        link.click();
-                      }}
-                      className="p-2 bg-purple-600/50 hover:bg-purple-600/70 rounded-lg transition-colors"
-                      title="Descargar imagen"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        addToast({ type: 'warning', title: 'Necesitas comprar', message: 'Debes comprar este contenido para poder descargar las imágenes.' });
-                      }}
-                      className="p-2 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors cursor-not-allowed opacity-50"
-                      title="Comprar para descargar"
-                      disabled
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+          {/* Controles flotantes - esquina superior derecha */}
+          <div className="absolute top-2 right-2 flex items-center gap-2">
+            <span className="text-xs text-white/60 bg-black/50 px-2 py-1 rounded">
+              {currentImageIndex + 1}/{allImages.length}
+            </span>
+            <button
+              onClick={toggleFullscreen}
+              className="p-2 bg-black/50 hover:bg-black/70 text-white rounded-lg transition-colors"
+              title="Pantalla completa"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </button>
+            {isOwner && (
+              <button
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = currentImage.url;
+                  link.download = currentImage.originalName || currentImage.name;
+                  link.click();
+                }}
+                className="p-2 bg-purple-600/50 hover:bg-purple-600/70 text-white rounded-lg transition-colors"
+                title="Descargar"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Miniaturas */}
+      {/* Miniaturas - altura fija */}
       {allImages.length > 1 && (
-        <div className="p-4 border-t border-gray-700/50">
-          <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="flex-shrink-0 p-2 border-t border-white/5 bg-black/20">
+          <div className="flex gap-1.5 overflow-x-auto pb-1 justify-center">
             {allImages.map((image, index) => (
               <button
                 key={index}
                 onClick={() => goToImage(index)}
-                className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all ${
+                className={`flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden transition-all ${
                   index === currentImageIndex
-                    ? 'ring-2 ring-purple-400 scale-110'
-                    : 'hover:scale-105 opacity-70 hover:opacity-100'
+                    ? 'ring-2 ring-purple-400 scale-105'
+                    : 'opacity-50 hover:opacity-100'
                 }`}
               >
                 <img

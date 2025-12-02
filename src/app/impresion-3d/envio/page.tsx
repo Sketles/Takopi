@@ -163,88 +163,88 @@ export default function ShippingPage() {
         {/* Background Effects */}
         <div className="fixed inset-0 pointer-events-none">
           <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-20"></div>
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px]"></div>
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px]"></div>
+          <div className="absolute top-0 left-1/4 w-64 sm:w-80 lg:w-96 h-64 sm:h-80 lg:h-96 bg-purple-600/20 rounded-full blur-[100px] sm:blur-[120px]"></div>
+          <div className="absolute bottom-0 right-1/4 w-64 sm:w-80 lg:w-96 h-64 sm:h-80 lg:h-96 bg-blue-600/10 rounded-full blur-[100px] sm:blur-[120px]"></div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 pt-24 md:pt-28 pb-8">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 lg:pt-28 pb-8">
           {/* Header */}
-          <div className="mb-12">
+          <div className="mb-8 sm:mb-12">
             <Link
               href="/impresion-3d/configurar"
-              className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 group"
+              className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 group text-sm sm:text-base"
             >
-              <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               Volver a Configuración
             </Link>
 
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-3 sm:mb-4">
               Datos de <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Envío</span>
             </h1>
-            <p className="text-gray-400 text-lg">Completa la información para recibir tu impresión 3D</p>
+            <p className="text-gray-400 text-base sm:text-lg">Completa la información para recibir tu impresión 3D</p>
           </div>
 
           {/* Progress Steps */}
-          <div className="mb-12">
-            <div className="flex items-center justify-center gap-4">
+          <div className="mb-8 sm:mb-12">
+            <div className="flex items-center justify-center gap-2 sm:gap-4">
               {/* Step 1 - Completed */}
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-green-500 flex items-center justify-center">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="text-sm font-medium text-gray-400">Configuración</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-400 hidden sm:inline">Configuración</span>
               </div>
 
-              <div className="w-16 h-0.5 bg-white/10"></div>
+              <div className="w-8 sm:w-16 h-0.5 bg-white/10"></div>
 
               {/* Step 2 - Current */}
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center animate-pulse">
-                  <span className="text-sm font-bold">2</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-purple-500 flex items-center justify-center animate-pulse">
+                  <span className="text-xs sm:text-sm font-bold">2</span>
                 </div>
-                <span className="text-sm font-medium text-white">Envío</span>
+                <span className="text-xs sm:text-sm font-medium text-white">Envío</span>
               </div>
 
-              <div className="w-16 h-0.5 bg-white/10"></div>
+              <div className="w-8 sm:w-16 h-0.5 bg-white/10"></div>
 
               {/* Step 3 - Pending */}
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-                  <span className="text-sm font-bold text-gray-500">3</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/10 flex items-center justify-center">
+                  <span className="text-xs sm:text-sm font-bold text-gray-500">3</span>
                 </div>
-                <span className="text-sm font-medium text-gray-500">Pago</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-500 hidden sm:inline">Pago</span>
               </div>
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-12 gap-8">
+          <div className="flex flex-col-reverse lg:grid lg:grid-cols-12 gap-6 sm:gap-8">
             {/* Left Column - Form */}
-            <div className="lg:col-span-7">
+            <div className="lg:col-span-7 order-2 lg:order-1">
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Email (Read-only) */}
-                <div className="bg-[#0f0f0f] border border-white/10 rounded-2xl p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-[#0f0f0f] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6">
+                  <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-purple-500/10 flex items-center justify-center">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                     </div>
                     <div>
                       <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Email de Contacto</label>
-                      <p className="text-white font-medium">{user.email}</p>
+                      <p className="text-white font-medium text-sm sm:text-base break-all">{user.email}</p>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-500">Recibirás actualizaciones del pedido en este correo</p>
+                  <p className="text-xs sm:text-sm text-gray-500">Recibirás actualizaciones del pedido en este correo</p>
                 </div>
 
                 {/* Personal Info */}
-                <div className="bg-[#0f0f0f] border border-white/10 rounded-2xl p-6 space-y-5">
-                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-[#0f0f0f] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-5">
+                  <h3 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     Información Personal
@@ -286,9 +286,9 @@ export default function ShippingPage() {
                 </div>
 
                 {/* Shipping Address */}
-                <div className="bg-[#0f0f0f] border border-white/10 rounded-2xl p-6 space-y-5">
-                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-[#0f0f0f] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-5">
+                  <h3 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
@@ -386,9 +386,9 @@ export default function ShippingPage() {
                 </div>
 
                 {/* Shipping Method */}
-                <div className="bg-[#0f0f0f] border border-white/10 rounded-2xl p-6 space-y-5">
-                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-[#0f0f0f] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-5">
+                  <h3 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
                     </svg>
@@ -403,15 +403,15 @@ export default function ShippingPage() {
                         setShippingData({ ...shippingData, shippingMethod: 'chilexpress' });
                         setErrors({ ...errors, shippingMethod: '' });
                       }}
-                      className={`w-full p-4 rounded-xl border-2 transition-all duration-300 ${
+                      className={`w-full p-3 sm:p-4 rounded-xl border-2 transition-all duration-300 ${
                         shippingData.shippingMethod === 'chilexpress'
                           ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.3)]'
                           : 'border-white/10 bg-black/30 hover:border-white/30'
                       }`}
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                         {/* Chilexpress Logo */}
-                        <div className="w-16 h-16 rounded-lg bg-white p-2 flex items-center justify-center flex-shrink-0">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg bg-white p-1.5 sm:p-2 flex items-center justify-center flex-shrink-0">
                           <svg viewBox="0 0 200 60" className="w-full h-full">
                             {/* Chilexpress brand colors: Red #E40520 */}
                             <rect x="0" y="0" width="200" height="60" fill="#E40520" rx="4"/>
@@ -423,17 +423,17 @@ export default function ShippingPage() {
                         
                         <div className="flex-1 text-left">
                           <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-bold text-white text-lg">Chilexpress</h4>
+                            <h4 className="font-bold text-white text-base sm:text-lg">Chilexpress</h4>
                             {shippingData.shippingMethod === 'chilexpress' && (
-                              <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center">
-                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-500 flex items-center justify-center">
+                                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                 </svg>
                               </div>
                             )}
                           </div>
-                          <p className="text-sm text-gray-400 mb-2">Entrega en 3-5 días hábiles</p>
-                          <div className="flex items-center gap-4 text-xs">
+                          <p className="text-xs sm:text-sm text-gray-400 mb-1 sm:mb-2">Entrega en 3-5 días hábiles</p>
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs">
                             <span className="flex items-center gap-1 text-green-400">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -449,9 +449,9 @@ export default function ShippingPage() {
                           </div>
                         </div>
                         
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500 mb-1">Costo de envío</p>
-                          <p className="text-xl font-bold text-white">$3.990</p>
+                        <div className="text-left sm:text-right mt-2 sm:mt-0">
+                          <p className="text-xs text-gray-500 mb-0.5 sm:mb-1">Costo de envío</p>
+                          <p className="text-lg sm:text-xl font-bold text-white">$3.990</p>
                           <p className="text-xs text-gray-400">CLP</p>
                         </div>
                       </div>
@@ -464,15 +464,15 @@ export default function ShippingPage() {
                         setShippingData({ ...shippingData, shippingMethod: 'mercadoenvios' });
                         setErrors({ ...errors, shippingMethod: '' });
                       }}
-                      className={`w-full p-4 rounded-xl border-2 transition-all duration-300 ${
+                      className={`w-full p-3 sm:p-4 rounded-xl border-2 transition-all duration-300 ${
                         shippingData.shippingMethod === 'mercadoenvios'
                           ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.3)]'
                           : 'border-white/10 bg-black/30 hover:border-white/30'
                       }`}
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                         {/* Mercado Envíos Logo */}
-                        <div className="w-16 h-16 rounded-lg bg-white p-2 flex items-center justify-center flex-shrink-0">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg bg-white p-1.5 sm:p-2 flex items-center justify-center flex-shrink-0">
                           <svg viewBox="0 0 200 60" className="w-full h-full">
                             {/* Mercado Libre brand colors: Yellow #FFE600 */}
                             <rect x="0" y="0" width="200" height="60" fill="#FFE600" rx="4"/>
@@ -488,17 +488,17 @@ export default function ShippingPage() {
                         
                         <div className="flex-1 text-left">
                           <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-bold text-white text-lg">Mercado Envíos Flex</h4>
+                            <h4 className="font-bold text-white text-base sm:text-lg">Mercado Envíos Flex</h4>
                             {shippingData.shippingMethod === 'mercadoenvios' && (
-                              <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center">
-                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-500 flex items-center justify-center">
+                                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                 </svg>
                               </div>
                             )}
                           </div>
-                          <p className="text-sm text-gray-400 mb-2">Entrega en 5-7 días hábiles</p>
-                          <div className="flex items-center gap-4 text-xs">
+                          <p className="text-xs sm:text-sm text-gray-400 mb-1 sm:mb-2">Entrega en 5-7 días hábiles</p>
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs">
                             <span className="flex items-center gap-1 text-green-400">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -514,9 +514,9 @@ export default function ShippingPage() {
                           </div>
                         </div>
                         
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500 mb-1">Costo de envío</p>
-                          <p className="text-xl font-bold text-white">$2.490</p>
+                        <div className="text-left sm:text-right mt-2 sm:mt-0">
+                          <p className="text-xs text-gray-500 mb-0.5 sm:mb-1">Costo de envío</p>
+                          <p className="text-lg sm:text-xl font-bold text-white">$2.490</p>
                           <p className="text-xs text-gray-400">CLP</p>
                         </div>
                       </div>
@@ -576,10 +576,10 @@ export default function ShippingPage() {
             </div>
 
             {/* Right Column - Order Summary */}
-            <div className="lg:col-span-5">
-              <div className="sticky top-24">
-                <div className="bg-[#0f0f0f] border border-white/10 rounded-2xl p-6 space-y-6">
-                  <h3 className="text-xl font-bold text-white">Resumen del Pedido</h3>
+            <div className="lg:col-span-5 order-1 lg:order-2">
+              <div className="lg:sticky lg:top-24">
+                <div className="bg-[#0f0f0f] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6">
+                  <h3 className="text-lg sm:text-xl font-bold text-white">Resumen del Pedido</h3>
 
                   {/* Order Details */}
                   <div className="space-y-4">
@@ -612,9 +612,9 @@ export default function ShippingPage() {
                       </div>
                     )}
 
-                    <div className="flex justify-between items-center py-4 bg-purple-500/10 rounded-xl px-4 border border-purple-500/20">
-                      <span className="text-lg font-bold text-white">Total</span>
-                      <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 py-3 sm:py-4 bg-purple-500/10 rounded-xl px-3 sm:px-4 border border-purple-500/20">
+                      <span className="text-base sm:text-lg font-bold text-white">Total</span>
+                      <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
                         ${(orderSummary.price + (shippingData.shippingMethod === 'chilexpress' ? 3990 : shippingData.shippingMethod === 'mercadoenvios' ? 2490 : 0)).toLocaleString('es-CL')} CLP
                       </span>
                     </div>

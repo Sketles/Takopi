@@ -21,40 +21,41 @@
 
 ### 🔴 NIVEL CRÍTICO (Afecta conversiones y UX principal)
 
-| # | Página | Archivo | Líneas | Complejidad | Elementos Críticos |
-|---|--------|---------|--------|-------------|-------------------|
-| 1 | **Landing/Home** | `src/app/page.tsx` | ~343 | ⭐⭐⭐⭐ | Hero, FeaturesGrid, ProfitCalculator, FAQ, CTAs |
-| 2 | **Explore** | `src/app/explore/page.tsx` | ~380 | ⭐⭐⭐⭐ | Grid de contenido, filtros, TrendingCarousel |
-| 3 | **Upload** | `src/app/upload/page.tsx` | ~893 | ⭐⭐⭐⭐⭐ | Formulario multi-step, drag&drop, previews |
-| 4 | **Profile** | `src/app/profile/page.tsx` | ~974 | ⭐⭐⭐⭐⭐ | Banner, tabs, grids de contenido, modales |
-| 5 | **Login** | `src/app/auth/login/page.tsx` | ~260 | ⭐⭐ | Formulario centrado, inputs |
+| # | Página | Archivo | Líneas | Complejidad | Elementos Críticos | Estado |
+|---|--------|---------|--------|-------------|-------------------|--------|
+| 1 | **Landing/Home** | `src/app/page.tsx` | ~343 | ⭐⭐⭐⭐ | Hero, FeaturesGrid, ProfitCalculator, FAQ, CTAs | ✅ |
+| 2 | **Explore** | `src/app/explore/page.tsx` | ~380 | ⭐⭐⭐⭐ | Grid de contenido, filtros, TrendingCarousel | ✅ |
+| 3 | **Upload** | `src/app/upload/page.tsx` | ~893 | ⭐⭐⭐⭐⭐ | Formulario multi-step, drag&drop, previews | ✅ |
+| 4 | **Profile** | `src/app/profile/page.tsx` | ~974 | ⭐⭐⭐⭐⭐ | Banner, tabs, grids de contenido, modales | ✅ |
+| 5 | **Login** | `src/app/auth/login/page.tsx` | ~260 | ⭐⭐ | Formulario centrado, inputs | ✅ |
+| 6 | **Register** | `src/app/auth/register/page.tsx` | ~290 | ⭐⭐ | Formulario, selector de roles | ✅ |
 | 6 | **Register** | `src/app/auth/register/page.tsx` | ~290 | ⭐⭐ | Formulario, selector de roles |
 
 ### 🟡 NIVEL IMPORTANTE (Flujos de compra y transacciones)
 
-| # | Página | Archivo | Líneas | Complejidad | Elementos Críticos |
-|---|--------|---------|--------|-------------|-------------------|
-| 7 | **Box (Carrito)** | `src/app/box/page.tsx` | ~395 | ⭐⭐⭐ | Lista de items, resumen, CTAs |
-| 8 | **Checkout** | `src/app/checkout/page.tsx` | ~454 | ⭐⭐⭐ | Resumen de compra, botón de pago |
-| 9 | **Payment Result** | `src/app/payment/result/page.tsx` | ~274 | ⭐⭐ | Estados de éxito/error |
-| 10 | **User Profile (Público)** | `src/app/user/[userId]/page.tsx` | ~434 | ⭐⭐⭐⭐ | Banner, stats, grid de contenido |
+| # | Página | Archivo | Líneas | Complejidad | Elementos Críticos | Estado |
+|---|--------|---------|--------|-------------|-------------------|--------|
+| 7 | **Box (Carrito)** | `src/app/box/page.tsx` | ~395 | ⭐⭐⭐ | Lista de items, resumen, CTAs | ✅ |
+| 8 | **Checkout** | `src/app/checkout/page.tsx` | ~454 | ⭐⭐⭐ | Resumen de compra, botón de pago | ✅ |
+| 9 | **Payment Result** | `src/app/payment/result/page.tsx` | ~274 | ⭐⭐ | Estados de éxito/error | ✅ |
+| 10 | **User Profile (Público)** | `src/app/user/[userId]/page.tsx` | ~434 | ⭐⭐⭐⭐ | Banner, stats, grid de contenido | ✅ |
 
 ### 🟢 NIVEL ESTÁNDAR (Features secundarios)
 
-| # | Página | Archivo | Líneas | Complejidad | Elementos Críticos |
-|---|--------|---------|--------|-------------|-------------------|
-| 11 | **Takopi IA** | `src/app/takopi-ia/page.tsx` | ~1062 | ⭐⭐⭐⭐⭐ | Visor 3D, panel de generación, historial |
-| 12 | **Search** | `src/app/search/page.tsx` | ~433 | ⭐⭐⭐ | Filtros, resultados, TagCloud |
-| 13 | **Impresión 3D Landing** | `src/app/impresion-3d/page.tsx` | ~350 | ⭐⭐⭐⭐ | Hero, catálogo materiales, animaciones |
-| 14 | **Configurar Impresión** | `src/app/impresion-3d/configurar/page.tsx` | ~450 | ⭐⭐⭐⭐ | Visor 3D, sliders, formulario |
+| # | Página | Archivo | Líneas | Complejidad | Elementos Críticos | Estado |
+|---|--------|---------|--------|-------------|-------------------|--------|
+| 11 | **Takopi IA** | `src/app/takopi-ia/page.tsx` | ~1062 | ⭐⭐⭐⭐⭐ | Visor 3D, panel de generación, historial | ✅ |
+| 12 | **Search** | `src/app/search/page.tsx` | ~433 | ⭐⭐⭐ | Filtros, resultados, TagCloud | ✅ |
+| 13 | **Impresión 3D Landing** | `src/app/impresion-3d/page.tsx` | ~350 | ⭐⭐⭐⭐ | Hero, catálogo materiales, animaciones | ✅ |
+| 14 | **Configurar Impresión** | `src/app/impresion-3d/configurar/page.tsx` | ~450 | ⭐⭐⭐⭐ | Visor 3D, sliders, formulario | ✅ |
 
 ### 🔵 NIVEL BAJO (Flujos de nicho)
 
-| # | Página | Archivo | Líneas | Complejidad | Elementos Críticos |
-|---|--------|---------|--------|-------------|-------------------|
-| 15 | **Envío (Impresión)** | `src/app/impresion-3d/envio/page.tsx` | ~664 | ⭐⭐⭐ | Formulario de dirección, selección envío |
-| 16 | **Pago (Impresión)** | `src/app/impresion-3d/pago/page.tsx` | ~524 | ⭐⭐⭐ | Resumen, métodos de pago |
-| 17 | **Confirmación (Impresión)** | `src/app/impresion-3d/confirmacion/page.tsx` | ~334 | ⭐⭐ | Estado de transacción |
+| # | Página | Archivo | Líneas | Complejidad | Elementos Críticos | Estado |
+|---|--------|---------|--------|-------------|-------------------|--------|
+| 15 | **Envío (Impresión)** | `src/app/impresion-3d/envio/page.tsx` | ~664 | ⭐⭐⭐ | Formulario de dirección, selección envío | ✅ |
+| 16 | **Pago (Impresión)** | `src/app/impresion-3d/pago/page.tsx` | ~524 | ⭐⭐⭐ | Resumen, métodos de pago | ✅ |
+| 17 | **Confirmación (Impresión)** | `src/app/impresion-3d/confirmacion/page.tsx` | ~334 | ⭐⭐ | Estado de transacción | ✅ |
 
 ---
 
@@ -109,10 +110,10 @@ xl: 1280px  → Desktop
 ### Fase 1: Core (Semana 1)
 1. ✅ Crear lista.md (HECHO)
 2. ✅ Landing/Home (HECHO - 2 dic 2025)
-3. 🔲 Login/Register
+3. ✅ Explore (HECHO - 2 dic 2025)
+4. 🔲 Login/Register
 
 ### Fase 2: Discovery (Semana 2)
-4. 🔲 Explore
 5. 🔲 Search
 6. 🔲 ContentCard (componente)
 

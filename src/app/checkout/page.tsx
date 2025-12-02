@@ -270,43 +270,43 @@ function CheckoutContent() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-[#050505] pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div className="min-h-screen bg-[#050505] pt-20 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         {/* Background Effects */}
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-0 left-1/4 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-purple-600/10 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-blue-600/10 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none" />
 
         <div className="max-w-6xl mx-auto relative z-10">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+          <div className="text-center mb-8 sm:mb-12">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-2 sm:mb-4 tracking-tight">
               {total === 0 ? '🎁 Obtener Gratis' : '🛒 Finalizar Compra'}
             </h1>
-            <p className="text-white/40 text-lg">Revisa tus items y completa tu pedido</p>
+            <p className="text-white/40 text-sm sm:text-lg">Revisa tus items y completa tu pedido</p>
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-6 rounded-2xl mb-8 flex items-start gap-4 animate-fade-in">
-              <svg className="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 sm:p-6 rounded-xl sm:rounded-2xl mb-6 sm:mb-8 flex items-start gap-3 sm:gap-4 animate-fade-in">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
-                <h3 className="font-bold mb-1">Ha ocurrido un error</h3>
-                <p>{error}</p>
+                <h3 className="font-bold mb-1 text-sm sm:text-base">Ha ocurrido un error</h3>
+                <p className="text-sm">{error}</p>
               </div>
             </div>
           )}
 
-          <div className="grid lg:grid-cols-12 gap-8">
+          <div className="flex flex-col-reverse lg:grid lg:grid-cols-12 gap-6 sm:gap-8">
             {/* Items del carrito (8 columnas) */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="bg-[#0f0f0f] border border-white/5 rounded-3xl p-6 md:p-8 shadow-xl">
-                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-                  <span className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center text-sm">1</span>
+            <div className="lg:col-span-7 space-y-4 sm:space-y-6">
+              <div className="bg-[#0f0f0f] border border-white/5 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl">
+                <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                  <span className="w-6 h-6 sm:w-8 sm:h-8 bg-white/5 rounded-full flex items-center justify-center text-xs sm:text-sm">1</span>
                   Items en tu pedido
                 </h2>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {items.map((item, index) => (
-                    <div key={index} className="flex gap-4 p-4 bg-black/20 rounded-2xl border border-white/5 hover:border-white/10 transition-colors group">
-                      <div className="w-24 h-24 rounded-xl overflow-hidden bg-white/5 flex-shrink-0">
+                    <div key={index} className="flex gap-3 sm:gap-4 p-3 sm:p-4 bg-black/20 rounded-xl sm:rounded-2xl border border-white/5 hover:border-white/10 transition-colors group">
+                      <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-lg sm:rounded-xl overflow-hidden bg-white/5 flex-shrink-0">
                         {item.coverImage ? (
                           <img
                             src={item.coverImage}
@@ -315,26 +315,26 @@ function CheckoutContent() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-white/20">
-                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                           </div>
                         )}
                       </div>
-                      <div className="flex-1 flex flex-col justify-center">
-                        <h3 className="font-bold text-white text-lg mb-1">{item.title}</h3>
-                        <p className="text-white/40 text-sm mb-2">por {item.author}</p>
+                      <div className="flex-1 min-w-0 flex flex-col justify-center">
+                        <h3 className="font-bold text-white text-sm sm:text-lg mb-0.5 sm:mb-1 truncate">{item.title}</h3>
+                        <p className="text-white/40 text-xs sm:text-sm mb-1 sm:mb-2">por {item.author}</p>
                         <div className="flex items-center gap-2">
-                          <span className="px-2 py-1 bg-white/5 rounded-md text-xs text-white/60 uppercase tracking-wider">
+                          <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-white/5 rounded text-[10px] sm:text-xs text-white/60 uppercase tracking-wider">
                             {item.contentType}
                           </span>
                         </div>
                       </div>
                       <div className="flex flex-col justify-center text-right">
-                        <p className="font-bold text-xl text-white">
+                        <p className="font-bold text-base sm:text-xl text-white">
                           {item.price === 0 ? 'Gratis' : `$${item.price.toLocaleString()}`}
                         </p>
-                        <p className="text-white/30 text-xs">{item.currency}</p>
+                        <p className="text-white/30 text-[10px] sm:text-xs">{item.currency}</p>
                       </div>
                     </div>
                   ))}
@@ -342,23 +342,23 @@ function CheckoutContent() {
               </div>
 
               {/* Información de seguridad */}
-              <div className={`p-6 rounded-3xl border flex items-start gap-4 ${total === 0
+              <div className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl border flex items-start gap-3 sm:gap-4 ${total === 0
                 ? 'bg-green-500/5 border-green-500/10'
                 : 'bg-blue-500/5 border-blue-500/10'
                 }`}>
-                <div className={`p-3 rounded-xl ${total === 0 ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className={`p-2 sm:p-3 rounded-lg sm:rounded-xl ${total === 0 ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className={`font-bold mb-1 ${total === 0 ? 'text-green-400' : 'text-blue-400'}`}>
+                  <h3 className={`font-bold mb-0.5 sm:mb-1 text-sm sm:text-base ${total === 0 ? 'text-green-400' : 'text-blue-400'}`}>
                     {total === 0 ? 'Descarga Segura' : 'Pago Seguro Encriptado'}
                   </h3>
-                  <p className={`text-sm ${total === 0 ? 'text-green-400/60' : 'text-blue-400/60'}`}>
+                  <p className={`text-xs sm:text-sm ${total === 0 ? 'text-green-400/60' : 'text-blue-400/60'}`}>
                     {total === 0
                       ? 'Este producto es gratuito. No se requiere información de pago.'
-                      : 'Tus datos están protegidos con encriptación SSL de 256 bits. No almacenamos información de tarjetas.'
+                      : 'Tus datos están protegidos con encriptación SSL de 256 bits.'
                     }
                   </p>
                 </div>
@@ -367,40 +367,40 @@ function CheckoutContent() {
 
             {/* Resumen de compra (5 columnas) */}
             <div className="lg:col-span-5">
-              <div className="bg-[#0f0f0f] border border-white/5 rounded-3xl p-6 md:p-8 shadow-xl sticky top-32">
-                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-                  <span className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center text-sm">2</span>
+              <div className="bg-[#0f0f0f] border border-white/5 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl lg:sticky lg:top-32">
+                <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                  <span className="w-6 h-6 sm:w-8 sm:h-8 bg-white/5 rounded-full flex items-center justify-center text-xs sm:text-sm">2</span>
                   Resumen
                 </h2>
 
-                <div className="space-y-4 mb-8">
-                  <div className="flex justify-between text-white/60">
+                <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+                  <div className="flex justify-between text-sm sm:text-base text-white/60">
                     <span>Subtotal ({items.length} items)</span>
                     <span>{total === 0 ? 'Gratis' : `$${total.toLocaleString()}`}</span>
                   </div>
-                  <div className="flex justify-between text-white/60">
+                  <div className="flex justify-between text-sm sm:text-base text-white/60">
                     <span>Comisión de servicio</span>
                     <span>$0</span>
                   </div>
-                  <div className="h-px bg-white/10 my-4" />
+                  <div className="h-px bg-white/10 my-3 sm:my-4" />
                   <div className="flex justify-between items-end">
-                    <span className="text-white font-medium">Total a pagar</span>
+                    <span className="text-white font-medium text-sm sm:text-base">Total a pagar</span>
                     <div className="text-right">
-                      <span className={`text-3xl font-bold ${total === 0 ? 'text-green-400' : 'text-white'}`}>
+                      <span className={`text-2xl sm:text-3xl font-bold ${total === 0 ? 'text-green-400' : 'text-white'}`}>
                         {total === 0 ? 'Gratis' : `$${total.toLocaleString()}`}
                       </span>
-                      <p className="text-white/30 text-xs mt-1">CLP (Pesos Chilenos)</p>
+                      <p className="text-white/30 text-[10px] sm:text-xs mt-0.5 sm:mt-1">CLP (Pesos Chilenos)</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <button
                     onClick={handlePayment}
                     disabled={loading || items.length === 0}
-                    className={`w-full py-4 px-6 rounded-xl font-bold text-lg shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-3 ${total === 0
+                    className={`w-full py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-bold text-sm sm:text-lg shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:gap-3 ${total === 0
                       ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-green-500/25'
-                      : 'bg-white text-black hover:bg-gray-100 hover:shadow-white/10'
+                      : 'bg-white text-black hover:bg-gray-100'
                       }`}
                   >
                     {loading ? (
@@ -423,13 +423,13 @@ function CheckoutContent() {
 
                   <button
                     onClick={handleBackToCart}
-                    className="w-full py-4 px-6 rounded-xl font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all duration-300"
+                    className="w-full py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-medium text-sm sm:text-base text-white/60 hover:text-white hover:bg-white/5 transition-all duration-300"
                   >
                     Volver al carrito
                   </button>
                 </div>
 
-                <div className="mt-8 flex items-center justify-center gap-4 opacity-30 grayscale hover:grayscale-0 transition-all duration-500">
+                <div className="mt-6 sm:mt-8 flex items-center justify-center gap-3 sm:gap-4 opacity-30 grayscale hover:grayscale-0 transition-all duration-500">
                   <img src="/webpay-logo.png" alt="Webpay" className="h-8 object-contain" onError={(e) => e.currentTarget.style.display = 'none'} />
                   <div className="text-xs text-white/50 text-center">
                     Pagos procesados por Transbank

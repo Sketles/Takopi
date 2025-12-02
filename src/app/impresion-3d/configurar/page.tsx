@@ -208,41 +208,41 @@ export default function PrintingConfigPage() {
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-purple-900/10 to-transparent"></div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 pt-24 md:pt-28 pb-8">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 pt-20 sm:pt-24 md:pt-28 pb-8">
           {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-12">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4 mb-8 sm:mb-12">
             <div>
               <Link
                 href="/impresion-3d"
-                className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-2 group"
+                className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-2 group text-sm"
               >
-                <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                Volver al Catálogo
+                Volver
               </Link>
-              <h1 className="text-4xl font-bold tracking-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
                 Configurador <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Inteligente</span>
               </h1>
             </div>
 
             {/* Steps Indicator */}
-            <div className="flex items-center gap-2 bg-white/5 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+            <div className="flex items-center gap-2 bg-white/5 backdrop-blur-md px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/10">
               <div className={`w-2 h-2 rounded-full ${modelLoaded ? 'bg-green-500' : 'bg-purple-500 animate-pulse'}`}></div>
-              <span className="text-sm font-medium text-gray-300">
+              <span className="text-xs sm:text-sm font-medium text-gray-300">
                 {modelLoaded ? 'Modelo Cargado' : 'Esperando Modelo'}
               </span>
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-12 gap-8">
+          <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 sm:gap-8">
             {/* Left Column - 3D Viewer & Upload */}
-            <div className="lg:col-span-8 space-y-6">
-              <div className="relative h-[500px] bg-gradient-to-br from-gray-900 to-black rounded-3xl border border-white/10 overflow-hidden group">
+            <div className="lg:col-span-8 space-y-4 sm:space-y-6">
+              <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] bg-gradient-to-br from-gray-900 to-black rounded-2xl sm:rounded-3xl border border-white/10 overflow-hidden group">
                 {!modelLoaded ? (
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-all duration-300"
+                    className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-all duration-300 px-4"
                   >
                     <input
                       ref={fileInputRef}
@@ -251,16 +251,16 @@ export default function PrintingConfigPage() {
                       onChange={handleFileUpload}
                       className="hidden"
                     />
-                    <div className="w-24 h-24 bg-purple-500/10 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 border border-purple-500/20">
-                      <svg className="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 bg-purple-500/10 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300 border border-purple-500/20">
+                      <svg className="w-8 h-8 sm:w-10 sm:h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                       </svg>
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-2">Sube tu Archivo 3D</h3>
-                    <p className="text-gray-400 mb-8">Arrastra o selecciona tu archivo .STL, .OBJ o .GLB</p>
-                    <div className="flex gap-3">
+                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 text-center">Sube tu Archivo 3D</h3>
+                    <p className="text-gray-400 text-sm sm:text-base mb-6 sm:mb-8 text-center">Arrastra o selecciona tu archivo .STL, .OBJ o .GLB</p>
+                    <div className="flex gap-2 sm:gap-3">
                       {['STL', 'OBJ', 'GLB'].map(ext => (
-                        <span key={ext} className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-500 font-mono">
+                        <span key={ext} className="px-2 sm:px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] sm:text-xs text-gray-500 font-mono">
                           .{ext}
                         </span>
                       ))}
@@ -287,26 +287,26 @@ export default function PrintingConfigPage() {
                     )}
 
                     {/* Viewer Controls Overlay */}
-                    <div className="absolute top-4 right-4 flex gap-2">
+                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex gap-2">
                       <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="px-4 py-2 bg-black/50 backdrop-blur-md border border-white/10 hover:bg-white/10 text-white rounded-xl text-sm font-medium transition-all"
+                        className="px-3 sm:px-4 py-1.5 sm:py-2 bg-black/50 backdrop-blur-md border border-white/10 hover:bg-white/10 text-white rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-all"
                       >
-                        Cambiar Archivo
+                        Cambiar
                       </button>
                     </div>
 
                     {/* File Info Overlay */}
-                    <div className="absolute bottom-4 left-4 right-4 p-4 bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center text-purple-400">
-                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                    <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 p-3 sm:p-4 bg-black/60 backdrop-blur-md border border-white/10 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-500/20 rounded-lg flex items-center justify-center text-purple-400">
+                          <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                         </div>
                         <div>
-                          <p className="font-medium text-white truncate max-w-[200px]">
+                          <p className="font-medium text-white text-sm sm:text-base truncate max-w-[150px] sm:max-w-[200px]">
                             {config.modelFile?.name || fileName || productTitle || 'Modelo 3D'}
                           </p>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-[10px] sm:text-xs text-gray-400">
                             {config.modelFile 
                               ? `${(config.modelFile.size / 1024 / 1024).toFixed(2)} MB`
                               : (productId ? '📦 Desde Marketplace' : 'Modelo externo')
@@ -314,9 +314,10 @@ export default function PrintingConfigPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="text-green-400 text-sm font-medium flex items-center gap-1">
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                        Listo para imprimir
+                      <div className="text-green-400 text-xs sm:text-sm font-medium flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        <span className="hidden sm:inline">Listo para imprimir</span>
+                        <span className="sm:hidden">Listo</span>
                       </div>
                     </div>
                   </>
@@ -325,31 +326,31 @@ export default function PrintingConfigPage() {
 
               {/* Configuration Options */}
               {modelLoaded && (
-                <div className="space-y-8 animate-fade-in-up">
+                <div className="space-y-6 sm:space-y-8 animate-fade-in-up">
                   {/* Material Selection */}
                   <section>
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs">1</span>
+                    <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2">
+                      <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-[10px] sm:text-xs">1</span>
                       Material
                     </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
                       {materials.map(material => (
                         <button
                           key={material.id}
                           onClick={() => setConfig({ ...config, material: material.id })}
-                          className={`relative group p-4 rounded-2xl border transition-all duration-300 ${config.material === material.id
+                          className={`relative group p-2 sm:p-4 rounded-xl sm:rounded-2xl border transition-all duration-300 ${config.material === material.id
                               ? 'bg-white/10 border-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.15)]'
                               : 'bg-white/5 border-transparent hover:bg-white/10'
                             }`}
                         >
-                          <div className="flex justify-center mb-3">
-                            <div className={`w-12 h-12 rounded-full ${material.sphereStyle} transition-transform duration-300 group-hover:scale-110`}></div>
+                          <div className="flex justify-center mb-2 sm:mb-3">
+                            <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-full ${material.sphereStyle} transition-transform duration-300 group-hover:scale-110`}></div>
                           </div>
                           <div className="text-center">
-                            <p className={`font-bold text-sm ${config.material === material.id ? 'text-white' : 'text-gray-300'}`}>
+                            <p className={`font-bold text-[10px] sm:text-sm ${config.material === material.id ? 'text-white' : 'text-gray-300'}`}>
                               {material.name}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">{material.desc}</p>
+                            <p className="text-[8px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">{material.desc}</p>
                           </div>
                         </button>
                       ))}
@@ -358,16 +359,16 @@ export default function PrintingConfigPage() {
 
                   {/* Color Selection */}
                   <section>
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs">2</span>
+                    <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2">
+                      <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-[10px] sm:text-xs">2</span>
                       Color
                     </h3>
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-2 sm:gap-3">
                       {colors.map(color => (
                         <button
                           key={color}
                           onClick={() => setConfig({ ...config, color })}
-                          className={`w-10 h-10 rounded-full transition-all duration-300 ${config.color === color
+                          className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-300 ${config.color === color
                               ? 'ring-2 ring-offset-2 ring-offset-[#0a0a0a] ring-white scale-110'
                               : 'hover:scale-110 hover:ring-2 hover:ring-white/20'
                             }`}
@@ -380,20 +381,20 @@ export default function PrintingConfigPage() {
 
                   {/* Print Settings Grid */}
                   <section>
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs">3</span>
+                    <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2">
+                      <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-[10px] sm:text-xs">3</span>
                       Ajustes de Impresión
                     </h3>
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
                       {/* Quality */}
-                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
-                        <label className="block text-sm font-medium text-gray-400 mb-3">Calidad</label>
-                        <div className="flex gap-2">
+                      <div className="bg-white/5 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/5">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-400 mb-2 sm:mb-3">Calidad</label>
+                        <div className="flex gap-1.5 sm:gap-2">
                           {qualities.map(quality => (
                             <button
                               key={quality.id}
                               onClick={() => setConfig({ ...config, quality: quality.id })}
-                              className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all ${config.quality === quality.id
+                              className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-all ${config.quality === quality.id
                                   ? 'bg-purple-600 text-white shadow-lg'
                                   : 'bg-white/5 text-gray-400 hover:bg-white/10'
                                 }`}
@@ -402,7 +403,7 @@ export default function PrintingConfigPage() {
                             </button>
                           ))}
                         </div>
-                        <p className="text-xs text-gray-500 mt-2 text-center">
+                        <p className="text-[10px] sm:text-xs text-gray-500 mt-2 text-center">
                           {qualities.find(q => q.id === config.quality)?.desc}
                         </p>
                       </div>
@@ -483,54 +484,54 @@ export default function PrintingConfigPage() {
 
             {/* Right Column - Summary Panel */}
             <div className="lg:col-span-4">
-              <div className="sticky top-8 space-y-6">
-                <div className="bg-gradient-to-b from-gray-900 to-black rounded-3xl border border-white/10 p-6 shadow-2xl relative overflow-hidden">
+              <div className="lg:sticky lg:top-8 space-y-4 sm:space-y-6">
+                <div className="bg-gradient-to-b from-gray-900 to-black rounded-2xl sm:rounded-3xl border border-white/10 p-4 sm:p-6 shadow-2xl relative overflow-hidden">
                   {/* Glow Effect */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 blur-[80px] rounded-full pointer-events-none"></div>
+                  <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-purple-600/10 blur-[60px] sm:blur-[80px] rounded-full pointer-events-none"></div>
 
-                  <h2 className="text-2xl font-bold mb-6 relative z-10">Resumen de Orden</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 relative z-10">Resumen de Orden</h2>
 
                   {!modelLoaded ? (
-                    <div className="text-center py-12 border-2 border-dashed border-white/10 rounded-2xl">
-                      <div className="text-4xl mb-4 opacity-50">🧾</div>
-                      <p className="text-gray-500 text-sm">Sube un modelo para<br />ver la cotización</p>
+                    <div className="text-center py-8 sm:py-12 border-2 border-dashed border-white/10 rounded-xl sm:rounded-2xl">
+                      <div className="text-3xl sm:text-4xl mb-3 sm:mb-4 opacity-50">🧾</div>
+                      <p className="text-gray-500 text-xs sm:text-sm">Sube un modelo para<br />ver la cotización</p>
                     </div>
                   ) : (
-                    <div className="space-y-6 relative z-10 animate-fade-in">
+                    <div className="space-y-4 sm:space-y-6 relative z-10 animate-fade-in">
                       {/* Price Card */}
-                      <div className="bg-white/5 rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
-                        <p className="text-gray-400 text-sm mb-1">Total Estimado</p>
+                      <div className="bg-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/10 backdrop-blur-sm">
+                        <p className="text-gray-400 text-xs sm:text-sm mb-1">Total Estimado</p>
                         {isCalculating ? (
-                          <div className="h-10 bg-white/10 rounded-lg animate-pulse w-3/4"></div>
+                          <div className="h-8 sm:h-10 bg-white/10 rounded-lg animate-pulse w-3/4"></div>
                         ) : (
                           <div className="flex items-baseline gap-1">
-                            <span className="text-4xl font-bold text-white tracking-tight">
+                            <span className="text-2xl sm:text-4xl font-bold text-white tracking-tight">
                               ${estimatedPrice.toLocaleString('es-CL')}
                             </span>
-                            <span className="text-gray-500 font-medium">CLP</span>
+                            <span className="text-gray-500 font-medium text-sm">CLP</span>
                           </div>
                         )}
-                        <div className="mt-4 flex items-center gap-2 text-sm text-purple-300 bg-purple-500/10 px-3 py-1.5 rounded-lg w-fit">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                          Tiempo aprox: {estimatedTime}
+                        <div className="mt-3 sm:mt-4 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-purple-300 bg-purple-500/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg w-fit">
+                          <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          Tiempo: {estimatedTime}
                         </div>
                       </div>
 
                       {/* Specs List */}
-                      <div className="space-y-3 text-sm">
-                        <div className="flex justify-between py-2 border-b border-white/5">
+                      <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
+                        <div className="flex justify-between py-1.5 sm:py-2 border-b border-white/5">
                           <span className="text-gray-400">Material</span>
                           <span className="font-medium text-white">{materials.find(m => m.id === config.material)?.name}</span>
                         </div>
-                        <div className="flex justify-between py-2 border-b border-white/5">
+                        <div className="flex justify-between py-1.5 sm:py-2 border-b border-white/5">
                           <span className="text-gray-400">Calidad</span>
                           <span className="font-medium text-white capitalize">{config.quality}</span>
                         </div>
-                        <div className="flex justify-between py-2 border-b border-white/5">
+                        <div className="flex justify-between py-1.5 sm:py-2 border-b border-white/5">
                           <span className="text-gray-400">Escala</span>
                           <span className="font-medium text-white">{config.scale}%</span>
                         </div>
-                        <div className="flex justify-between py-2 border-b border-white/5">
+                        <div className="flex justify-between py-1.5 sm:py-2 border-b border-white/5">
                           <span className="text-gray-400">Relleno</span>
                           <span className="font-medium text-white">{config.infill}%</span>
                         </div>
@@ -539,18 +540,18 @@ export default function PrintingConfigPage() {
                       {/* Checkout Button */}
                       <button
                         onClick={handleProceedToCheckout}
-                        className="w-full py-4 bg-white text-black rounded-xl font-bold text-lg hover:bg-gray-200 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-white/10"
+                        className="w-full py-3 sm:py-4 bg-white text-black rounded-xl font-bold text-sm sm:text-lg hover:bg-gray-200 transition-all active:scale-[0.98] shadow-lg shadow-white/10"
                       >
                         Continuar al Pago
                       </button>
 
                       {/* Trust Badges */}
-                      <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-500 text-center">
-                        <div className="bg-white/5 rounded-lg p-2">
+                      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] text-gray-500 text-center">
+                        <div className="bg-white/5 rounded-lg p-1.5 sm:p-2">
                           🔒 Pago Seguro
                         </div>
-                        <div className="bg-white/5 rounded-lg p-2">
-                          🚚 Envíos a todo Chile
+                        <div className="bg-white/5 rounded-lg p-1.5 sm:p-2">
+                          🚚 Envíos Chile
                         </div>
                       </div>
                     </div>

@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="relative mt-32 bg-[#050505] border-t border-white/5">
+    <footer className="relative mt-12 sm:mt-16 bg-[#050505] border-t border-white/5">
       {/* Gradient Top Border */}
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
 

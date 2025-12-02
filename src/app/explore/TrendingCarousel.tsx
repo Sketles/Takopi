@@ -18,23 +18,23 @@ const TrendingCarousel = memo(({ items, onItemClick }: TrendingCarouselProps) =>
   const tripleItems = [...items, ...items, ...items];
 
   return (
-    <div className="relative mt-12 mb-8">
+    <div className="relative mt-8 sm:mt-10 lg:mt-12 mb-6 sm:mb-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 px-4">
-        <h2 className="text-2xl font-bold flex items-center gap-3">
-          <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 text-black text-sm">
+      <div className="flex items-center justify-between mb-4 sm:mb-5 lg:mb-6 px-4">
+        <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 sm:gap-3">
+          <span className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 text-black text-xs sm:text-sm">
             ★
           </span>
           Tendencias
         </h2>
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <div className={`w-2 h-2 rounded-full transition-colors ${isPaused ? 'bg-yellow-500' : 'bg-green-500 animate-pulse'}`}></div>
-          <span>{isPaused ? 'Pausado' : 'Auto-scroll'}</span>
+          <span className="hidden sm:inline">{isPaused ? 'Pausado' : 'Auto-scroll'}</span>
         </div>
       </div>
 
       {/* LEFT NEON LINES - Outside carousel, in page background */}
-      <div className="absolute left-0 top-16 bottom-0 w-64 pointer-events-none" style={{ transform: 'translateX(-30%)' }}>
+      <div className="hidden lg:block absolute left-0 top-16 bottom-0 w-64 pointer-events-none" style={{ transform: 'translateX(-30%)' }}>
         <div className="absolute right-0 top-[10%] h-[2px] neon-line-purple glitch-h-1" style={{ width: '120px' }}></div>
         <div className="absolute right-0 top-[25%] h-[3px] neon-line-cyan glitch-h-2" style={{ width: '160px' }}></div>
         <div className="absolute right-0 top-[40%] h-[4px] neon-line-fuchsia-intense glitch-h-3" style={{ width: '280px' }}></div>
@@ -44,7 +44,7 @@ const TrendingCarousel = memo(({ items, onItemClick }: TrendingCarouselProps) =>
       </div>
 
       {/* RIGHT NEON LINES - Outside carousel, in page background */}
-      <div className="absolute right-0 top-16 bottom-0 w-64 pointer-events-none" style={{ transform: 'translateX(30%)' }}>
+      <div className="hidden lg:block absolute right-0 top-16 bottom-0 w-64 pointer-events-none" style={{ transform: 'translateX(30%)' }}>
         <div className="absolute left-0 top-[15%] h-[2px] neon-line-cyan-r glitch-h-3" style={{ width: '130px' }}></div>
         <div className="absolute left-0 top-[32%] h-[3px] neon-line-purple-r glitch-h-1" style={{ width: '170px' }}></div>
         <div className="absolute left-0 top-[48%] h-[5px] neon-line-fuchsia-intense-r glitch-h-4" style={{ width: '300px' }}></div>
@@ -59,12 +59,12 @@ const TrendingCarousel = memo(({ items, onItemClick }: TrendingCarouselProps) =>
         onMouseLeave={() => setIsPaused(false)}
       >
         {/* Gradient masks inside carousel */}
-        <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#0a0a0a] to-transparent z-10 pointer-events-none"></div>
-        <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10 pointer-events-none"></div>
+        <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-16 lg:w-24 bg-gradient-to-r from-[#0a0a0a] to-transparent z-10 pointer-events-none"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-16 lg:w-24 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10 pointer-events-none"></div>
 
         {/* Animated Track - GPU accelerated */}
         <div 
-          className="flex gap-5 w-max"
+          className="flex gap-3 sm:gap-4 lg:gap-5 w-max"
           style={{
             animation: `scroll ${items.length * 5}s linear infinite`,
             animationPlayState: isPaused ? 'paused' : 'running',
@@ -73,7 +73,7 @@ const TrendingCarousel = memo(({ items, onItemClick }: TrendingCarouselProps) =>
           {tripleItems.map((item, index) => (
             <div
               key={`trend-${item.id}-${index}`}
-              className="w-[280px] md:w-[300px] flex-shrink-0 cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
+              className="w-[240px] sm:w-[260px] md:w-[280px] lg:w-[300px] flex-shrink-0 cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
               onClick={() => onItemClick(item)}
             >
               <ContentCard

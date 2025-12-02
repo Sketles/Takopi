@@ -7,11 +7,10 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-x-hidden">
+        <div className="min-h-screen bg-[#050505] text-white relative overflow-x-hidden">
             {/* Subtle Background Elements */}
             <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.1),transparent_50%)]"></div>
-                <div className="absolute bottom-0 right-0 w-[800px] h-[800px] bg-purple-900/10 rounded-full blur-[120px] translate-x-1/3 translate-y-1/3"></div>
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.08),transparent_40%)]"></div>
             </div>
 
             <div className="relative z-10 flex flex-col min-h-screen">

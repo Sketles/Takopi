@@ -598,9 +598,9 @@ function ProfileContent() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-[#050505] pb-20">
+      <div className="min-h-screen bg-[#050505] pb-12 sm:pb-20">
         {/* Banner Section - Full Width & Immersive */}
-        <div className="relative h-[40vh] min-h-[300px] lg:h-[50vh] w-full overflow-hidden">
+        <div className="relative h-[30vh] min-h-[200px] sm:h-[35vh] sm:min-h-[250px] lg:h-[45vh] lg:min-h-[350px] w-full overflow-hidden">
           {/* Banner Image */}
           <div
             className={`absolute inset-0 ${isOwnProfile ? 'cursor-pointer group' : ''}`}
@@ -639,12 +639,12 @@ function ProfileContent() {
         </div>
 
         {/* Profile Info Container - Overlapping Banner */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative -mt-32 z-10">
-          <div className="flex flex-col md:flex-row items-end gap-8 mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative -mt-20 sm:-mt-28 lg:-mt-32 z-10">
+          <div className="flex flex-col items-center sm:items-start md:flex-row md:items-end gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
             {/* Avatar */}
             <div className="relative group shrink-0">
               <div
-                className={`w-32 h-32 md:w-40 md:h-40 rounded-full p-1 bg-[#050505] ${isOwnProfile ? 'cursor-pointer' : ''}`}
+                className={`w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full p-1 bg-[#050505] ${isOwnProfile ? 'cursor-pointer' : ''}`}
                 onClick={() => isOwnProfile && setEditingType('avatar')}
               >
                 <div className="w-full h-full rounded-full overflow-hidden relative bg-white/5 border border-white/10">
@@ -675,10 +675,10 @@ function ProfileContent() {
             </div>
 
             {/* User Info & Actions */}
-            <div className="flex-1 w-full flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-4xl font-bold text-white tracking-tight">{currentProfile.username}</h1>
+            <div className="flex-1 w-full flex flex-col items-center sm:items-start md:flex-row md:items-end justify-between gap-4 sm:gap-6 pb-2">
+              <div className="space-y-2 text-center sm:text-left">
+                <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">{currentProfile.username}</h1>
                   {currentProfile.role === 'Artist' && (
                     <span className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs" title="Artista Verificado">
                       ✓
@@ -686,8 +686,8 @@ function ProfileContent() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-3 text-white/60 text-sm">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${currentProfile.role === 'Artist' ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' :
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 text-white/60 text-xs sm:text-sm">
+                  <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium border ${currentProfile.role === 'Artist' ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' :
                     currentProfile.role === 'Explorer' ? 'bg-green-500/10 border-green-500/20 text-green-400' :
                       'bg-white/5 border-white/10 text-white/60'
                     }`}>
@@ -695,7 +695,6 @@ function ProfileContent() {
                       currentProfile.role === 'Explorer' ? 'Explorador' :
                         currentProfile.role}
                   </span>
-                  {/* link to change role removed */}
                   {isOwnProfile && (
                     <RoleSelector
                       currentRole={currentProfile.role}
@@ -704,32 +703,32 @@ function ProfileContent() {
                       isOpen={isRoleSelectorOpen}
                     />
                   )}
-                  <span>•</span>
-                  <span>{currentProfile.location || 'Ubicación no especificada'}</span>
-                  <span>•</span>
+                  <span className="hidden sm:inline">•</span>
+                  <span className="hidden sm:inline">{currentProfile.location || 'Ubicación no especificada'}</span>
+                  <span className="hidden sm:inline">•</span>
                   <span>Se unió en {currentProfile.createdAt ? new Date(currentProfile.createdAt).getFullYear() : '2024'}</span>
                 </div>
 
-                <p className="text-white/80 max-w-2xl text-lg leading-relaxed">
+                <p className="text-white/80 max-w-2xl text-sm sm:text-base lg:text-lg leading-relaxed line-clamp-3 sm:line-clamp-none">
                   {currentProfile.bio || 'Sin descripción'}
                 </p>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 shrink-0">
+              <div className="flex gap-2 sm:gap-3 shrink-0 w-full sm:w-auto justify-center sm:justify-end">
                 {isOwnProfile ? (
                   <button
                     onClick={() => setIsEditing(!isEditing)}
-                    className="px-6 py-2.5 bg-white text-black rounded-xl font-bold hover:bg-gray-200 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-white/5"
+                    className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white text-black rounded-xl font-bold hover:bg-gray-200 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-white/5 text-sm sm:text-base"
                   >
                     Editar Perfil
                   </button>
                 ) : (
                   <>
-                    <button className="px-6 py-2.5 bg-white text-black rounded-xl font-bold hover:bg-gray-200 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-white/5">
+                    <button className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white text-black rounded-xl font-bold hover:bg-gray-200 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-white/5 text-sm sm:text-base">
                       Seguir
                     </button>
-                    <button className="px-4 py-2.5 bg-white/5 text-white rounded-xl font-medium hover:bg-white/10 transition-colors border border-white/10">
+                    <button className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white/5 text-white rounded-xl font-medium hover:bg-white/10 transition-colors border border-white/10">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
@@ -741,7 +740,7 @@ function ProfileContent() {
           </div>
 
           {/* Stats Bar - Floating Glass */}
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-12">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3 lg:gap-4 mb-8 sm:mb-12">
             {[
               { label: 'Seguidores', value: realStats ? realStats.followersCount : currentProfile.stats.followers, clickable: true, onClick: () => { setFollowersModalTab('followers'); setIsFollowersModalOpen(true); } },
               { label: 'Siguiendo', value: realStats ? realStats.followingCount : currentProfile.stats.following, clickable: true, onClick: () => { setFollowersModalTab('following'); setIsFollowersModalOpen(true); } },
@@ -753,14 +752,14 @@ function ProfileContent() {
               <div
                 key={idx}
                 onClick={stat.clickable ? stat.onClick : undefined}
-                className={`bg-[#0f0f0f]/80 backdrop-blur-md border border-white/5 rounded-2xl p-4 text-center hover:bg-white/5 transition-colors group ${
+                className={`bg-[#0f0f0f]/80 backdrop-blur-md border border-white/5 rounded-xl sm:rounded-2xl p-2 sm:p-3 lg:p-4 text-center hover:bg-white/5 transition-colors group ${
                   stat.clickable ? 'cursor-pointer hover:border-purple-500/30 hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]' : 'cursor-default'
                 }`}
               >
-                <div className="text-2xl font-bold text-white mb-1 group-hover:scale-110 transition-transform duration-300">
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-0.5 sm:mb-1 group-hover:scale-110 transition-transform duration-300">
                   {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
                 </div>
-                <div className={`text-xs uppercase tracking-wider font-medium ${
+                <div className={`text-[10px] sm:text-xs uppercase tracking-wider font-medium ${
                   stat.clickable ? 'text-purple-400/80 group-hover:text-purple-400' : 'text-white/40'
                 }`}>
                   {stat.label}
@@ -771,13 +770,13 @@ function ProfileContent() {
 
           {/* Content Section */}
           {isOwnProfile && (
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               {/* Tabs */}
               <div className="flex justify-center">
-                <div className="bg-[#0f0f0f] border border-white/5 rounded-full p-1 inline-flex">
+                <div className="bg-[#0f0f0f] border border-white/5 rounded-full p-1 inline-flex w-full sm:w-auto max-w-sm">
                   <button
                     onClick={() => setActiveSection('creations')}
-                    className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${activeSection === 'creations'
+                    className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${activeSection === 'creations'
                       ? 'bg-white text-black shadow-lg'
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                       }`}
@@ -786,7 +785,7 @@ function ProfileContent() {
                   </button>
                   <button
                     onClick={() => setActiveSection('purchases')}
-                    className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${activeSection === 'purchases'
+                    className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${activeSection === 'purchases'
                       ? 'bg-white text-black shadow-lg'
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                       }`}
@@ -834,20 +833,20 @@ function ProfileContent() {
                     }));
 
                     return categoriesWithContent.length > 0 ? (
-                      <div className="space-y-12">
+                      <div className="space-y-8 sm:space-y-12">
                         {categoriesWithContent.map((category) => (
-                          <div key={category.type} className="space-y-6">
-                            <div className="flex items-center gap-4 px-2">
-                              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-2xl border border-white/5">
+                          <div key={category.type} className="space-y-4 sm:space-y-6">
+                            <div className="flex items-center gap-3 sm:gap-4 px-1 sm:px-2">
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/5 flex items-center justify-center text-xl sm:text-2xl border border-white/5">
                                 {category.icon}
                               </div>
                               <div>
-                                <h3 className="text-2xl font-bold text-white">{category.title}</h3>
-                                <p className="text-white/40 text-sm">{category.count} {category.count === 1 ? 'creación' : 'creaciones'}</p>
+                                <h3 className="text-xl sm:text-2xl font-bold text-white">{category.title}</h3>
+                                <p className="text-white/40 text-xs sm:text-sm">{category.count} {category.count === 1 ? 'creación' : 'creaciones'}</p>
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
                               {category.creations.map((creation: any, idx: number) => (
                                 <ContentCard
                                   key={creation.id || creation._id || `${category.type}-${idx}`}
@@ -867,15 +866,15 @@ function ProfileContent() {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-20 bg-[#0f0f0f] rounded-3xl border border-white/5">
-                        <div className="text-6xl mb-6 opacity-20">🎨</div>
-                        <h3 className="text-2xl font-bold text-white mb-2">Aún no tienes creaciones</h3>
-                        <p className="text-white/40 max-w-md mx-auto mb-8">
+                      <div className="text-center py-12 sm:py-20 px-4 bg-[#0f0f0f] rounded-2xl sm:rounded-3xl border border-white/5">
+                        <div className="text-4xl sm:text-6xl mb-4 sm:mb-6 opacity-20">🎨</div>
+                        <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">Aún no tienes creaciones</h3>
+                        <p className="text-white/40 max-w-md mx-auto mb-6 sm:mb-8 text-sm sm:text-base">
                           Comparte tu talento con el mundo subiendo tu primera creación al marketplace.
                         </p>
                         <button
                           onClick={() => window.location.href = '/upload'}
-                          className="px-8 py-3 bg-white text-black rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                          className="px-6 sm:px-8 py-2.5 sm:py-3 bg-white text-black rounded-xl font-bold hover:bg-gray-200 transition-colors text-sm sm:text-base"
                         >
                           Subir Contenido
                         </button>

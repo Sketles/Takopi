@@ -76,57 +76,54 @@ function AIModelViewer({ task, isGenerating, isRefining, isLoadingHistory, inclu
   if (isGenerating || isRefining || (task && !['SUCCEEDED', 'FAILED', 'CANCELED'].includes(task.status))) {
     // Detectar si estamos en fase de refine
     const isRefinePhase = isRefining || task?.taskType === 'text-to-3d-refine';
-    
+
     // Cuando isRefining es true pero task aún es el preview completado,
     // el progreso del refine es 0 (está iniciando)
     const isWaitingForRefineTask = isRefining && task?.taskType !== 'text-to-3d-refine';
     const progress = isWaitingForRefineTask ? 0 : (task?.progress || 0);
-    
+
     const showTwoSteps = includeTextures || isRefinePhase;
-    
+
     // Calcular progreso total cuando hay 2 pasos
     // Paso 1 (Modelado): 0-50%, Paso 2 (Texturas): 50-100%
     const totalProgress = showTwoSteps
       ? (isRefinePhase ? 50 + (progress / 2) : progress / 2)
       : progress;
-    
+
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center relative z-10 px-8">
-        
+      <div className="w-full h-full flex flex-col items-center justify-center relative z-10 px-4 sm:px-8">
+
         {/* Indicador de Pasos (solo si hay 2 pasos) */}
         {showTwoSteps && (
-          <div className="absolute top-8 left-1/2 -translate-x-1/2 flex items-center gap-3">
+          <div className="absolute top-4 sm:top-8 left-1/2 -translate-x-1/2 flex items-center gap-2 sm:gap-3">
             {/* Paso 1: Modelado */}
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-500 ${
-              !isRefinePhase 
-                ? 'bg-purple-500/20 border-purple-500/50 text-purple-300' 
-                : 'bg-green-500/10 border-green-500/30 text-green-400'
-            }`}>
-              <span className="text-lg">{!isRefinePhase ? '🔨' : '✓'}</span>
-              <span className="text-sm font-medium">Modelado 3D</span>
+            <div className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full border transition-all duration-500 ${!isRefinePhase
+              ? 'bg-purple-500/20 border-purple-500/50 text-purple-300'
+              : 'bg-green-500/10 border-green-500/30 text-green-400'
+              }`}>
+              <span className="text-sm sm:text-lg">{!isRefinePhase ? '🔨' : '✓'}</span>
+              <span className="text-xs sm:text-sm font-medium hidden xs:inline">Modelado 3D</span>
             </div>
-            
+
             {/* Conector */}
-            <div className={`w-8 h-0.5 transition-all duration-500 ${
-              isRefinePhase ? 'bg-gradient-to-r from-green-500 to-fuchsia-500' : 'bg-white/20'
-            }`} />
-            
+            <div className={`w-4 sm:w-8 h-0.5 transition-all duration-500 ${isRefinePhase ? 'bg-gradient-to-r from-green-500 to-fuchsia-500' : 'bg-white/20'
+              }`} />
+
             {/* Paso 2: Texturas */}
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-500 ${
-              isRefinePhase 
-                ? 'bg-fuchsia-500/20 border-fuchsia-500/50 text-fuchsia-300' 
-                : 'bg-white/5 border-white/10 text-gray-500'
-            }`}>
-              <span className="text-lg">{isRefinePhase ? '🎨' : '⏳'}</span>
-              <span className="text-sm font-medium">Texturizado</span>
+            <div className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full border transition-all duration-500 ${isRefinePhase
+              ? 'bg-fuchsia-500/20 border-fuchsia-500/50 text-fuchsia-300'
+              : 'bg-white/5 border-white/10 text-gray-500'
+              }`}>
+              <span className="text-sm sm:text-lg">{isRefinePhase ? '🎨' : '⏳'}</span>
+              <span className="text-xs sm:text-sm font-medium hidden xs:inline">Texturizado</span>
             </div>
           </div>
         )}
 
         {/* Círculo de Progreso Principal */}
-        <div className="relative w-48 h-48">
+        <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48">
           <div className={`absolute inset-0 rounded-full blur-[60px] animate-pulse ${isRefinePhase ? 'bg-fuchsia-500/20' : 'bg-purple-500/20'}`} />
-          
+
           {/* Outer Ring */}
           <div className="absolute inset-0 rounded-full border border-white/5 animate-[spin_3s_linear_infinite]" />
           <div className={`absolute inset-2 rounded-full border border-t-2 animate-[spin_2s_linear_infinite] ${isRefinePhase ? 'border-fuchsia-500/20 border-t-fuchsia-500' : 'border-purple-500/20 border-t-purple-500'}`} />
@@ -151,46 +148,45 @@ function AIModelViewer({ task, isGenerating, isRefining, isLoadingHistory, inclu
           </svg>
 
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-4xl font-black text-white tracking-tighter">
+            <span className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tighter">
               {Math.round(showTwoSteps ? totalProgress : progress)}%
             </span>
-            <span className={`text-xs uppercase tracking-widest mt-1 font-bold ${isRefinePhase ? 'text-fuchsia-300' : 'text-purple-300'}`}>
+            <span className={`text-[10px] sm:text-xs uppercase tracking-widest mt-0.5 sm:mt-1 font-bold ${isRefinePhase ? 'text-fuchsia-300' : 'text-purple-300'}`}>
               {isRefinePhase ? 'Texturizando' : 'Modelando'}
             </span>
           </div>
         </div>
 
         {/* Mensaje de Estado */}
-        <div className={`mt-8 px-6 py-3 backdrop-blur-md border rounded-full ${isRefinePhase ? 'bg-fuchsia-500/5 border-fuchsia-500/20' : 'bg-white/5 border-white/10'}`}>
-          <p className="text-gray-300 text-sm font-medium animate-pulse">
-            {isRefinePhase 
-              ? "Aplicando colores, materiales y texturas PBR..." 
+        <div className={`mt-4 sm:mt-8 px-3 sm:px-6 py-2 sm:py-3 backdrop-blur-md border rounded-full ${isRefinePhase ? 'bg-fuchsia-500/5 border-fuchsia-500/20' : 'bg-white/5 border-white/10'}`}>
+          <p className="text-gray-300 text-xs sm:text-sm font-medium animate-pulse text-center">
+            {isRefinePhase
+              ? "Aplicando colores, materiales y texturas PBR..."
               : (task?.prompt ? `Creando: "${task.prompt.length > 40 ? task.prompt.slice(0, 40) + '...' : task.prompt}"` : "Generando geometría 3D...")}
           </p>
         </div>
 
         {/* Barra de progreso lineal (visual secundario) */}
         {showTwoSteps && (
-          <div className="mt-6 w-full max-w-md">
+          <div className="mt-4 sm:mt-6 w-full max-w-xs sm:max-w-md px-4 sm:px-0">
             <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all duration-500 ${
-                  isRefinePhase 
-                    ? 'bg-gradient-to-r from-green-500 via-fuchsia-500 to-fuchsia-400' 
-                    : 'bg-gradient-to-r from-purple-600 to-purple-400'
-                }`}
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${isRefinePhase
+                  ? 'bg-gradient-to-r from-green-500 via-fuchsia-500 to-fuchsia-400'
+                  : 'bg-gradient-to-r from-purple-600 to-purple-400'
+                  }`}
                 style={{ width: `${totalProgress}%` }}
               />
             </div>
-            <div className="flex justify-between mt-2 text-xs text-gray-500">
-              <span>Inicio</span>
-              <span className={isRefinePhase ? 'text-green-400' : 'text-purple-400'}>
-                {!isRefinePhase ? `Modelando... ${Math.round(progress)}%` : '✓ Modelo listo'}
+            <div className="flex justify-between mt-2 text-[10px] sm:text-xs text-gray-500">
+              <span className="hidden sm:inline">Inicio</span>
+              <span className={`${isRefinePhase ? 'text-green-400' : 'text-purple-400'} truncate max-w-[80px] sm:max-w-none`}>
+                {!isRefinePhase ? `${Math.round(progress)}%` : '✓ Listo'}
               </span>
-              <span className={isRefinePhase ? 'text-fuchsia-400' : ''}>
-                {isRefinePhase ? `Texturas... ${Math.round(progress)}%` : 'Texturas'}
+              <span className={`${isRefinePhase ? 'text-fuchsia-400' : ''} truncate max-w-[80px] sm:max-w-none`}>
+                {isRefinePhase ? `${Math.round(progress)}%` : 'Texturas'}
               </span>
-              <span>Listo</span>
+              <span className="hidden sm:inline">Listo</span>
             </div>
           </div>
         )}
@@ -347,10 +343,11 @@ export default function TakopiIAPage() {
   const [isRefining, setIsRefining] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<GenerationTask | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const { authDelete, getToken } = useAuthenticatedFetch();
-  
+
   // Ref para trackear si debe auto-refinar cuando termine el preview
   const shouldAutoRefineRef = useRef(false);
   const lastRefineTaskIdRef = useRef<string | null>(null);
@@ -364,7 +361,7 @@ export default function TakopiIAPage() {
       setBalanceLoading(false);
       return;
     }
-    
+
     const init = async () => {
       await Promise.all([loadHistory(), loadBalance()]);
       setBalanceLoading(false);
@@ -381,17 +378,7 @@ export default function TakopiIAPage() {
 
   // AUTO-REFINE: Cuando el preview termina, aplicar texturas automáticamente
   useEffect(() => {
-    console.log('🔍 Auto-refine check:', {
-      status: currentTask?.status,
-      taskType: currentTask?.taskType,
-      mode: currentTask?.mode,
-      shouldAutoRefine: shouldAutoRefineRef.current,
-      isRefining,
-      lastRefineTaskId: lastRefineTaskIdRef.current,
-      currentTaskId: currentTask?.taskId,
-    });
-
-    const shouldRefine = 
+    const shouldRefine =
       currentTask?.status === 'SUCCEEDED' &&
       currentTask?.taskType === 'text-to-3d' &&
       currentTask?.mode === 'preview' &&
@@ -399,17 +386,13 @@ export default function TakopiIAPage() {
       !isRefining &&
       lastRefineTaskIdRef.current !== currentTask.taskId;
 
-    console.log('🎯 shouldRefine:', shouldRefine);
-
     if (shouldRefine && currentTask) {
-      console.log('🚀 Iniciando auto-refine para:', currentTask.taskId);
       lastRefineTaskIdRef.current = currentTask.taskId;
       shouldAutoRefineRef.current = false;
       setIsRefining(true);
-      
+
       refine(currentTask.taskId, { enablePbr: true, aiModel: currentTask.aiModel })
         .then(() => {
-          console.log('✅ Refine iniciado exitosamente');
           setTimeout(() => loadBalance(), 2000);
         })
         .catch((err) => {
@@ -418,11 +401,11 @@ export default function TakopiIAPage() {
         });
     }
   }, [currentTask?.status, currentTask?.taskType, currentTask?.mode, currentTask?.taskId, isRefining, refine, loadBalance]);
-  
+
   // Detectar cuando refine termina y actualizar historial
   useEffect(() => {
-    if (currentTask?.taskType === 'text-to-3d-refine' && 
-        ['SUCCEEDED', 'FAILED', 'CANCELED'].includes(currentTask?.status || '')) {
+    if (currentTask?.taskType === 'text-to-3d-refine' &&
+      ['SUCCEEDED', 'FAILED', 'CANCELED'].includes(currentTask?.status || '')) {
       setIsRefining(false);
       // Recargar historial para mostrar el modelo con texturas
       loadHistory();
@@ -451,11 +434,11 @@ export default function TakopiIAPage() {
   // Mostrar badge "Listo" por 2 segundos cuando termina una generación (refine o final)
   useEffect(() => {
     // Solo mostrar badge cuando el modelo final está listo (no preview si hay auto-refine pendiente)
-    const isReallyDone = currentTask?.status === 'SUCCEEDED' && 
-      (currentTask?.taskType === 'text-to-3d-refine' || 
-       currentTask?.taskType === 'image-to-3d' ||
-       (currentTask?.taskType === 'text-to-3d' && currentTask?.mode !== 'preview'));
-    
+    const isReallyDone = currentTask?.status === 'SUCCEEDED' &&
+      (currentTask?.taskType === 'text-to-3d-refine' ||
+        currentTask?.taskType === 'image-to-3d' ||
+        (currentTask?.taskType === 'text-to-3d' && currentTask?.mode !== 'preview'));
+
     if (isReallyDone) {
       setShowSuccessBadge(true);
       const timer = setTimeout(() => setShowSuccessBadge(false), 2000);
@@ -472,7 +455,7 @@ export default function TakopiIAPage() {
   // Eliminar modelo del historial (Blob + DB)
   const handleDeleteGeneration = useCallback(async () => {
     if (!deleteTarget) return;
-    
+
     setIsDeleting(true);
     try {
       const { error } = await authDelete(`/api/ai/tasks/${deleteTarget.id}`);
@@ -524,8 +507,8 @@ export default function TakopiIAPage() {
   };
 
   // Determinar si hay una tarea en progreso que no estamos viendo
-  const hasActiveTaskNotViewing = currentTask && 
-    !['SUCCEEDED', 'FAILED', 'CANCELED'].includes(currentTask.status) && 
+  const hasActiveTaskNotViewing = currentTask &&
+    !['SUCCEEDED', 'FAILED', 'CANCELED'].includes(currentTask.status) &&
     selectedTask !== null;
 
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -536,17 +519,14 @@ export default function TakopiIAPage() {
       router.push(`/auth/login?redirect=${encodeURIComponent('/takopi-ia')}`);
       return;
     }
-    
+
     if (mode === 'text-to-3d' && !prompt.trim()) return;
     if (mode === 'image-to-3d' && !image) return;
-    
-    console.log('🎬 handleGenerate llamado:', { mode, includeTextures });
-    
+
     // Si es text-to-3d con texturas, activar auto-refine
     if (mode === 'text-to-3d' && includeTextures) {
       shouldAutoRefineRef.current = true;
       lastRefineTaskIdRef.current = null;
-      console.log('✅ shouldAutoRefineRef seteado a TRUE');
     }
 
     let imageUrl: string | undefined;
@@ -574,7 +554,6 @@ export default function TakopiIAPage() {
 
         const data = await response.json();
         imageUrl = data.url;
-        console.log('✅ Imagen subida:', imageUrl);
       } catch (err) {
         console.error('❌ Error subiendo imagen:', err);
         setIsUploadingImage(false);
@@ -583,7 +562,7 @@ export default function TakopiIAPage() {
         setIsUploadingImage(false);
       }
     }
-    
+
     await generate({
       type: mode,
       prompt: prompt.trim(),
@@ -609,65 +588,264 @@ export default function TakopiIAPage() {
     <Layout>
       <div className="relative min-h-screen bg-[#050505] overflow-hidden font-sans selection:bg-purple-500/30">
 
+        {/* Ambient Glows - más sutiles en mobile */}
+        <div className="fixed top-0 left-1/4 w-[200px] h-[200px] sm:w-[500px] sm:h-[500px] bg-purple-600/8 sm:bg-purple-600/10 rounded-full blur-[60px] sm:blur-[120px] pointer-events-none" />
+        <div className="fixed bottom-0 right-1/4 w-[200px] h-[200px] sm:w-[500px] sm:h-[500px] bg-blue-600/5 rounded-full blur-[60px] sm:blur-[120px] pointer-events-none" />
 
-        {/* Ambient Glows */}
-        <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
+        {/* ==================== MOBILE LAYOUT ==================== */}
+        <div className="lg:hidden relative min-h-screen flex flex-col pt-16">
 
-        {/* Header Flotante - MOVIDO dentro del main layout flow */}
-        <div className="absolute top-6 right-6 z-50 flex items-center gap-4 pointer-events-none">
-          {/* Coin Balance */}
-          <div className="pointer-events-auto flex items-center gap-3 px-5 py-2.5 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl shadow-purple-900/20 hover:border-purple-500/30 transition-colors group">
-            <div className="relative w-8 h-8 group-hover:scale-110 transition-transform duration-300">
-              <Image
-                src="/icons/takopi-coin.png"
-                alt="Takopi Coin"
-                width={32}
-                height={32}
-                className="drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]"
-              />
-            </div>
-            <div className="flex flex-col leading-none">
-              <span className="text-white font-bold text-lg tracking-tight">
-                {balanceLoading ? '...' : balance ?? '—'}
-              </span>
-              <span className="text-[10px] text-purple-300 font-medium uppercase tracking-wider">Takopi Coins</span>
-            </div>
-          </div>
+          {/* Main Content - Scrollable */}
+          <main className="flex-1 pb-6 px-4 overflow-y-auto">
+            
+            {/* 3D Viewer - Prominente */}
+            <section className="mb-4">
+              <div className="aspect-square max-h-[45vh] w-full rounded-2xl border border-white/10 bg-black/30 backdrop-blur-sm relative overflow-hidden shadow-xl">
+                <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-10 pointer-events-none" />
+                
+                {/* Success Badge */}
+                {showSuccessBadge && (
+                  <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1 bg-green-500/20 backdrop-blur-xl border border-green-500/30 rounded-full">
+                    <span className="text-green-400 font-bold text-xs flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-ping" />
+                      ¡Listo!
+                    </span>
+                  </div>
+                )}
+
+                {/* Back to Progress Button */}
+                {hasActiveTaskNotViewing && (
+                  <button
+                    onClick={handleBackToCurrentTask}
+                    className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 bg-purple-600/90 backdrop-blur-xl border border-purple-400/30 rounded-full shadow-lg animate-pulse"
+                  >
+                    <span className="text-white font-bold text-xs flex items-center gap-1.5">
+                      <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Ver Progreso
+                    </span>
+                  </button>
+                )}
+
+                <AIModelViewer
+                  task={displayTask}
+                  isGenerating={isGenerating && !selectedTask}
+                  isRefining={isRefining}
+                  isLoadingHistory={loadingTask}
+                  includeTextures={includeTextures}
+                />
+
+                {/* Manual Refine Button */}
+                {displayTask?.status === 'SUCCEEDED' &&
+                  displayTask?.taskType === 'text-to-3d' &&
+                  displayTask?.mode === 'preview' &&
+                  !isRefining && (
+                    <button
+                      onClick={() => {
+                        setIsRefining(true);
+                        refine(displayTask.taskId, { enablePbr: true, aiModel: displayTask.aiModel })
+                          .catch(() => setIsRefining(false));
+                      }}
+                      className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold text-xs rounded-full shadow-lg"
+                    >
+                      🎨 +Texturas
+                    </button>
+                  )}
+              </div>
+            </section>
+
+            {/* Controls Card - Compacto y elegante */}
+            <section className="mb-4">
+              <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 space-y-4">
+                
+                {/* Mode Switcher - Same style as desktop */}
+                <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-full p-1 flex">
+                  <div className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white/10 rounded-full transition-all duration-300 ease-out ${mode === 'image-to-3d' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'}`} />
+                  <button
+                    onClick={() => setMode('text-to-3d')}
+                    className={`relative flex-1 py-2 px-4 rounded-full text-xs font-medium transition-colors z-10 ${mode === 'text-to-3d' ? 'text-white' : 'text-gray-400'}`}
+                  >
+                    Texto a 3D
+                  </button>
+                  <button
+                    onClick={() => setMode('image-to-3d')}
+                    className={`relative flex-1 py-2 px-4 rounded-full text-xs font-medium transition-colors z-10 ${mode === 'image-to-3d' ? 'text-white' : 'text-gray-400'}`}
+                  >
+                    Imagen a 3D
+                  </button>
+                </div>
+
+                {/* Input Area */}
+                {mode === 'text-to-3d' ? (
+                  <>
+                    {/* Prompt */}
+                    <div className="relative">
+                      <textarea
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="Describe lo que quieres crear..."
+                        className="w-full h-20 p-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50 resize-none text-sm"
+                        maxLength={1000}
+                      />
+                      <span className="absolute bottom-2 right-2 text-[10px] text-gray-600">{prompt.length}/1000</span>
+                    </div>
+
+                    {/* Texture Toggle - Inline */}
+                    <div className="flex items-center justify-between py-2 px-3 bg-white/5 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🎨</span>
+                        <span className="text-xs text-gray-300">Texturas PBR</span>
+                      </div>
+                      <button
+                        onClick={() => setIncludeTextures(!includeTextures)}
+                        className={`w-9 h-5 rounded-full transition-all ${includeTextures ? 'bg-purple-600' : 'bg-white/10'}`}
+                      >
+                        <div className={`w-4 h-4 rounded-full bg-white transition-all ${includeTextures ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  /* Image Upload - Compact */
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`flex items-center gap-3 p-3 rounded-xl border-2 border-dashed cursor-pointer transition-all ${image ? 'border-purple-500/50 bg-purple-500/5' : 'border-white/10 bg-black/20'}`}
+                  >
+                    <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png" onChange={(e) => handleImageSelect(e.target.files?.[0] || null)} className="hidden" />
+                    {image ? (
+                      <>
+                        <img src={URL.createObjectURL(image)} alt="" className="w-12 h-12 object-cover rounded-lg" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-white truncate">{image.name}</p>
+                          <p className="text-[10px] text-gray-500">Toca para cambiar</p>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setImage(null); }}
+                          className="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center text-red-400 text-xs"
+                        >
+                          ✕
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                          <span className="text-lg">📷</span>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-300">Subir imagen</p>
+                          <p className="text-[10px] text-gray-500">PNG/JPG hasta 10MB</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {imageError && (
+                  <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <p className="text-red-400 text-xs">{imageError}</p>
+                  </div>
+                )}
+
+                {/* AI Model Selector - Compact Pills */}
+                <div className="flex gap-2">
+                  {AI_MODELS.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => setAiModel(m.id)}
+                      className={`flex-1 py-2 px-3 rounded-xl border text-left transition-all ${aiModel === m.id
+                        ? 'border-purple-500/50 bg-purple-900/30'
+                        : 'border-white/10 bg-black/20'}`}
+                    >
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-white font-semibold text-xs">{m.name}</span>
+                        {aiModel === m.id && <div className="w-1.5 h-1.5 rounded-full bg-green-400" />}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Image src="/icons/takopi-coin.png" alt="coin" width={10} height={10} />
+                        <span className="text-[10px] text-yellow-500 font-mono">{m.credits}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Error Message */}
+                {error && (
+                  <div className="p-2 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    <p className="text-red-400 text-xs">⚠️ {error}</p>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* History - Horizontal Scroll */}
+            {history.length > 0 && (
+              <section>
+                <div className="flex items-center gap-1.5 mb-1.5 px-1">
+                  <span className="text-xs">📜</span>
+                  <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Recientes</h3>
+                </div>
+                <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                  {history.slice(0, 10).map((t) => {
+                    const thumbSrc = getProxiedUrl(t.thumbnailUrl);
+                    const isViewing = selectedTask?.id === t.id || (currentTask?.id === t.id && !selectedTask);
+                    return (
+                      <div
+                        key={t.id}
+                        onClick={() => handleSelectFromHistory(t)}
+                        className={`flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-all ${isViewing ? 'border-purple-500 shadow-lg shadow-purple-500/20' : 'border-transparent'}`}
+                      >
+                        {thumbSrc ? (
+                          <img src={thumbSrc} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-white/5 flex items-center justify-center text-sm">
+                            {t.status === 'SUCCEEDED' ? '🎨' : t.status === 'FAILED' ? '❌' : '🔄'}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+            {/* Generate Button - Inline */}
+            <section className="mt-4 mb-6">
+              <button
+                onClick={handleGenerate}
+                disabled={isGenerating || isUploadingImage || (mode === 'text-to-3d' && !prompt.trim()) || (mode === 'image-to-3d' && !image)}
+                className={`w-full py-3.5 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${isGenerating || isUploadingImage || (mode === 'text-to-3d' && !prompt.trim()) || (mode === 'image-to-3d' && !image)
+                  ? 'bg-white/5 text-gray-500 border border-white/5'
+                  : 'bg-white text-black shadow-[0_0_30px_rgba(255,255,255,0.15)]'
+                }`}
+              >
+                {isUploadingImage ? (
+                  <><span className="w-4 h-4 border-2 border-gray-400 border-t-black rounded-full animate-spin" />Subiendo...</>
+                ) : isGenerating ? (
+                  <><span className="w-4 h-4 border-2 border-gray-400 border-t-black rounded-full animate-spin" />Creando...</>
+                ) : (
+                  <>✨ Crear <span className="text-xs opacity-60 flex items-center gap-1">({getEstimatedCredits()} <Image src="/icons/takopi-coin.png" alt="coin" width={12} height={12} />)</span></>
+                )}
+              </button>
+            </section>
+          </main>
         </div>
 
-        {/* Main Layout */}
-        <main className="relative z-10 h-screen pt-24 pb-6 px-6 flex gap-6">
+        {/* ==================== DESKTOP LAYOUT ==================== */}
+        <main className="hidden lg:flex relative z-10 h-screen pt-28 pb-6 px-6 flex-row gap-6 overflow-hidden">
 
-          {/* Left: Floating Config Panel */}
-          <div className="w-[400px] flex flex-col justify-center h-full py-10">
-            
-            {/* Mode Switcher - Estilo Navbar (fuera del contenedor) */}
+          {/* Left: Config Panel */}
+          <div className="w-[400px] flex flex-col h-full py-10">
+            {/* Mode Switcher */}
             <div className="flex justify-center mb-4">
-              <div className="bg-[#0D0D0D]/80 backdrop-blur-xl border border-white/10 rounded-full p-1.5 flex gap-1 shadow-xl">
-                <button
-                  onClick={() => setMode('text-to-3d')}
-                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${mode === 'text-to-3d'
-                    ? 'bg-white/10 text-white'
-                    : 'text-gray-400 hover:text-white'
-                    }`}
-                >
+              <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-full p-1 flex w-full max-w-[300px]">
+                <div className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white/10 rounded-full transition-all duration-300 ease-out ${mode === 'image-to-3d' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'}`} />
+                <button onClick={() => setMode('text-to-3d')} className={`relative flex-1 py-2 rounded-full text-sm font-medium transition-colors z-10 ${mode === 'text-to-3d' ? 'text-white' : 'text-gray-400 hover:text-white'}`}>
                   Texto a 3D
                 </button>
-                <button
-                  onClick={() => setMode('image-to-3d')}
-                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${mode === 'image-to-3d'
-                    ? 'bg-white/10 text-white'
-                    : 'text-gray-400 hover:text-white'
-                    }`}
-                >
+                <button onClick={() => setMode('image-to-3d')} className={`relative flex-1 py-2 rounded-full text-sm font-medium transition-colors z-10 ${mode === 'image-to-3d' ? 'text-white' : 'text-gray-400 hover:text-white'}`}>
                   Imagen a 3D
                 </button>
               </div>
             </div>
 
-            <div className="bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-6 shadow-2xl shadow-black/50 overflow-y-auto custom-scrollbar hover:border-white/20 transition-colors duration-500">
-
+            <div className="flex-1 bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-6 shadow-2xl shadow-black/50 overflow-y-auto custom-scrollbar hover:border-white/20 transition-colors duration-500">
               <div className="space-y-8">
                 {/* Input Area */}
                 {mode === 'text-to-3d' ? (
@@ -677,15 +855,12 @@ export default function TakopiIAPage() {
                       <textarea
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
-                        placeholder="Describe tu imaginación... (ej: Un dragón cyberpunk de cristal)"
+                        placeholder="Describe tu imaginación..."
                         className="w-full h-40 p-5 bg-black/30 border border-white/10 rounded-3xl text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.03] transition-all resize-none text-lg leading-relaxed shadow-inner"
                         maxLength={1000}
                       />
-                      <div className="absolute bottom-4 right-4 text-xs text-gray-600 font-mono bg-black/50 px-2 py-1 rounded-md">
-                        {prompt.length}/1000
-                      </div>
+                      <div className="absolute bottom-4 right-4 text-xs text-gray-600 font-mono bg-black/50 px-2 py-1 rounded-md">{prompt.length}/1000</div>
                     </div>
-
                     {/* Texture Switch */}
                     <div className="mt-4 flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-xl">
                       <div className="flex items-center gap-3">
@@ -694,16 +869,11 @@ export default function TakopiIAPage() {
                         </div>
                         <div>
                           <span className="text-sm font-medium text-gray-200 block">Incluir Texturas</span>
-                          <span className="text-[10px] text-gray-500 block">Genera materiales PBR detallados</span>
+                          <span className="text-[10px] text-gray-500 block">Genera materiales PBR</span>
                         </div>
                       </div>
-                      <button
-                        onClick={() => setIncludeTextures(!includeTextures)}
-                        className={`relative w-12 h-6 rounded-full transition-all duration-300 ${includeTextures ? 'bg-purple-600 shadow-[0_0_10px_rgba(168,85,247,0.4)]' : 'bg-white/10'
-                          }`}
-                      >
-                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 ${includeTextures ? 'left-7' : 'left-1'
-                          }`} />
+                      <button onClick={() => setIncludeTextures(!includeTextures)} className={`relative w-12 h-6 rounded-full transition-all duration-300 ${includeTextures ? 'bg-purple-600 shadow-[0_0_10px_rgba(168,85,247,0.4)]' : 'bg-white/10'}`}>
+                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 ${includeTextures ? 'left-7' : 'left-1'}`} />
                       </button>
                     </div>
                   </div>
@@ -712,37 +882,30 @@ export default function TakopiIAPage() {
                     <label className="block text-xs font-bold text-purple-300 uppercase tracking-wider mb-3 ml-1">Referencia Visual</label>
                     <div
                       onClick={() => fileInputRef.current?.click()}
-                      className={`aspect-square rounded-3xl border-2 border-dashed cursor-pointer transition-all duration-300 flex flex-col items-center justify-center relative overflow-hidden group ${image ? 'border-purple-500/50 bg-purple-500/5' : 'border-white/10 bg-black/20 hover:border-purple-500/30 hover:bg-white/5'
-                        }`}
+                      className={`aspect-square rounded-3xl border-2 border-dashed cursor-pointer transition-all duration-300 flex flex-col items-center justify-center relative overflow-hidden group ${image ? 'border-purple-500/50 bg-purple-500/5' : 'border-white/10 bg-black/20 hover:border-purple-500/30 hover:bg-white/5'}`}
                     >
                       <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png" onChange={(e) => handleImageSelect(e.target.files?.[0] || null)} className="hidden" />
                       {image ? (
                         <>
                           <img src={URL.createObjectURL(image)} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setImage(null); }}
-                            className="absolute top-4 right-4 w-8 h-8 bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-red-500/80 transition-colors border border-white/10"
-                          >
-                            ✕
-                          </button>
+                          <button onClick={(e) => { e.stopPropagation(); setImage(null); }} className="absolute top-4 right-4 w-8 h-8 bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-red-500/80 transition-colors border border-white/10">✕</button>
                         </>
                       ) : (
                         <>
-                          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 border border-white/5">
+                          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-white/5">
                             <span className="text-3xl">📷</span>
                           </div>
-                          <p className="text-gray-400 font-medium">Sube tu imagen</p>
-                          <p className="text-gray-600 text-xs mt-1">Solo PNG o JPG (máx 10MB)</p>
+                          <p className="mt-4 text-gray-400 font-medium">Sube tu imagen</p>
+                          <p className="text-gray-600 text-xs">PNG/JPG (máx 10MB)</p>
                         </>
                       )}
                     </div>
-                    {/* Error de imagen */}
                     {imageError && (
                       <div className="mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-2">
                         <span className="text-red-400 text-lg">⚠️</span>
                         <div>
                           <p className="text-red-400 text-sm font-medium">{imageError}</p>
-                          <p className="text-red-400/60 text-xs mt-1">Convierte tu imagen a JPG o PNG e intenta de nuevo.</p>
+                          <p className="text-red-400/60 text-xs mt-1">Convierte tu imagen a JPG o PNG.</p>
                         </div>
                       </div>
                     )}
@@ -757,33 +920,25 @@ export default function TakopiIAPage() {
                       <button
                         key={m.id}
                         onClick={() => setAiModel(m.id)}
-                        className={`p-3 rounded-xl border text-left transition-all duration-300 relative overflow-hidden group ${aiModel === m.id
-                          ? 'border-purple-500/50 bg-gradient-to-br from-purple-900/40 to-black'
-                          : 'border-white/10 bg-black/20 hover:bg-white/5'
-                          }`}
+                        className={`p-3 rounded-xl border text-left transition-all duration-300 ${aiModel === m.id ? 'border-purple-500/50 bg-gradient-to-br from-purple-900/40 to-black' : 'border-white/10 bg-black/20 hover:bg-white/5'}`}
                       >
-                        <div className="relative z-10">
-                          <div className="flex justify-between items-start mb-0.5">
-                            <span className="text-white font-bold text-sm">{m.name}</span>
-                            {aiModel === m.id && <div className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_10px_#4ade80]" />}
-                          </div>
-                          <p className="text-[10px] text-gray-400 mb-1.5">{m.desc}</p>
-                          <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/5">
-                            <Image src="/icons/takopi-coin.png" alt="coin" width={10} height={10} />
-                            <span className="text-[10px] font-mono text-yellow-500">{m.credits}</span>
-                          </div>
+                        <div className="flex justify-between items-start mb-0.5">
+                          <span className="text-white font-bold text-sm">{m.name}</span>
+                          {aiModel === m.id && <div className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_10px_#4ade80]" />}
+                        </div>
+                        <p className="text-[10px] text-gray-400 mb-1.5">{m.desc}</p>
+                        <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/5">
+                          <Image src="/icons/takopi-coin.png" alt="coin" width={10} height={10} />
+                          <span className="text-[10px] font-mono text-yellow-500">{m.credits}</span>
                         </div>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Error Message */}
                 {error && (
-                  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl backdrop-blur-sm animate-shake">
-                    <p className="text-red-400 text-sm font-medium flex items-center gap-2">
-                      <span>⚠️</span> {error}
-                    </p>
+                  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl backdrop-blur-sm">
+                    <p className="text-red-400 text-sm font-medium flex items-center gap-2"><span>⚠️</span> {error}</p>
                   </div>
                 )}
               </div>
@@ -793,33 +948,16 @@ export default function TakopiIAPage() {
                 <button
                   onClick={handleGenerate}
                   disabled={isGenerating || isUploadingImage || (mode === 'text-to-3d' && !prompt.trim()) || (mode === 'image-to-3d' && !image)}
-                  className={`w-full py-5 rounded-2xl font-black text-lg tracking-wide transition-all duration-500 relative overflow-hidden group ${isGenerating || isUploadingImage || (mode === 'text-to-3d' && !prompt.trim()) || (mode === 'image-to-3d' && !image)
-                    ? 'bg-white/5 text-gray-600 cursor-not-allowed border border-white/5'
-                    : 'bg-white text-black hover:scale-[1.02] shadow-[0_0_40px_rgba(255,255,255,0.2)]'
-                    }`}
+                  className={`w-full py-5 rounded-2xl font-black text-lg tracking-wide transition-all duration-500 relative overflow-hidden group ${isGenerating || isUploadingImage || (mode === 'text-to-3d' && !prompt.trim()) || (mode === 'image-to-3d' && !image) ? 'bg-white/5 text-gray-600 cursor-not-allowed border border-white/5' : 'bg-white text-black hover:scale-[1.02] shadow-[0_0_40px_rgba(255,255,255,0.2)]'}`}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-shimmer" />
                   <span className="relative flex items-center justify-center gap-3">
                     {isUploadingImage ? (
-                      <>
-                        <span className="w-5 h-5 border-2 border-gray-400 border-t-black rounded-full animate-spin" />
-                        SUBIENDO IMAGEN...
-                      </>
+                      <><span className="w-5 h-5 border-2 border-gray-400 border-t-black rounded-full animate-spin" />SUBIENDO IMAGEN...</>
                     ) : isGenerating ? (
-                      <>
-                        <span className="w-5 h-5 border-2 border-gray-400 border-t-black rounded-full animate-spin" />
-                        MATERIALIZANDO...
-                      </>
+                      <><span className="w-5 h-5 border-2 border-gray-400 border-t-black rounded-full animate-spin" />MATERIALIZANDO...</>
                     ) : (
-                      <>
-                        CREAR AHORA
-                        <span className="text-xs opacity-60 font-normal ml-1 inline-flex items-center gap-1">
-                          ({getEstimatedCredits()} <Image src="/icons/takopi-coin.png" alt="coin" width={12} height={12} className="inline" />)
-                        </span>
-                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                      </>
+                      <>CREAR AHORA<span className="text-xs opacity-60 font-normal ml-1 inline-flex items-center gap-1">({getEstimatedCredits()} <Image src="/icons/takopi-coin.png" alt="coin" width={12} height={12} className="inline" />)</span></>
                     )}
                   </span>
                 </button>
@@ -827,234 +965,181 @@ export default function TakopiIAPage() {
             </div>
           </div>
 
-          {/* Center: Massive 3D Viewer */}
+          {/* Center: 3D Viewer */}
           <div className="flex-1 h-full py-4 relative">
-            {/* Gradient removed as per user request */}
-
             <div className="h-full w-full rounded-[3rem] border border-white/10 bg-black/20 backdrop-blur-sm relative overflow-hidden shadow-2xl shadow-black/80 group">
-              {/* Grid Background Effect */}
               <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-20 pointer-events-none" />
-
-              {/* Success Badge */}
               {showSuccessBadge && (
                 <div className="absolute top-8 left-1/2 -translate-x-1/2 z-30 px-6 py-2 bg-green-500/20 backdrop-blur-xl border border-green-500/30 rounded-full animate-bounce-in shadow-[0_0_30px_rgba(34,197,94,0.3)]">
-                  <span className="text-green-400 font-bold tracking-wide flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-green-400 animate-ping" />
-                    GENERACIÓN COMPLETADA
+                  <span className="text-green-400 font-bold tracking-wide flex items-center gap-2 text-sm">
+                    <span className="w-2 h-2 rounded-full bg-green-400 animate-ping" />GENERACIÓN COMPLETADA
                   </span>
                 </div>
               )}
-
-              {/* Botón "Volver al progreso" cuando hay una tarea activa y estás viendo el historial */}
               {hasActiveTaskNotViewing && (
-                <button
-                  onClick={handleBackToCurrentTask}
-                  className="absolute top-8 left-1/2 -translate-x-1/2 z-30 px-6 py-3 bg-purple-600/90 hover:bg-purple-500 backdrop-blur-xl border border-purple-400/30 rounded-full shadow-[0_0_30px_rgba(168,85,247,0.4)] transition-all hover:scale-105 animate-pulse"
-                >
-                  <span className="text-white font-bold tracking-wide flex items-center gap-2">
+                <button onClick={handleBackToCurrentTask} className="absolute top-8 left-1/2 -translate-x-1/2 z-30 px-6 py-3 bg-purple-600/90 hover:bg-purple-500 backdrop-blur-xl border border-purple-400/30 rounded-full shadow-[0_0_30px_rgba(168,85,247,0.4)] transition-all hover:scale-105 animate-pulse">
+                  <span className="text-white font-bold tracking-wide flex items-center gap-2 text-sm">
                     <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     {isRefining ? 'TEXTURIZANDO...' : 'GENERANDO...'} — Ver Progreso
                   </span>
                 </button>
               )}
-
-              <AIModelViewer 
-                task={displayTask} 
-                isGenerating={isGenerating && !selectedTask} 
-                isRefining={isRefining} 
-                isLoadingHistory={loadingTask}
-                includeTextures={includeTextures}
-              />
-              
-              {/* Botón Manual de Refine - Para testing */}
-              {displayTask?.status === 'SUCCEEDED' && 
-               displayTask?.taskType === 'text-to-3d' && 
-               displayTask?.mode === 'preview' && 
-               !isRefining && (
+              <AIModelViewer task={displayTask} isGenerating={isGenerating && !selectedTask} isRefining={isRefining} isLoadingHistory={loadingTask} includeTextures={includeTextures} />
+              {displayTask?.status === 'SUCCEEDED' && displayTask?.taskType === 'text-to-3d' && displayTask?.mode === 'preview' && !isRefining && (
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30">
-                  <button
-                    onClick={() => {
-                      setIsRefining(true);
-                      refine(displayTask.taskId, { enablePbr: true, aiModel: displayTask.aiModel })
-                        .catch(() => setIsRefining(false));
-                    }}
-                    className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white font-bold rounded-full shadow-lg shadow-orange-500/30 transition-all hover:scale-105 flex items-center gap-2"
-                  >
-                    <span>🎨</span>
-                    <span>AGREGAR TEXTURAS (10 💎)</span>
+                  <button onClick={() => { setIsRefining(true); refine(displayTask.taskId, { enablePbr: true, aiModel: displayTask.aiModel }).catch(() => setIsRefining(false)); }} className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white font-bold rounded-full shadow-lg shadow-orange-500/30 transition-all hover:scale-105 flex items-center gap-2">
+                    <span>🎨</span>AGREGAR TEXTURAS (10 💎)
                   </button>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Right: Compact History Strip */}
-          <div className="w-24 h-full py-10 flex flex-col gap-4">
-            <div className="flex-1 bg-black/40 backdrop-blur-xl border border-white/10 rounded-[2rem] p-3 flex flex-col items-center gap-4 overflow-y-auto custom-scrollbar shadow-xl">
-              <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-lg mb-2 shrink-0 border border-white/5">
-                📜
+          {/* Right: History Sidebar */}
+          <div className="w-48 h-full py-10 flex flex-col gap-3">
+            {/* Coin Balance - Modern with hover buy button */}
+            <div className="group relative flex items-center gap-4 px-5 py-3.5 bg-gradient-to-br from-amber-950/40 via-yellow-950/30 to-amber-950/40 border border-amber-500/30 rounded-2xl hover:border-amber-400/50 transition-all duration-300 cursor-pointer overflow-hidden">
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/5 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute -top-10 -left-10 w-20 h-20 bg-amber-500/20 rounded-full blur-2xl opacity-50" />
+              
+              {/* Coin icon with ring */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-amber-500/20 rounded-full blur-md animate-pulse" />
+                <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-amber-900/50 to-amber-950/50 border border-amber-500/30 flex items-center justify-center">
+                  <Image src="/icons/takopi-coin.png" alt="Coins" width={26} height={26} className="drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+                </div>
               </div>
-
-              {history.map((t) => {
-                const thumbSrc = getProxiedUrl(t.thumbnailUrl);
-                const hasTextures = t.taskType === 'text-to-3d-refine' || t.taskType === 'image-to-3d' || t.mode === 'refine';
-                const isInProgress = !['SUCCEEDED', 'FAILED', 'CANCELED'].includes(t.status);
-                const isCurrentTask = currentTask?.id === t.id;
-                const isViewingThis = selectedTask?.id === t.id || (isCurrentTask && !selectedTask);
-                
-                return (
-                <div
-                  key={t.id}
-                  onClick={() => handleSelectFromHistory(t)}
-                  className={`w-16 h-16 shrink-0 rounded-2xl overflow-visible transition-all duration-300 relative group ${
-                    isInProgress && !isCurrentTask ? 'cursor-wait' : 
-                    t.status === 'SUCCEEDED' || isCurrentTask ? 'cursor-pointer' : 'cursor-not-allowed'
-                  } ${isViewingThis
-                    ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-black scale-105'
-                    : 'opacity-60 hover:opacity-100 hover:scale-110'
-                    }`}
-                >
-                  <div className="w-full h-full rounded-2xl overflow-hidden">
-                  {thumbSrc ? (
-                    <img 
-                      src={thumbSrc} 
-                      alt="" 
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        target.nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                  ) : null}
-                  {/* Fallback placeholder */}
-                  <div className={`w-full h-full flex items-center justify-center ${thumbSrc ? 'hidden' : ''} ${
-                    t.status === 'FAILED' ? 'bg-red-500/20' : 
-                    isInProgress ? 'bg-purple-500/20' : 'bg-white/10'
-                  }`}>
-                    <span className="text-xl">
-                      {t.status === 'SUCCEEDED' ? '🎨' : 
-                       t.status === 'FAILED' ? '❌' : 
-                       '🔄'}
-                    </span>
-                  </div>
-                  </div>
-
-                  {/* Indicador de que está en progreso */}
-                  {isInProgress && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-2xl">
-                      <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  )}
-
-                  {/* Badge de texturas (solo para completados) */}
-                  {t.status === 'SUCCEEDED' && hasTextures && (
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-fuchsia-500 rounded-full flex items-center justify-center shadow-lg border-2 border-black z-10">
-                      <span className="text-[10px]">🎨</span>
-                    </div>
-                  )}
-
-                  {/* Loading overlay cuando se está cargando este item del historial */}
-                  {loadingTask && selectedTask?.id === t.id && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/70 rounded-2xl">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  )}
-
-                  {/* Botón eliminar (aparece en hover, sobresale del contenedor) */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteTarget(t);
-                    }}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 hover:scale-125 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg z-20 border-2 border-black"
-                    title="Eliminar"
-                  >
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-
-                  {/* Tooltip on Hover */}
-                  <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-lg text-xs text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
-                    {t.prompt?.slice(0, 20) || 'Sin título'}...
-                  </div>
+              
+              {/* Balance text */}
+              <div className="relative flex flex-col flex-1">
+                <span className="font-bold text-xl text-white tracking-tight">
+                  {balance?.toLocaleString() ?? '—'}
+                </span>
+                <span className="text-[9px] text-amber-400/70 uppercase tracking-widest font-semibold">Takopi Coins</span>
+              </div>
+              
+              {/* Add button - shows on hover */}
+              <div className="absolute right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-0 translate-x-2">
+                <div className="w-8 h-8 rounded-full bg-amber-500 hover:bg-amber-400 flex items-center justify-center shadow-lg shadow-amber-500/30 transition-colors">
+                  <span className="text-black font-bold text-lg leading-none">+</span>
                 </div>
-              );})}
-
-              {history.length === 0 && (
-                <div className="flex-1 flex flex-col items-center justify-center opacity-30">
-                  <div className="w-1 h-16 bg-white/20 rounded-full" />
+              </div>
+            </div>
+            
+            <div className="flex-1 bg-black/40 backdrop-blur-xl border border-white/10 rounded-[1.5rem] p-3 flex flex-col shadow-xl overflow-hidden">
+              <div className="flex items-center gap-2 mb-4 px-1">
+                <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
+                  <span className="text-base">📜</span>
                 </div>
-              )}
+                <div>
+                  <h3 className="font-bold text-white text-xs tracking-wide">HISTORIAL</h3>
+                  <p className="text-[9px] text-gray-500 font-medium leading-none">Recientes</p>
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
+                {history.map((t) => {
+                  const thumbSrc = getProxiedUrl(t.thumbnailUrl);
+                  const hasTextures = t.taskType === 'text-to-3d-refine' || t.taskType === 'image-to-3d' || t.mode === 'refine';
+                  const isCurrentTask = currentTask?.id === t.id;
+                  const isViewingThis = selectedTask?.id === t.id || (isCurrentTask && !selectedTask);
+                  return (
+                    <div key={t.id} onClick={() => handleSelectFromHistory(t)} className={`group relative rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden ${isViewingThis ? 'bg-white/10 border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.15)]' : 'bg-black/20 border-white/5 hover:bg-white/5 hover:border-white/10'}`}>
+                      <div className="aspect-[2/1] w-full bg-black/50 relative">
+                        {thumbSrc ? <img src={thumbSrc} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" /> : <div className="w-full h-full flex items-center justify-center text-xl">{t.status === 'SUCCEEDED' ? '🎨' : t.status === 'FAILED' ? '❌' : '🔄'}</div>}
+                        {hasTextures && <div className="absolute top-1 left-1 w-4 h-4 bg-fuchsia-500 flex items-center justify-center rounded-full shadow-sm z-10"><span className="text-[8px]">✨</span></div>}
+                        <div className="absolute bottom-0 inset-x-0 p-1.5 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+                          <div className="flex justify-between items-end">
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold backdrop-blur-sm ${t.status === 'SUCCEEDED' ? 'bg-green-500/20 text-green-400' : t.status === 'FAILED' ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/20 text-blue-400 animate-pulse'}`}>
+                              {t.status === 'SUCCEEDED' ? 'Listo' : t.status === 'FAILED' ? 'Error' : 'Procesando'}
+                            </span>
+                            <span className="text-[9px] text-gray-300 font-medium drop-shadow-md truncate max-w-[50px]">{new Date(t.createdAt).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(t); }} className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm z-20">
+                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  );
+                })}
+                {history.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-10 opacity-40">
+                    <span className="text-4xl mb-2">🕸️</span>
+                    <p className="text-sm text-gray-500">Sin historial aún</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-
         </main>
 
         {/* Modal de confirmación para eliminar */}
-        {deleteTarget && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div 
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-              onClick={() => !isDeleting && setDeleteTarget(null)}
-            />
-            
-            {/* Modal */}
-            <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-              {/* Icono */}
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-                <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </div>
-              
-              {/* Título */}
-              <h3 className="text-lg font-bold text-white text-center mb-2">
-                ¿Eliminar modelo?
-              </h3>
-              
-              {/* Descripción */}
-              <p className="text-sm text-gray-400 text-center mb-1">
-                Esta acción no se puede deshacer.
-              </p>
-              <p className="text-xs text-gray-500 text-center mb-6 truncate px-4">
-                &quot;{deleteTarget.prompt?.slice(0, 30) || 'Sin título'}{deleteTarget.prompt && deleteTarget.prompt.length > 30 ? '...' : ''}&quot;
-              </p>
-              
-              {/* Botones */}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setDeleteTarget(null)}
-                  disabled={isDeleting}
-                  className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium text-gray-300 transition-colors disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleDeleteGeneration}
-                  disabled={isDeleting}
-                  className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 rounded-xl text-sm font-bold text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {isDeleting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Eliminando...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      Eliminar
-                    </>
-                  )}
-                </button>
+        {
+          deleteTarget && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              {/* Backdrop */}
+              <div
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                onClick={() => !isDeleting && setDeleteTarget(null)}
+              />
+
+              {/* Modal */}
+              <div className="relative bg-[#0a0a0a] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                {/* Icono */}
+                <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+
+                {/* Título */}
+                <h3 className="text-base sm:text-lg font-bold text-white text-center mb-2">
+                  ¿Eliminar modelo?
+                </h3>
+
+                {/* Descripción */}
+                <p className="text-xs sm:text-sm text-gray-400 text-center mb-1">
+                  Esta acción no se puede deshacer.
+                </p>
+                <p className="text-[10px] sm:text-xs text-gray-500 text-center mb-4 sm:mb-6 truncate px-4">
+                  &quot;{deleteTarget?.prompt?.slice(0, 30) || 'Sin título'}{deleteTarget?.prompt && deleteTarget.prompt.length > 30 ? '...' : ''}&quot;
+                </p>
+
+                {/* Botones */}
+                <div className="flex gap-2 sm:gap-3">
+                  <button
+                    onClick={() => setDeleteTarget(null)}
+                    disabled={isDeleting}
+                    className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium text-gray-300 transition-colors disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleDeleteGeneration}
+                    disabled={isDeleting}
+                    className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-red-500 hover:bg-red-600 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 sm:gap-2"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span className="hidden sm:inline">Eliminando...</span>
+                        <span className="sm:hidden">...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Eliminar
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )
+        }
       </div>
     </Layout>
   );

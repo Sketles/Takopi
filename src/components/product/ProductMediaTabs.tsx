@@ -158,14 +158,14 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
   };
 
   return (
-    <div className={`flex flex-col h-full w-full relative ${className}`}>
+    <div className={`flex flex-col h-full min-h-[280px] sm:min-h-[350px] w-full relative ${className}`}>
 
       {/* Floating Tab Switcher - Centered at top */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30">
-        <div className="flex bg-black/60 backdrop-blur-md rounded-full p-1 border border-white/10 shadow-lg">
+      <div className="absolute top-2 sm:top-4 lg:top-6 left-1/2 -translate-x-1/2 z-30">
+        <div className="flex bg-black/70 backdrop-blur-md rounded-full p-0.5 sm:p-1 border border-white/10 shadow-lg">
           <button
             onClick={() => handleTabChange('viewer')}
-            className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${activeTab === 'viewer'
+            className={`px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${activeTab === 'viewer'
               ? 'bg-white text-black shadow-sm'
               : 'text-white/60 hover:text-white'
               }`}
@@ -174,13 +174,14 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
           </button>
           <button
             onClick={() => handleTabChange('files')}
-            className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'files'
+            className={`px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 flex items-center gap-1.5 sm:gap-2 ${activeTab === 'files'
               ? 'bg-white text-black shadow-sm'
               : 'text-white/60 hover:text-white'
               }`}
           >
-            Archivos
-            <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === 'files' ? 'bg-black/10 text-black' : 'bg-white/10 text-white'}`}>
+            <span className="hidden sm:inline">Archivos</span>
+            <span className="sm:hidden">Files</span>
+            <span className={`text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded-full ${activeTab === 'files' ? 'bg-black/10 text-black' : 'bg-white/10 text-white'}`}>
               {product.files?.length || 0}
             </span>
           </button>
@@ -188,27 +189,29 @@ export default function ProductMediaTabs({ product, isOwner = false, className =
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 relative w-full h-full flex items-center justify-center overflow-hidden bg-transparent">
+      <div className="flex-1 relative w-full h-full overflow-hidden bg-transparent">
         {activeTab === 'viewer' && (
-          <div className="w-full h-full flex items-center justify-center animate-fade-in">
+          <div className="w-full h-full animate-fade-in">
             {loadedTabs.has('viewer') ? (
               product.contentType === 'musica' && hasAudio ? (
-                <div className="w-full h-full p-12 flex items-center justify-center">
+                <div className="w-full h-full pt-10 sm:pt-12 overflow-y-auto">
                   <MusicPlayer
                     files={product.files || []}
                     title={product.title}
                     coverImage={product.coverImage}
-                    className="max-w-2xl w-full"
+                    className="w-full h-full"
                   />
                 </div>
               ) : product.contentType === 'texturas' && hasTextures ? (
-                <TextureViewer
-                  files={product.files || []}
-                  title={product.title}
-                  coverImage={product.coverImage}
-                  className="h-full w-full"
-                  isOwner={isOwner}
-                />
+                <div className="w-full h-full pt-10 sm:pt-12">
+                  <TextureViewer
+                    files={product.files || []}
+                    title={product.title}
+                    coverImage={product.coverImage}
+                    className="h-full w-full"
+                    isOwner={isOwner}
+                  />
+                </div>
               ) : has3D ? (
                 get3DModelUrl() ? (
                   <div className="w-full h-full">

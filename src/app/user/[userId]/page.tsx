@@ -193,13 +193,13 @@ export default function UserProfilePage() {
   if (error || !userData) {
     return (
       <Layout>
-        <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <div className="min-h-screen bg-[#050505] flex items-center justify-center px-4">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-white mb-4">Usuario no encontrado</h1>
-            <p className="text-gray-400 mb-6">{error}</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-white mb-4">Usuario no encontrado</h1>
+            <p className="text-gray-400 mb-6 text-sm sm:text-base">{error}</p>
             <button
               onClick={() => router.back()}
-              className="px-6 py-2 bg-white text-black rounded-xl font-bold hover:bg-gray-200 transition-colors"
+              className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white text-black rounded-xl font-bold text-sm sm:text-base hover:bg-gray-200 transition-colors"
             >
               Volver
             </button>
@@ -211,9 +211,9 @@ export default function UserProfilePage() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-[#050505] pb-20">
+      <div className="min-h-screen bg-[#050505] pb-12 sm:pb-20">
         {/* Banner Section - Full Width & Immersive */}
-        <div className="relative h-[40vh] min-h-[300px] lg:h-[50vh] w-full overflow-hidden">
+        <div className="relative h-[30vh] min-h-[200px] sm:h-[40vh] sm:min-h-[300px] lg:h-[50vh] w-full overflow-hidden">
           {/* Banner Image */}
           <div className="absolute inset-0">
             {userData.banner ? (
@@ -234,11 +234,11 @@ export default function UserProfilePage() {
         </div>
 
         {/* Profile Info Container - Overlapping Banner */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative -mt-32 z-10">
-          <div className="flex flex-col md:flex-row items-end gap-8 mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative -mt-20 sm:-mt-32 z-10">
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-4 sm:gap-8 mb-6 sm:mb-8">
             {/* Avatar */}
             <div className="relative group shrink-0">
-              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full p-1 bg-[#050505]">
+              <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full p-1 bg-[#050505]">
                 <div className="w-full h-full rounded-full overflow-hidden relative bg-white/5 border border-white/10">
                   {userData.avatar ? (
                     <img
@@ -248,7 +248,7 @@ export default function UserProfilePage() {
                       draggable={false}
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600 text-white text-4xl font-bold">
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600 text-white text-2xl sm:text-4xl font-bold">
                       {getInitial(userData.username)}
                     </div>
                   )}
@@ -257,19 +257,19 @@ export default function UserProfilePage() {
             </div>
 
             {/* User Info & Actions */}
-            <div className="flex-1 w-full flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
+            <div className="flex-1 w-full flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6 pb-2 text-center md:text-left">
               <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-4xl font-bold text-white tracking-tight">{userData.username}</h1>
+                <div className="flex items-center justify-center md:justify-start gap-2 sm:gap-3">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">{userData.username}</h1>
                   {userData.role === 'Artist' && (
-                    <span className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs" title="Artista Verificado">
+                    <span className="w-5 h-5 sm:w-6 sm:h-6 bg-purple-500 rounded-full flex items-center justify-center text-white text-[10px] sm:text-xs" title="Artista Verificado">
                       ✓
                     </span>
                   )}
                 </div>
 
-                <div className="flex items-center gap-3 text-white/60 text-sm">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${userData.role === 'Artist' ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' :
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-3 text-white/60 text-xs sm:text-sm">
+                  <span className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium border ${userData.role === 'Artist' ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' :
                     userData.role === 'Explorer' ? 'bg-green-500/10 border-green-500/20 text-green-400' :
                       'bg-white/5 border-white/10 text-white/60'
                     }`}>
@@ -277,34 +277,34 @@ export default function UserProfilePage() {
                       userData.role === 'Explorer' ? 'Explorador' :
                         userData.role}
                   </span>
-                  <span>•</span>
-                  <span>{userData.location || 'Ubicación no especificada'}</span>
-                  <span>•</span>
+                  <span className="hidden sm:inline">•</span>
+                  <span className="hidden sm:inline">{userData.location || 'Ubicación no especificada'}</span>
+                  <span className="hidden sm:inline">•</span>
                   <span>Se unió en {new Date(userData.createdAt).getFullYear()}</span>
                 </div>
 
-                <p className="text-white/80 max-w-2xl text-lg leading-relaxed">
+                <p className="text-white/80 max-w-2xl text-sm sm:text-base lg:text-lg leading-relaxed">
                   {userData.bio || 'Sin descripción'}
                 </p>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 shrink-0">
+              <div className="flex gap-2 sm:gap-3 shrink-0 justify-center md:justify-start">
                 <button
                   onClick={handleFollow}
                   disabled={isFollowLoading}
-                  className={`px-6 py-2.5 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg ${isFollowing
+                  className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 shadow-lg ${isFollowing
                     ? 'bg-white/10 text-white hover:bg-white/20 border border-white/10'
                     : 'bg-white text-black hover:bg-gray-200 shadow-white/5'
                     } ${isFollowLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  {isFollowLoading ? 'Cargando...' : isFollowing ? 'Siguiendo' : 'Seguir'}
+                  {isFollowLoading ? '...' : isFollowing ? 'Siguiendo' : 'Seguir'}
                 </button>
                 <button
                   onClick={() => router.back()}
-                  className="px-4 py-2.5 bg-white/5 text-white rounded-xl font-medium hover:bg-white/10 transition-colors border border-white/10"
+                  className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white/5 text-white rounded-xl font-medium hover:bg-white/10 transition-colors border border-white/10"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                   </svg>
                 </button>
@@ -313,7 +313,7 @@ export default function UserProfilePage() {
           </div>
 
           {/* Stats Bar - Floating Glass */}
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-12">
+          <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-4 mb-8 sm:mb-12">
             {[
               { label: 'Seguidores', value: userData.stats.followersCount },
               { label: 'Siguiendo', value: userData.stats.followingCount },
@@ -322,27 +322,27 @@ export default function UserProfilePage() {
               { label: 'Corazones', value: userData.stats.totalLikes },
               { label: 'Pines', value: 0 } // No disponible públicamente por ahora
             ].map((stat, idx) => (
-              <div key={idx} className="bg-[#0f0f0f]/80 backdrop-blur-md border border-white/5 rounded-2xl p-4 text-center hover:bg-white/5 transition-colors group cursor-default">
-                <div className="text-2xl font-bold text-white mb-1 group-hover:scale-110 transition-transform duration-300">
+              <div key={idx} className={`bg-[#0f0f0f]/80 backdrop-blur-md border border-white/5 rounded-xl sm:rounded-2xl p-2 sm:p-4 text-center hover:bg-white/5 transition-colors group cursor-default ${idx >= 3 ? 'hidden md:block' : ''}`}>
+                <div className="text-lg sm:text-2xl font-bold text-white mb-0.5 sm:mb-1 group-hover:scale-110 transition-transform duration-300">
                   {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
                 </div>
-                <div className="text-xs text-white/40 uppercase tracking-wider font-medium">{stat.label}</div>
+                <div className="text-[10px] sm:text-xs text-white/40 uppercase tracking-wider font-medium">{stat.label}</div>
               </div>
             ))}
           </div>
 
           {/* Content Section */}
-          <div className="space-y-8">
-            <div className="flex items-center gap-4 mb-8">
-              <h2 className="text-2xl font-bold text-white">Creaciones</h2>
+          <div className="space-y-6 sm:space-y-8">
+            <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-white">Creaciones</h2>
               <div className="h-px flex-1 bg-white/10"></div>
             </div>
 
             {(!userData.content || userData.content.length === 0) ? (
-              <div className="flex flex-col items-center justify-center py-20 bg-[#0f0f0f] border border-white/5 rounded-3xl">
-                <div className="text-6xl mb-4 opacity-50">📦</div>
-                <h3 className="text-xl font-semibold text-white mb-2">No hay contenido</h3>
-                <p className="text-white/40">Este usuario aún no ha publicado contenido.</p>
+              <div className="flex flex-col items-center justify-center py-12 sm:py-20 bg-[#0f0f0f] border border-white/5 rounded-2xl sm:rounded-3xl">
+                <div className="text-4xl sm:text-6xl mb-3 sm:mb-4 opacity-50">📦</div>
+                <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">No hay contenido</h3>
+                <p className="text-white/40 text-sm sm:text-base">Este usuario aún no ha publicado contenido.</p>
               </div>
             ) : (() => {
               // Agrupar creaciones por tipo de contenido
@@ -374,20 +374,20 @@ export default function UserProfilePage() {
               }));
 
               return (
-                <div className="space-y-12">
+                <div className="space-y-8 sm:space-y-12">
                   {categoriesWithContent.map((category) => (
-                    <div key={category.type} className="space-y-6">
-                      <div className="flex items-center gap-4 px-2">
-                        <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-2xl border border-white/5">
+                    <div key={category.type} className="space-y-4 sm:space-y-6">
+                      <div className="flex items-center gap-3 sm:gap-4 px-2">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/5 flex items-center justify-center text-xl sm:text-2xl border border-white/5">
                           {category.icon}
                         </div>
                         <div>
-                          <h3 className="text-2xl font-bold text-white">{category.title}</h3>
-                          <p className="text-white/40 text-sm">{category.count} {category.count === 1 ? 'creación' : 'creaciones'}</p>
+                          <h3 className="text-xl sm:text-2xl font-bold text-white">{category.title}</h3>
+                          <p className="text-white/40 text-xs sm:text-sm">{category.count} {category.count === 1 ? 'creación' : 'creaciones'}</p>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                         {category.creations.map((creation: any, idx: number) => (
                           <ContentCard
                             key={creation.id || creation._id || `${category.type}-${idx}`}

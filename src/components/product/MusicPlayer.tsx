@@ -130,7 +130,7 @@ export default function MusicPlayer({ files, title, coverImage, author, classNam
 
   if (!currentTrack) {
     return (
-      <div className={`flex items-center justify-center bg-[#121212] rounded-xl p-8 ${className}`}>
+      <div className={`flex items-center justify-center bg-transparent rounded-xl p-4 ${className}`}>
         <div className="text-center text-gray-400">
           <div className="text-4xl mb-2">🎵</div>
           <div>No hay archivos de audio</div>
@@ -140,12 +140,12 @@ export default function MusicPlayer({ files, title, coverImage, author, classNam
   }
 
   return (
-    <div className={`flex flex-col bg-[#121212] rounded-xl overflow-hidden ${className}`}>
+    <div className={`flex flex-col bg-transparent overflow-hidden ${className}`}>
       <audio ref={audioRef} src={currentTrack.url} preload="metadata" />
 
       {/* Cover Image - Grande y centrado */}
-      <div className="flex justify-center py-6 bg-gradient-to-b from-purple-900/20 to-transparent">
-        <div className="relative w-44 h-44 md:w-56 md:h-56 rounded-lg overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
+      <div className="flex justify-center py-4 sm:py-6">
+        <div className="relative w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 rounded-xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.5)] border border-white/10">
           {coverImage ? (
             <img
               src={coverImage}
@@ -154,7 +154,7 @@ export default function MusicPlayer({ files, title, coverImage, author, classNam
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-purple-800 to-purple-950 flex items-center justify-center">
-              <span className="text-6xl">🎵</span>
+              <span className="text-6xl sm:text-7xl">🎵</span>
             </div>
           )}
           {/* Playing indicator */}
@@ -168,14 +168,14 @@ export default function MusicPlayer({ files, title, coverImage, author, classNam
         </div>
       </div>
 
-      {/* Track List */}
+      {/* Track List - Sin límite de altura, crece con el contenido */}
       {audioFiles.length > 0 && (
         <div className="flex-1 overflow-y-auto">
           {/* Header de lista */}
-          <div className="sticky top-0 bg-[#121212] border-b border-white/10 px-4 py-2 flex items-center text-xs text-gray-500 uppercase tracking-wider">
-            <div className="w-8 text-center">#</div>
-            <div className="flex-1 pl-3">Título</div>
-            <div className="w-14 text-right pr-2">
+          <div className="sticky top-0 bg-black/60 backdrop-blur-sm border-b border-white/5 px-3 sm:px-4 py-2 flex items-center text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">
+            <div className="w-6 sm:w-8 text-center">#</div>
+            <div className="flex-1 pl-2 sm:pl-3">Título</div>
+            <div className="w-12 sm:w-14 text-right pr-2">
               <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -191,12 +191,12 @@ export default function MusicPlayer({ files, title, coverImage, author, classNam
               <button
                 key={index}
                 onClick={() => playTrack(index)}
-                className={`w-full flex items-center px-4 py-3 hover:bg-white/5 transition-colors group ${
+                className={`w-full flex items-center px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-white/5 transition-colors group ${
                   isCurrentTrack ? 'bg-white/10' : ''
                 }`}
               >
                 {/* Número / Indicador */}
-                <div className="w-8 text-center flex-shrink-0">
+                <div className="w-6 sm:w-8 text-center flex-shrink-0">
                   {isCurrentTrack && isPlaying ? (
                     <div className="flex gap-[2px] justify-center items-end h-4">
                       <div className="w-[3px] bg-green-500 rounded-sm animate-[bar1_0.5s_ease-in-out_infinite]" style={{height: '8px'}}></div>
@@ -216,14 +216,14 @@ export default function MusicPlayer({ files, title, coverImage, author, classNam
                 </div>
 
                 {/* Nombre del track */}
-                <div className="flex-1 text-left pl-3 min-w-0">
-                  <p className={`text-sm font-medium truncate ${isCurrentTrack ? 'text-green-500' : 'text-white'}`}>
+                <div className="flex-1 text-left pl-2 sm:pl-3 min-w-0">
+                  <p className={`text-xs sm:text-sm font-medium truncate ${isCurrentTrack ? 'text-green-500' : 'text-white'}`}>
                     {trackName}
                   </p>
                 </div>
 
                 {/* Duración */}
-                <div className="w-14 text-right text-sm text-gray-400 font-mono pr-2">
+                <div className="w-12 sm:w-14 text-right text-xs sm:text-sm text-gray-400 font-mono pr-1 sm:pr-2">
                   {formatTime(trackDurations[index] || 0)}
                 </div>
               </button>
@@ -233,10 +233,10 @@ export default function MusicPlayer({ files, title, coverImage, author, classNam
       )}
 
       {/* Player Bar - Fijo abajo */}
-      <div className="border-t border-white/10 bg-[#181818] p-3">
+      <div className="border-t border-white/5 bg-white/5 backdrop-blur-sm p-2 sm:p-3 rounded-b-xl">
         {/* Progress Bar */}
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-[10px] text-gray-400 font-mono w-8 text-right">{formatTime(currentTime)}</span>
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+          <span className="text-[9px] sm:text-[10px] text-gray-400 font-mono w-7 sm:w-8 text-right">{formatTime(currentTime)}</span>
           <div className="flex-1 relative h-1 bg-white/20 rounded-full group cursor-pointer">
             <div
               className="absolute top-0 left-0 h-full bg-white group-hover:bg-green-500 rounded-full transition-colors"
@@ -251,30 +251,30 @@ export default function MusicPlayer({ files, title, coverImage, author, classNam
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
           </div>
-          <span className="text-[10px] text-gray-400 font-mono w-8">{formatTime(duration)}</span>
+          <span className="text-[9px] sm:text-[10px] text-gray-400 font-mono w-7 sm:w-8">{formatTime(duration)}</span>
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           {/* Track info mini */}
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-800">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded overflow-hidden flex-shrink-0 bg-gray-800">
               {coverImage ? (
                 <img src={coverImage} alt={title} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-lg">🎵</div>
               )}
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-white truncate max-w-[120px]">
+            <div className="min-w-0 hidden xs:block sm:block">
+              <p className="text-[10px] sm:text-xs font-medium text-white truncate max-w-[80px] sm:max-w-[120px]">
                 {cleanTrackName(currentTrack.originalName || currentTrack.name)}
               </p>
-              <p className="text-[10px] text-gray-500 truncate max-w-[120px]">{title}</p>
+              <p className="text-[9px] sm:text-[10px] text-gray-500 truncate max-w-[80px] sm:max-w-[120px]">{title}</p>
             </div>
           </div>
 
           {/* Playback Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button onClick={prevTrack} className="text-gray-400 hover:text-white transition-colors">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
             </button>

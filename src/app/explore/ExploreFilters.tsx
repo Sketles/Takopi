@@ -96,8 +96,8 @@ const ExploreFilters = memo(({ state, dispatch }: ExploreFiltersProps) => {
           state.showFilters ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="bg-[#151515] border border-white/10 rounded-2xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-left shadow-2xl">
-          <div className="space-y-3">
+        <div className="bg-[#151515] border border-white/10 rounded-2xl p-4 sm:p-5 lg:p-6 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 text-left shadow-2xl">
+          <div className="space-y-2 sm:space-y-3">
             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Precio</h3>
             <div className="flex flex-col gap-2">
               {(['all', 'free', 'paid'] as const).map((filter) => (
@@ -130,12 +130,12 @@ const ExploreFilters = memo(({ state, dispatch }: ExploreFiltersProps) => {
             </div>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Ordenar Por</h3>
+          <div className="space-y-2 sm:space-y-3">
+            <h3 className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-wider">Ordenar Por</h3>
             <select
               value={state.sortBy}
               onChange={(e) => dispatch({ type: 'SET_SORT_BY', payload: e.target.value as SortBy })}
-              className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 transition-colors appearance-none cursor-pointer"
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-white focus:outline-none focus:border-purple-500 transition-colors appearance-none cursor-pointer"
             >
               <option value="newest">✨ Más Recientes</option>
               <option value="popular">🔥 Más Populares</option>
@@ -144,14 +144,14 @@ const ExploreFilters = memo(({ state, dispatch }: ExploreFiltersProps) => {
             </select>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Licencia</h3>
-            <div className="flex flex-wrap gap-2">
+          <div className="space-y-2 sm:space-y-3">
+            <h3 className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-wider">Licencia</h3>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {(['all', 'personal', 'commercial'] as const).map((license) => (
                 <button
                   key={license}
                   onClick={() => dispatch({ type: 'SET_LICENSE_FILTER', payload: license })}
-                  className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${
+                  className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm border transition-all ${
                     state.licenseFilter === license
                       ? license === 'personal'
                         ? 'bg-blue-500/20 text-blue-400 border-blue-500/50'
@@ -167,10 +167,10 @@ const ExploreFilters = memo(({ state, dispatch }: ExploreFiltersProps) => {
             </div>
           </div>
 
-          <div className="md:col-span-3 pt-4 border-t border-white/5 flex justify-end">
+          <div className="md:col-span-3 pt-3 sm:pt-4 border-t border-white/5 flex justify-end">
             <button
               onClick={() => dispatch({ type: 'SET_SHOW_FILTERS', payload: false })}
-              className="text-sm text-gray-400 hover:text-white underline decoration-gray-600 hover:decoration-white underline-offset-4 transition-all"
+              className="text-xs sm:text-sm text-gray-400 hover:text-white underline decoration-gray-600 hover:decoration-white underline-offset-4 transition-all"
             >
               Ocultar Filtros
             </button>

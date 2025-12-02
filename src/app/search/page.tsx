@@ -273,26 +273,27 @@ function SearchContent() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900">
+      <div className="min-h-screen bg-[#050505]">
         {/* Hero Section */}
         <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10"></div>
+          <div className="absolute top-0 left-1/4 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] bg-purple-600/10 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none" />
           
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="text-center mb-12">
-              <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 pt-20 sm:pt-24">
+            <div className="text-center mb-8 sm:mb-12">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white mb-4 sm:mb-6">
                 Descubre
                 <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                   {' '}Creatividad
                 </span>
               </h1>
-              <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
+              <p className="text-base sm:text-xl text-gray-300 max-w-2xl mx-auto mb-6 sm:mb-8 px-4">
                 Encuentra avatares, modelos 3D, música, texturas y más contenido creativo
               </p>
             </div>
 
             {/* Search Bar */}
-            <div className="max-w-4xl mx-auto mb-8">
+            <div className="max-w-4xl mx-auto mb-6 sm:mb-8 px-2 sm:px-0">
               <SearchBar
                 value={state.query.text || ''}
                 onChange={(text) => updateQuery({ text })}
@@ -300,13 +301,13 @@ function SearchContent() {
                 onSuggestions={getSuggestions}
                 suggestions={state.suggestions}
                 loading={state.loading}
-                placeholder="Buscar contenido... (ej: música streaming, modelo 3D casa)"
+                placeholder="Buscar contenido..."
               />
             </div>
 
             {/* Popular Tags */}
             {state.popularTags.length > 0 && (
-              <div className="max-w-4xl mx-auto mb-8">
+              <div className="max-w-4xl mx-auto mb-6 sm:mb-8 px-2 sm:px-0">
                 <TagCloud
                   tags={state.popularTags}
                   selectedTags={state.query.tags || []}
@@ -320,10 +321,10 @@ function SearchContent() {
         </div>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col lg:flex-row gap-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
             {/* Filters Sidebar */}
-            <div className={`lg:w-80 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+            <div className={`lg:w-72 xl:w-80 ${showFilters ? 'block' : 'hidden lg:block'}`}>
               <SearchFilters
                 categories={state.query.categories || []}
                 priceRange={state.query.priceRange}
@@ -346,42 +347,42 @@ function SearchContent() {
             <div className="flex-1">
               {/* Results Header */}
               {state.results && (
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
                   <div className="text-white">
-                    <h2 className="text-2xl font-bold mb-2">
+                    <h2 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">
                       {state.results.total} resultado{state.results.total !== 1 ? 's' : ''}
                     </h2>
-                    <p className="text-gray-300">
+                    <p className="text-gray-300 text-sm sm:text-base">
                       Mostrando {state.results.stats.showing}
                     </p>
                   </div>
                   
                   <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className="lg:hidden mt-4 sm:mt-0 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                    className="lg:hidden px-4 py-2 sm:py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium transition-colors"
                   >
-                    {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+                    {showFilters ? 'Ocultar Filtros' : 'Filtros'}
                   </button>
                 </div>
               )}
 
               {/* Search Results */}
               {state.loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="bg-gray-800/50 rounded-xl p-6 animate-pulse">
-                      <div className="h-48 bg-gray-700 rounded-lg mb-4"></div>
-                      <div className="h-4 bg-gray-700 rounded mb-2"></div>
-                      <div className="h-3 bg-gray-700 rounded w-2/3"></div>
+                    <div key={i} className="bg-[#0f0f0f] rounded-xl sm:rounded-2xl p-3 sm:p-6 animate-pulse border border-white/5">
+                      <div className="h-32 sm:h-48 bg-white/5 rounded-lg mb-3 sm:mb-4"></div>
+                      <div className="h-3 sm:h-4 bg-white/5 rounded mb-2"></div>
+                      <div className="h-2.5 sm:h-3 bg-white/5 rounded w-2/3"></div>
                     </div>
                   ))}
                 </div>
               ) : state.error ? (
-                <div className="text-center py-12">
-                  <div className="text-red-400 text-xl mb-4">❌ {state.error}</div>
+                <div className="text-center py-8 sm:py-12">
+                  <div className="text-red-400 text-lg sm:text-xl mb-4">❌ {state.error}</div>
                   <button
                     onClick={() => performSearch(state.query)}
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                    className="px-4 sm:px-6 py-2.5 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm sm:text-base font-medium transition-colors"
                   >
                     Reintentar
                   </button>
@@ -405,12 +406,12 @@ function SearchContent() {
                   onRetrySearch={() => performSearch(state.query)}
                 />
               ) : (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4">🔍</div>
-                  <h3 className="text-2xl font-bold text-white mb-4">
+                <div className="text-center py-8 sm:py-12">
+                  <div className="text-5xl sm:text-6xl mb-3 sm:mb-4">🔍</div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">
                     Comienza tu búsqueda
                   </h3>
-                  <p className="text-gray-300 mb-6">
+                  <p className="text-gray-300 text-sm sm:text-base mb-4 sm:mb-6 px-4">
                     Escribe algo en el buscador o selecciona un tag popular
                   </p>
                 </div>

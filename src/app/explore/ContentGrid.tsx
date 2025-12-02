@@ -55,36 +55,36 @@ const ContentGrid = memo(
 
     if (loading) {
       return (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-400 animate-pulse">Cargando contenido increíble...</p>
+        <div className="flex flex-col items-center justify-center py-12 sm:py-16 lg:py-20">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mb-3 sm:mb-4"></div>
+          <p className="text-gray-400 text-sm sm:text-base animate-pulse">Cargando contenido increíble...</p>
         </div>
       );
     }
 
     if (error) {
       return (
-        <div className="text-center py-24">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-red-500/10 mb-6">
-            <span className="text-4xl">⚠️</span>
+        <div className="text-center py-16 sm:py-20 lg:py-24">
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full bg-red-500/10 mb-4 sm:mb-5 lg:mb-6">
+            <span className="text-2xl sm:text-3xl lg:text-4xl">⚠️</span>
           </div>
-          <h3 className="text-2xl font-bold text-white mb-2">Error al cargar contenido</h3>
-          <p className="text-gray-400">{error}</p>
+          <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">Error al cargar contenido</h3>
+          <p className="text-gray-400 text-sm sm:text-base">{error}</p>
         </div>
       );
     }
 
     if (items.length === 0) {
       return (
-        <div className="text-center py-24">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-white/5 mb-6">
-            <span className="text-4xl">🔍</span>
+        <div className="text-center py-16 sm:py-20 lg:py-24">
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full bg-white/5 mb-4 sm:mb-5 lg:mb-6">
+            <span className="text-2xl sm:text-3xl lg:text-4xl">🔍</span>
           </div>
-          <h3 className="text-2xl font-bold text-white mb-2">No encontramos nada por aquí</h3>
-          <p className="text-gray-400">Intenta con otra categoría o ajusta tus filtros.</p>
+          <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">No encontramos nada por aquí</h3>
+          <p className="text-gray-400 text-sm sm:text-base">Intenta con otra categoría o ajusta tus filtros.</p>
           <button
             onClick={onResetFilters}
-            className="mt-4 text-purple-400 hover:text-purple-300 font-medium"
+            className="mt-3 sm:mt-4 text-purple-400 hover:text-purple-300 font-medium text-sm sm:text-base"
           >
             Limpiar todos los filtros
           </button>
@@ -94,7 +94,7 @@ const ContentGrid = memo(
 
     return (
       <>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {items.map((item, index) => (
             <div
               key={item.id}
@@ -137,11 +137,11 @@ const ContentGrid = memo(
         </div>
 
         {!isSearching && hasMore && (
-          <div ref={observerTarget} className="flex justify-center py-12">
+          <div ref={observerTarget} className="flex justify-center py-8 sm:py-10 lg:py-12">
             {isLoadingMore && (
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
-                <p className="text-gray-400 text-sm">Cargando más contenido...</p>
+              <div className="flex flex-col items-center gap-2 sm:gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
+                <p className="text-gray-400 text-xs sm:text-sm">Cargando más contenido...</p>
               </div>
             )}
           </div>

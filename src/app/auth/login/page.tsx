@@ -78,7 +78,7 @@ function LoginForm() {
       title="Bienvenido de Vuelta"
       subtitle="Inicia sesión para continuar tu viaje creativo"
     >
-      <form className="space-y-6" onSubmit={handleSubmit}>
+      <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
         <AnimatePresence mode="wait">
           {error && (
             <motion.div
@@ -95,10 +95,10 @@ function LoginForm() {
           )}
         </AnimatePresence>
 
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
           {/* Email Input */}
           <div className="relative group">
-            <label className="block text-xs font-medium text-gray-400 mb-2 ml-1 tracking-wide">EMAIL</label>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5 sm:mb-2 ml-1 tracking-wide">EMAIL</label>
             <motion.div
               variants={inputVariants}
               animate={focusedField === 'email' ? 'focused' : 'unfocused'}
@@ -119,7 +119,7 @@ function LoginForm() {
                 onChange={handleChange}
                 onFocus={() => setFocusedField('email')}
                 onBlur={() => setFocusedField(null)}
-                className="block w-full pl-12 pr-4 py-4 bg-transparent text-white placeholder-gray-600 focus:outline-none text-sm font-medium transition-all"
+                className="block w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-4 bg-transparent text-white placeholder-gray-600 focus:outline-none text-sm font-medium transition-all"
                 style={{
                   WebkitBoxShadow: "0 0 0 30px #131313 inset",
                   WebkitTextFillColor: "white",
@@ -132,7 +132,7 @@ function LoginForm() {
 
           {/* Password Input */}
           <div className="relative group">
-            <label className="block text-xs font-medium text-gray-400 mb-2 ml-1 tracking-wide">CONTRASEÑA</label>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5 sm:mb-2 ml-1 tracking-wide">CONTRASEÑA</label>
             <motion.div
               variants={inputVariants}
               animate={focusedField === 'password' ? 'focused' : 'unfocused'}
@@ -153,7 +153,7 @@ function LoginForm() {
                 onChange={handleChange}
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
-                className="block w-full pl-12 pr-12 py-4 bg-transparent text-white placeholder-gray-600 focus:outline-none text-sm font-medium transition-all"
+                className="block w-full pl-11 sm:pl-12 pr-12 py-3 sm:py-4 bg-transparent text-white placeholder-gray-600 focus:outline-none text-sm font-medium transition-all"
                 style={{
                   WebkitBoxShadow: "0 0 0 30px #131313 inset",
                   WebkitTextFillColor: "white",
@@ -181,23 +181,23 @@ function LoginForm() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 pt-1 sm:pt-2">
           {/* Custom Toggle Switch */}
           <div
             onClick={() => setRememberMe(!rememberMe)}
-            className="flex items-center gap-3 cursor-pointer group ml-1"
+            className="flex items-center gap-2 sm:gap-3 cursor-pointer group ml-1"
           >
-            <div className={`w-11 h-6 rounded-full p-1 transition-all duration-300 flex items-center ${rememberMe ? 'bg-purple-600 shadow-[0_0_10px_rgba(168,85,247,0.4)]' : 'bg-white/5 border border-white/10'}`}>
+            <div className={`w-10 sm:w-11 h-5 sm:h-6 rounded-full p-0.5 sm:p-1 transition-all duration-300 flex items-center ${rememberMe ? 'bg-purple-600 shadow-[0_0_10px_rgba(168,85,247,0.4)]' : 'bg-white/5 border border-white/10'}`}>
               <motion.div
-                animate={{ x: rememberMe ? 20 : 0 }}
+                animate={{ x: rememberMe ? 18 : 0 }}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 className="w-4 h-4 bg-white rounded-full shadow-sm"
               />
             </div>
-            <span className="text-sm text-gray-400 group-hover:text-white transition-colors select-none">Recordarme</span>
+            <span className="text-xs sm:text-sm text-gray-400 group-hover:text-white transition-colors select-none">Recordarme</span>
           </div>
 
-          <Link href="#" className="text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors hover:underline decoration-1 underline-offset-4">
+          <Link href="#" className="text-xs sm:text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors hover:underline decoration-1 underline-offset-4 ml-1 sm:ml-0">
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
@@ -207,7 +207,7 @@ function LoginForm() {
           whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={isLoading}
-          className="w-full flex justify-center py-4 px-4 border border-transparent rounded-2xl shadow-[0_0_20px_rgba(168,85,247,0.2)] text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
+          className="w-full flex justify-center py-3 sm:py-4 px-4 border border-transparent rounded-xl sm:rounded-2xl shadow-[0_0_20px_rgba(168,85,247,0.2)] text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
         >
           <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
           <span className="relative flex items-center gap-2">
@@ -225,11 +225,11 @@ function LoginForm() {
           </span>
         </motion.button>
 
-        <div className="relative my-8">
+        <div className="relative my-6 sm:my-8">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-white/5" />
           </div>
-          <div className="relative flex justify-center text-sm">
+          <div className="relative flex justify-center text-xs sm:text-sm">
             <span className="px-4 bg-[#0a0a0a]/50 backdrop-blur-sm text-gray-500">O continúa con</span>
           </div>
         </div>

@@ -12,11 +12,11 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden selection:bg-purple-500/30">
+        <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center px-4 py-8 sm:p-4 relative overflow-hidden selection:bg-purple-500/30">
             {/* Background Elements */}
             <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 via-[#0a0a0a] to-[#0a0a0a] z-0"></div>
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
-            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse delay-1000"></div>
+            <div className="absolute top-0 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-purple-600/20 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none animate-pulse"></div>
+            <div className="absolute bottom-0 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-blue-600/10 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none animate-pulse delay-1000"></div>
 
             <ParticleBackground />
 
@@ -28,23 +28,23 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
                 className="w-full max-w-md relative z-10"
             >
                 {/* Logo Header */}
-                <div className="text-center mb-8">
+                <div className="text-center mb-6 sm:mb-8">
                     <Link href="/" className="inline-block group">
                         <motion.h1
                             whileHover={{ scale: 1.05 }}
-                            className="text-5xl font-black tracking-tighter mb-2"
+                            className="text-4xl sm:text-5xl font-black tracking-tighter mb-2"
                         >
                             <span className="bg-gradient-to-r from-purple-400 via-fuchsia-400 to-purple-600 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(168,85,247,0.5)]">
                                 TAKOPI
                             </span>
                         </motion.h1>
                     </Link>
-                    <h2 className="text-2xl font-bold text-white mb-2">{title}</h2>
-                    <p className="text-gray-400 text-sm">{subtitle}</p>
+                    <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">{title}</h2>
+                    <p className="text-gray-400 text-xs sm:text-sm">{subtitle}</p>
                 </div>
 
                 {/* Glass Card */}
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden">
                     {/* Top Shine Effect */}
                     <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
 
@@ -52,7 +52,7 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
                 </div>
 
                 {/* Footer Links */}
-                <div className="mt-8 text-center text-sm text-gray-500">
+                <div className="mt-6 sm:mt-8 text-center text-xs sm:text-sm text-gray-500">
                     <p>© {new Date().getFullYear()} Takopi. Todos los derechos reservados.</p>
                 </div>
             </motion.div>
