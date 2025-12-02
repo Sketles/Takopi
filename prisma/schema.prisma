@@ -31,6 +31,14 @@ enum License {
   streaming
 }
 
+enum GenStatus {
+  PENDING
+  IN_PROGRESS
+  SUCCEEDED
+  FAILED
+  CANCELED
+}
+
 // ============ MODELS ============
 model User {
   id           String        @id @default(cuid())
@@ -54,6 +62,7 @@ model User {
   purchases    Purchase[]
   transactions Transaction[]
   collections  Collection[]
+  generations  Generation[]
 
   @@map("users")
 }
@@ -245,4 +254,38 @@ model CollectionItem {
   @@index([collectionId])
   @@index([contentId])
   @@map("collection_items")
+}
+
+// ============ AI GENERATION ============
+model Generation {
+  id            String      @id @default(cuid())
+  userId        String
+  taskId        String      @unique // ID de tarea en Meshy
+  taskType      String      @default("text-to-3d") // text-to-3d, image-to-3d, text-to-3d-refine, retexture
+  prompt        String?
+  imageUrl      String?     // Para image-to-3d
+  status        GenStatus   @default(PENDING)
+  progress      Int         @default(0)
+  modelUrl      String?     // URL del modelo GLB
+  thumbnailUrl  String?
+  artStyle      String?
+  aiModel       String      @default("latest")
+  creditsUsed   Int         @default(0)
+  errorMessage  String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  completedAt   DateTime?
+  
+  // Campos para texturas (nuevos)
+  mode          String?     @default("preview") // preview, refine
+  enablePbr     Boolean     @default(false)
+  texturePrompt String?
+  previewTaskId String?     // Para refine: ID de la tarea preview original
+  hasTextures   Boolean     @default(false)
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("generations")
 }

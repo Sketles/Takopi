@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
       },
       resolveExtensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
     },
+    serverActions: {
+      bodySizeLimit: '100mb',
+    },
   },
 };
 

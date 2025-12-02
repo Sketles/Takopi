@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -208,10 +208,13 @@ export function useRequireAuth(returnUrl?: string) {
   const router = useRouter();
 
   // Redirigir si no está autenticado y ya terminó de cargar
-  if (!isLoading && !user) {
-    const redirect = returnUrl || (typeof window !== 'undefined' ? window.location.pathname : '/');
-    router.push(`/auth/login?redirect=${encodeURIComponent(redirect)}`);
-  }
+  // Usar useEffect para evitar setState durante render
+  useEffect(() => {
+    if (!isLoading && !user) {
+      const redirect = returnUrl || (typeof window !== 'undefined' ? window.location.pathname : '/');
+      router.push(`/auth/login?redirect=${encodeURIComponent(redirect)}`);
+    }
+  }, [isLoading, user, router, returnUrl]);
 
   return {
     isReady: !isLoading && !!user,
