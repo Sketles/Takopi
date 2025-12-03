@@ -97,11 +97,7 @@ function ProfileContent() {
         setRealStats(result.data);
       }
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.log('Stats request timeout - using default values');
-      } else {
-        console.log('Stats request failed - using default values');
-      }
+      // Silently handle timeout/failure - using default values
     }
   };
 
@@ -130,11 +126,7 @@ function ProfileContent() {
         setUserCreations(result.data.creations);
       }
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.log('Creations request timeout');
-      } else {
-        console.log('Creations request failed');
-      }
+      // Silently handle timeout/failure
     } finally {
       setLoadingCreations(false);
     }
@@ -171,11 +163,7 @@ function ProfileContent() {
         // Ya no auto-actualizamos la ubicación
       }
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.log('Profile request timeout');
-      } else {
-        console.log('Profile request failed');
-      }
+      // Silently handle timeout/failure
     }
   };
 
@@ -191,8 +179,6 @@ function ProfileContent() {
         return;
       }
 
-      console.log('🔄 Enviando datos al servidor:', updatedProfile);
-
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos timeout
 
@@ -207,11 +193,9 @@ function ProfileContent() {
       });
 
       clearTimeout(timeoutId);
-      console.log('📡 Respuesta del servidor:', response.status, response.statusText);
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Datos recibidos del servidor:', data);
 
         setCurrentProfile(prev => ({
           ...prev,
@@ -229,12 +213,10 @@ function ProfileContent() {
 
         setIsEditing(false);
       } else {
-        console.error('❌ Error del servidor:', response.status, response.statusText);
         const errorData = await response.json().catch(() => ({ error: 'Error desconocido del servidor' }));
         addToast({ type: 'error', title: `Error del servidor (${response.status})`, message: errorData.error });
       }
     } catch (error: any) {
-      console.error('❌ Error al actualizar perfil:', error);
 
       if (error.name === 'AbortError') {
         addToast({ type: 'warning', title: 'Tiempo agotado', message: 'La solicitud tardó demasiado. Verifica tu conexión a internet.' });
@@ -397,17 +379,8 @@ function ProfileContent() {
     const contentId = creation.id || creation._id;
     const validId = typeof contentId === 'string' ? contentId : contentId?.toString();
 
-    console.log('🔍 Transformando creación:', {
-      originalId: creation.id,
-      mongoId: creation._id,
-      finalId: validId,
-      type: typeof validId,
-      creationCompleto: creation
-    });
-
     // Validar que tengamos un ID válido
     if (!validId) {
-      console.error('❌ No se pudo obtener un ID válido de la creación:', creation);
       addToast({ type: 'error', title: 'Error', message: 'Producto sin ID válido' });
     }
 
@@ -455,10 +428,6 @@ function ProfileContent() {
 
   // Función para editar producto
   const handleEditProduct = (product: any) => {
-    console.log('📝 handleEditProduct - Producto recibido:', product);
-    console.log('📝 ID del producto:', product?.id);
-    console.log('📝 Todas las keys:', Object.keys(product || {}));
-    
     setProductToEdit(product);
     setIsProductEditorOpen(true);
   };
@@ -470,7 +439,6 @@ function ProfileContent() {
 
       // Validar que productOrId no sea undefined o null
       if (!productOrId) {
-        console.error('❌ productOrId es undefined o null');
         addToast({ type: 'error', title: 'Error', message: 'Producto no válido' });
         return { success: false };
       }
@@ -482,21 +450,14 @@ function ProfileContent() {
       } else if (typeof productOrId === 'object') {
         productId = productOrId.id || productOrId._id;
       } else {
-        console.error('❌ Tipo de productOrId no válido:', typeof productOrId);
         addToast({ type: 'error', title: 'Error', message: 'Formato de producto no válido' });
         return { success: false };
       }
       
       if (!productId) {
-        console.error('❌ No se encontró ID en el producto:', productOrId);
         addToast({ type: 'error', title: 'Error', message: 'ID de producto no válido' });
         return { success: false };
       }
-
-      // Debug: verificar el ID que se está enviando
-      console.log('🔍 Eliminando producto con ID:', productId);
-      console.log('🔍 Producto/ID recibido:', productOrId);
-      console.log('🔍 Fuente:', source);
 
       const response = await fetch(`/api/content/${productId}`, {
         method: 'DELETE',
@@ -518,16 +479,11 @@ function ProfileContent() {
         addToast({ type: 'success', title: 'Éxito', message: 'Producto eliminado correctamente' });
         return { success: true };
       } else {
-        console.error('❌ Error response status:', response.status);
-        console.error('❌ Error response statusText:', response.statusText);
-
         let errorMessage = 'Error desconocido';
         try {
           const errorData = await response.json();
-          console.error('❌ Error eliminando producto:', errorData);
           errorMessage = errorData.error || errorData.message || 'Error al eliminar el producto';
-        } catch (jsonError) {
-          console.error('❌ Error parsing JSON:', jsonError);
+        } catch {
           errorMessage = `Error ${response.status}: ${response.statusText}`;
         }
 
@@ -536,7 +492,6 @@ function ProfileContent() {
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('❌ Error eliminando producto:', error);
       addToast({ type: 'error', title: 'Error', message: 'Error al eliminar el producto' });
       throw error;
     }
@@ -545,8 +500,6 @@ function ProfileContent() {
   // Función para guardar cambios del producto
   const handleSaveProduct = async (updatedProduct: any) => {
     try {
-      console.log('💾 Guardando producto:', updatedProduct);
-      
       const token = localStorage.getItem('takopi_token');
       if (!token) {
         addToast({ type: 'error', title: 'Error', message: 'No estás autenticado' });
@@ -563,7 +516,6 @@ function ProfileContent() {
       });
 
       const data = await response.json();
-      console.log('📥 Respuesta del servidor:', data);
 
       if (response.ok) {
         // Actualizar la lista de creaciones con los datos actualizados del servidor
@@ -581,11 +533,9 @@ function ProfileContent() {
         
         addToast({ type: 'success', title: 'Éxito', message: 'Producto actualizado exitosamente' });
       } else {
-        console.error('❌ Error del servidor:', data);
         addToast({ type: 'error', title: 'Error', message: data.error || 'Error al actualizar el producto' });
       }
-    } catch (error) {
-      console.error('❌ Error al actualizar producto:', error);
+    } catch {
       addToast({ type: 'error', title: 'Error', message: 'Error al actualizar el producto' });
     }
   };

@@ -283,19 +283,15 @@ export default function UploadPage() {
 
       // 3. Subir archivos directamente a Vercel Blob (CLIENT-SIDE UPLOAD)
       // Esto evita el límite de 4.5MB de las Serverless Functions
-      console.log('📤 Iniciando upload directo a Vercel Blob...');
       
       // Subir archivos principales
       const uploadedFiles = await uploadFiles(validFiles, formData.contentType);
-      console.log(`✅ ${uploadedFiles.length} archivo(s) subido(s) a Vercel Blob`);
 
       // Subir imagen de portada
       let coverImageUrl = coverPreview || '/placeholder-cover.jpg';
       if (coverImage) {
-        console.log('📤 Subiendo imagen de portada...');
         const uploadedCover = await uploadSingleFile(coverImage, 'covers');
         coverImageUrl = uploadedCover.url;
-        console.log('✅ Portada subida:', coverImageUrl);
       }
 
       // 3. Preparar payload con URLs reales de Vercel Blob
@@ -337,7 +333,6 @@ export default function UploadPage() {
       const responseContentType = response.headers.get('content-type');
       if (!responseContentType || !responseContentType.includes('application/json')) {
         const textError = await response.text();
-        console.error('❌ Respuesta no-JSON del servidor:', textError);
         throw new Error(`Error del servidor: ${textError.substring(0, 100)}`);
       }
 
@@ -359,7 +354,6 @@ export default function UploadPage() {
       }, 1000);
 
     } catch (error) {
-      console.error('Error al publicar:', error);
       addToast({
         type: 'error',
         title: 'Error',
