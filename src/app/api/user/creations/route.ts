@@ -1,37 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GetUserCreationsUseCase } from '@/features/user/domain/usecases/get-user-creations.usecase';
 import { createUserRepository } from '@/features/user/data/repositories/user.repository';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
-
-// Función para verificar el token JWT
-async function verifyToken(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  try {
-    const decoded = jwt.verify(token, config.jwt.secret) as any;
-    return decoded;
-  } catch (error) {
-    return null;
-  }
-}
+import { requireAuth } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 Get User Creations API (Clean Architecture)');
 
     // Verificar autenticación
-    const decoded = await verifyToken(request);
-    if (!decoded) {
-      return NextResponse.json(
-        { success: false, error: 'Token inválido o expirado' },
-        { status: 401 }
-      );
-    }
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    
+    const decoded = auth;
 
     // Crear repository y usecase (Clean Architecture)
     const repository = createUserRepository();

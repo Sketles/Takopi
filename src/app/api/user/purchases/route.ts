@@ -1,29 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GetUserPurchasesUseCase } from '@/features/user/domain/usecases/get-user-purchases.usecase';
 import { createUserRepository } from '@/features/user/data/repositories/user.repository';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
+import { requireAuth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
-
-    // Obtener token de autorización
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Token de autorización requerido' }, { status: 401 });
-    }
-
-    const token = authHeader.split(' ')[1];
-
-    // Verificar token
-    let userId;
-    try {
-      const decoded = jwt.verify(token, config.jwt.secret) as any;
-      userId = decoded.userId;
-    } catch (error) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
+    // Verificar autenticación
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    
+    const userId = auth.userId;
 
     // Crear repository y usecase (Clean Architecture)
     const repository = createUserRepository();
@@ -125,7 +112,8 @@ export async function GET(request: NextRequest) {
         seller: seller ? {
           id: seller.id,
           username: seller.username,
-          email: seller.email
+          email: seller.email,
+          avatar: seller.avatar || null
         } : null,
         amount: purchase.price, // El campo en DB es 'price', lo mapeamos a 'amount' para el frontend
         currency: purchase.currency,

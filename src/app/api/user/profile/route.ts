@@ -1,32 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UpdateProfileUseCase } from '@/features/auth/domain/usecases/update-profile.usecase';
 import { createAuthRepository } from '@/features/auth/data/repositories/auth.repository';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
-
-// Función para verificar el token JWT
-async function verifyToken(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  try {
-    const decoded = jwt.verify(token, config.jwt.secret) as any;
-    return decoded;
-  } catch (error) {
-    return null;
-  }
-}
+import { requireAuth } from '@/lib/auth';
 
 // GET - Obtener perfil del usuario
 export async function GET(request: NextRequest) {
   try {
-    const decoded = await verifyToken(request);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    
+    const decoded = auth;
 
     if (process.env.NODE_ENV !== 'production') {
       console.log('🔍 Get Profile API (Clean Architecture):', decoded.userId);

@@ -3,8 +3,7 @@ import { IAuthRepository, LoginResult } from '../../domain/repositories/auth.rep
 import { UserEntity } from '../../domain/entities/user.entity';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
+import { generateToken, verifyTokenLegacy } from '@/lib/auth';
 
 export class AuthRepositoryPrisma implements IAuthRepository {
   async login(email: string, password: string): Promise<LoginResult> {
@@ -25,17 +24,11 @@ export class AuthRepositoryPrisma implements IAuthRepository {
       throw new Error('Credenciales inválidas');
     }
 
-    // Generar token JWT
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        username: user.username,
-        role: user.role
-      },
-      config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn } as jwt.SignOptions
-    );
+    // Generar token JWT usando módulo centralizado
+    const token = generateToken({
+      userId: user.id,
+      email: user.email
+    });
 
     const userEntity = this.toEntity(user);
 
@@ -59,17 +52,11 @@ export class AuthRepositoryPrisma implements IAuthRepository {
       }
     });
 
-    // Generar token JWT
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        username: user.username,
-        role: user.role
-      },
-      config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn } as jwt.SignOptions
-    );
+    // Generar token JWT usando módulo centralizado
+    const token = generateToken({
+      userId: user.id,
+      email: user.email
+    });
 
     const userEntity = this.toEntity(user);
 
@@ -79,14 +66,14 @@ export class AuthRepositoryPrisma implements IAuthRepository {
   async verifyToken(token: string): Promise<UserEntity | null> {
     console.log('🗄️ AuthRepositoryPrisma: verifyToken');
 
-    try {
-      const decoded: any = jwt.verify(token, config.jwt.secret);
-      const user = await this.findUserById(decoded.userId);
-      return user;
-    } catch (error) {
-      console.error('Token verification failed:', error);
+    const result = verifyTokenLegacy(token);
+    if (!result.success) {
+      console.error('Token verification failed:', result.error);
       return null;
     }
+    
+    const user = await this.findUserById(result.user.userId);
+    return user;
   }
 
   async findUserByEmail(email: string): Promise<UserEntity | null> {

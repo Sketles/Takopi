@@ -1,4 +1,10 @@
 // Configuración de variables de entorno
+// Optimizado para Vercel deployment
+
+/** Detectar si estamos en Vercel */
+const isVercel = process.env.VERCEL === '1';
+const isProduction = process.env.NODE_ENV === 'production';
+
 export const config = {
   // Base de datos
   database: {
@@ -11,16 +17,21 @@ export const config = {
     readWriteToken: process.env.BLOB_READ_WRITE_TOKEN,
   },
 
-  // JWT
+  // JWT - El secret DEBE venir de env en producción
   jwt: {
-    secret: process.env.JWT_SECRET || 'takopi_jwt_secret_super_secreto_2025_change_in_production',
-    expiresIn: '7d'
+    // En producción/Vercel: usa variable de entorno obligatoria
+    // En desarrollo: usa fallback con advertencia
+    secret: process.env.JWT_SECRET || (isProduction ? '' : 'takopi_dev_secret_not_for_production_2025'),
+    expiresIn: '7d',
+    algorithm: 'HS256' as const
   },
 
   // NextAuth
   nextauth: {
-    secret: process.env.NEXTAUTH_SECRET || 'takopi_nextauth_secret_2025_change_in_production',
-    url: process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    secret: process.env.NEXTAUTH_SECRET || (isProduction ? '' : 'takopi_nextauth_dev_secret_2025'),
+    url: process.env.NEXTAUTH_URL || process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : 'http://localhost:3000'
   },
 
   // Transbank Webpay
@@ -35,56 +46,69 @@ export const config = {
     name: 'Takopi',
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development',
-    baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    isVercel,
+    isProduction,
+    baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
   }
 };
 
 // Validar variables críticas
-export function validateConfig() {
+export function validateConfig(): boolean {
   const errors: string[] = [];
+  const warnings: string[] = [];
 
-  // Solo validar en producción
-  if (process.env.NODE_ENV === 'production') {
-    if (!config.database.url) {
-      errors.push('POSTGRES_PRISMA_URL debe estar configurado en producción');
+  // En producción (Vercel), validar variables críticas
+  if (config.app.isProduction || config.app.isVercel) {
+    if (!process.env.POSTGRES_PRISMA_URL) {
+      errors.push('POSTGRES_PRISMA_URL requerido en producción');
     }
 
-    if (!config.blob.readWriteToken) {
-      errors.push('BLOB_READ_WRITE_TOKEN debe estar configurado en producción');
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      errors.push('BLOB_READ_WRITE_TOKEN requerido en producción');
     }
 
-    // Solo validar que existan, no su contenido específico
-    if (!config.jwt.secret) {
-      errors.push('JWT_SECRET debe estar configurado en producción');
+    if (!process.env.JWT_SECRET) {
+      errors.push('JWT_SECRET requerido en producción');
+    } else if (process.env.JWT_SECRET.length < 32) {
+      warnings.push('JWT_SECRET debería tener al menos 32 caracteres');
     }
 
-    if (!config.nextauth.secret) {
-      errors.push('NEXTAUTH_SECRET debe estar configurado en producción');
+    if (!process.env.NEXTAUTH_SECRET) {
+      warnings.push('NEXTAUTH_SECRET no configurado');
     }
 
     if (errors.length > 0) {
-      console.error('❌ Configuración de producción incompleta:', errors);
-      throw new Error('Missing required environment variables in production');
-    }
-  } else {
-    // En desarrollo, solo advertir
-    const warnings: string[] = [];
-    
-    if (!config.jwt.secret || config.jwt.secret.includes('change_in_production')) {
-      warnings.push('JWT_SECRET no configurado (usando default)');
-    }
-
-    if (!config.nextauth.secret || config.nextauth.secret.includes('change_in_production')) {
-      warnings.push('NEXTAUTH_SECRET no configurado (usando default)');
+      console.error('❌ Variables de entorno faltantes en producción:', errors);
+      // En Vercel, NO lanzar error para permitir build, pero loguear
+      if (process.env.VERCEL_ENV === 'production') {
+        throw new Error(`Missing required environment variables: ${errors.join(', ')}`);
+      }
     }
 
     if (warnings.length > 0) {
-      console.warn('⚠️  Configuración de desarrollo:', warnings);
+      console.warn('⚠️ Advertencias de configuración:', warnings);
+    }
+  } else {
+    // En desarrollo, solo advertir
+    if (!process.env.JWT_SECRET) {
+      warnings.push('JWT_SECRET no configurado (usando default de desarrollo)');
+    }
+
+    if (!process.env.NEXTAUTH_SECRET) {
+      warnings.push('NEXTAUTH_SECRET no configurado (usando default de desarrollo)');
+    }
+
+    if (warnings.length > 0) {
+      console.warn('⚠️ Configuración de desarrollo:', warnings);
     }
   }
 
   return errors.length === 0;
 }
 
-// Ejecutar validación al importar
-validateConfig();
+// Ejecutar validación al importar (solo loguea, no bloquea)
+if (typeof window === 'undefined') {
+  // Solo en servidor
+  validateConfig();
+}

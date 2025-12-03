@@ -1,7 +1,6 @@
 // Verify Token UseCase - Verificar validez de token JWT
 import { IAuthRepository } from '../repositories/auth.repository.interface';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
+import { verifyTokenLegacy } from '@/lib/auth';
 
 export interface VerifyTokenResult {
   valid: boolean;
@@ -16,42 +15,33 @@ export class VerifyTokenUseCase {
   async execute(token: string): Promise<VerifyTokenResult> {
     console.log('🎯 VerifyTokenUseCase: Verificando token');
 
-    // Validaciones de negocio
-    if (!token || token.trim().length === 0) {
+    // Usar módulo centralizado para verificar token
+    const result = verifyTokenLegacy(token);
+    
+    if (!result.success) {
+      console.log('❌ Token inválido:', result.error);
       return {
         valid: false,
-        error: 'Token requerido'
+        error: result.error
       };
     }
 
-    try {
-      // Verificar el token JWT
-      const decodedToken = jwt.verify(token, config.jwt.secret) as any;
-      
-      console.log('✅ Token válido:', { userId: decodedToken.userId });
+    console.log('✅ Token válido:', { userId: result.user.userId });
 
-      // Opcionalmente verificar que el usuario existe en el repositorio
-      const user = await this.repository.findUserById(decodedToken.userId);
-      if (!user) {
-        return {
-          valid: false,
-          error: 'Usuario no encontrado'
-        };
-      }
-
-      return {
-        valid: true,
-        userId: decodedToken.userId,
-        email: decodedToken.email
-      };
-
-    } catch (error) {
-      console.log('❌ Token inválido o expirado:', error);
+    // Verificar que el usuario existe en el repositorio
+    const user = await this.repository.findUserById(result.user.userId);
+    if (!user) {
       return {
         valid: false,
-        error: 'Token inválido o expirado'
+        error: 'Usuario no encontrado'
       };
     }
+
+    return {
+      valid: true,
+      userId: result.user.userId,
+      email: result.user.email
+    };
   }
 }
 

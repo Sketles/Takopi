@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CreateWebpayTransactionUseCase } from '@/features/payment/domain/usecases/create-webpay-transaction.usecase';
 import { createPaymentRepository } from '@/features/payment/data/repositories/payment.repository';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
+import { requireAuth } from '@/lib/auth';
 import { webpayConfig, generateBuyOrder, generateSessionId } from '@/config/webpay';
 
 // Importar WebpayPlus de manera condicional para mejor manejo de errores
@@ -14,29 +13,13 @@ try {
   console.error('❌ Error loading Transbank SDK for create:', error);
 }
 
-// Función para verificar el token JWT
-async function verifyToken(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  try {
-    const decoded = jwt.verify(token, config.jwt.secret) as any;
-    return decoded;
-  } catch (error) {
-    return null;
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     // Verificar autenticación
-    const decoded = await verifyToken(request);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    
+    const decoded = auth;
 
     const requestBody = await request.json();
     const { amount, contentId } = requestBody;

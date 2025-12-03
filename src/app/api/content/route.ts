@@ -2,24 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CreateContentUseCase } from '@/features/content/domain/usecases/create-content.usecase';
 import { GetContentUseCase } from '@/features/content/domain/usecases/get-content.usecase';
 import { createContentRepository } from '@/features/content/data/repositories/content.repository';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
-
-// Función para verificar el token JWT
-async function verifyToken(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  try {
-    const decoded = jwt.verify(token, config.jwt.secret) as any;
-    return decoded;
-  } catch (error) {
-    return null;
-  }
-}
+import { requireAuth } from '@/lib/auth';
 
 // GET - Obtener publicaciones (con filtros opcionales)
 export async function GET(request: NextRequest) {
@@ -107,10 +90,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar autenticación
-    const decoded = await verifyToken(request);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    
+    const decoded = auth;
 
     const requestBody = await request.json();
     if (process.env.NODE_ENV !== 'production') {

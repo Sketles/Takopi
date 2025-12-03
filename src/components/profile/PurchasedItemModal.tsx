@@ -4,6 +4,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { ModelViewerModal } from '../ModelViewer3D';
 import MusicPlayer from '../product/MusicPlayer';
 import TextureViewer from '../product/TextureViewer';
+import { useRouter } from 'next/navigation';
 
 interface PurchasedItemModalProps {
   purchase: any;
@@ -20,28 +21,57 @@ export default function PurchasedItemModal({
   onDownload,
   downloading,
 }: PurchasedItemModalProps) {
+  const router = useRouter();
+  
   if (!isOpen || !purchase) return null;
   
   // Validar estructura de purchase
-  const amount = purchase.amount ?? 0;
-  const currency = purchase.currency || 'CLP';
-
   const is3DPrint = purchase.contentSnapshot?.type === '3d_print';
   const content = purchase.content || purchase.contentSnapshot;
+  
+  // Obtener datos del autor/vendedor
+  const seller = purchase.seller || content?.author;
+  const sellerUsername = seller?.username || content?.authorUsername || 'Vendedor';
+  const sellerAvatar = seller?.avatar || content?.authorAvatar;
+  
+  // Detectar si el contenido es un modelo 3D que se puede imprimir
+  const contentType = content?.contentType || purchase.contentSnapshot?.contentType;
+  const canBePrinted = !is3DPrint && (
+    contentType === 'modelos3d' || 
+    contentType === '3d' || 
+    contentType === 'model' || 
+    contentType === 'avatares' ||
+    contentType === 'avatar'
+  );
+  
+  // Handler para ir a imprimir el modelo
+  const handlePrint3D = () => {
+    // Buscar archivo 3D en los archivos del contenido
+    const modelFile = content?.files?.find((f: any) =>
+      f.name?.toLowerCase().endsWith('.stl') ||
+      f.name?.toLowerCase().endsWith('.obj') ||
+      f.name?.toLowerCase().endsWith('.glb') ||
+      f.name?.toLowerCase().endsWith('.gltf')
+    ) || content?.files?.[0];
+
+    const params = new URLSearchParams();
+    params.set('productId', content?.id || purchase.contentId || purchase.id);
+    params.set('productTitle', content?.title || 'Modelo 3D');
+    if (modelFile?.url) {
+      params.set('modelUrl', modelFile.url);
+      params.set('fileName', modelFile.name);
+    }
+
+    onClose(); // Cerrar el modal
+    router.push(`/impresion-3d/configurar?${params.toString()}`);
+  };
   
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-CL', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     });
-  };
-
-  const formatPrice = (amount: number | undefined, currency: string) => {
-    if (!amount || isNaN(amount)) return 'Precio no disponible';
-    return `$${amount.toLocaleString('es-CL')} ${currency}`;
   };
 
   // Renderizar visor integrado según tipo de contenido
@@ -191,53 +221,46 @@ export default function PurchasedItemModal({
             </div>
 
             {/* Purchase Info */}
-            <div className="bg-[#0f0f0f] rounded-2xl p-6 border border-white/10 mb-6">
-              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <div className="bg-[#0f0f0f] rounded-2xl p-4 sm:p-6 border border-white/10 mb-6">
+              <h3 className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Información de Compra
+                Detalles de Compra
               </h3>
               
-              <div className="space-y-4">
-                <div className="flex justify-between items-center pb-3 border-b border-white/5">
-                  <span className="text-gray-400 text-sm">Precio Pagado</span>
-                  <span className="text-white font-bold text-lg">
-                    {formatPrice(amount, currency)}
-                  </span>
-                </div>
-                
-                <div className="flex justify-between items-center pb-3 border-b border-white/5">
-                  <span className="text-gray-400 text-sm">Fecha de Compra</span>
-                  <span className="text-white text-sm">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-2 border-b border-white/5">
+                  <span className="text-gray-400 text-xs sm:text-sm">Fecha</span>
+                  <span className="text-white text-xs sm:text-sm">
                     {formatDate(purchase.purchaseDate || purchase.createdAt || new Date().toISOString())}
                   </span>
                 </div>
 
-                {!is3DPrint && purchase.seller && (
-                  <div className="flex justify-between items-center pb-3 border-b border-white/5">
-                    <span className="text-gray-400 text-sm">Vendedor</span>
-                    <span className="text-white text-sm flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-xs font-bold text-purple-400">
-                        {purchase.seller.username?.charAt(0).toUpperCase()}
-                      </div>
-                      {purchase.seller.username}
-                    </span>
+                {!is3DPrint && (
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-gray-400 text-xs sm:text-sm">Creador</span>
+                    <div className="flex items-center gap-2">
+                      {sellerAvatar ? (
+                        <img 
+                          src={sellerAvatar} 
+                          alt={sellerUsername}
+                          className="w-6 h-6 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-xs font-bold text-white">
+                          {sellerUsername.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <span className="text-white text-xs sm:text-sm font-medium">{sellerUsername}</span>
+                    </div>
                   </div>
                 )}
 
-                <div className="flex justify-between items-center pb-3 border-b border-white/5">
-                  <span className="text-gray-400 text-sm">Estado</span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-medium">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
-                    {purchase.status === 'completed' ? 'Completado' : purchase.status}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400 text-sm">ID de Transacción</span>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-400 text-xs sm:text-sm">ID</span>
                   <span className="text-white/60 text-xs font-mono">
-                    {purchase.id.slice(0, 12)}...
+                    #{purchase.id.slice(-8).toUpperCase()}
                   </span>
                 </div>
               </div>
@@ -319,25 +342,61 @@ export default function PurchasedItemModal({
 
             {/* Actions */}
             {!is3DPrint && (
-              <button
-                onClick={() => onDownload(purchase.id, content?.title || 'Contenido')}
-                disabled={downloading}
-                className="w-full px-6 py-4 bg-white text-black rounded-xl font-bold text-lg hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
-              >
-                {downloading ? (
-                  <>
-                    <div className="w-5 h-5 border-4 border-black/30 border-t-black rounded-full animate-spin"></div>
-                    Descargando...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Descargar Archivos
-                  </>
+              <div className="space-y-3">
+                {/* Botones en fila */}
+                <div className="flex gap-2">
+                  {/* Botón Descargar */}
+                  <button
+                    onClick={() => onDownload(purchase.id, content?.title || 'Contenido')}
+                    disabled={downloading}
+                    className={`${canBePrinted ? 'flex-1' : 'w-full'} px-4 py-2.5 bg-white text-black rounded-xl font-semibold text-sm hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+                  >
+                    {downloading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                        <span>Descargando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span>Descargar Archivos</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Botón Imprimir 3D - Solo para modelos 3D */}
+                  {canBePrinted && (
+                    <button
+                      onClick={handlePrint3D}
+                      className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold text-sm hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                      </svg>
+                      <span>Imprimir en 3D</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Info de impresión 3D */}
+                {canBePrinted && (
+                  <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 sm:p-4">
+                    <div className="flex items-start gap-2 sm:gap-3">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div>
+                        <h4 className="text-purple-400 font-bold text-xs sm:text-sm mb-0.5 sm:mb-1">¿Quieres tenerlo físico?</h4>
+                        <p className="text-white/60 text-[10px] sm:text-xs leading-relaxed">
+                          Imprime este modelo en 3D con nuestro servicio. Elige material, color y te lo enviamos a tu casa.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 )}
-              </button>
+              </div>
             )}
 
             {is3DPrint && (

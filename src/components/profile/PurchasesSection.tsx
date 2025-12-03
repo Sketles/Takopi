@@ -156,7 +156,8 @@ export default function PurchasesSection() {
   };
 
   const formatPrice = (amount: number | undefined, currency: string) => {
-    if (!amount || isNaN(amount)) return 'Precio no disponible';
+    if (amount === undefined || amount === null || isNaN(amount)) return 'Gratis';
+    if (amount === 0) return 'Gratis';
     return `$${amount.toLocaleString('es-CL')} ${currency}`;
   };
 
