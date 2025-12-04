@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="public/icons/takopi-logo.svg" alt="Takopi Logo" width="120" />
-
-# TAKOPI
+<img src="public/icons/logo.png" alt="Takopi Logo" width="400" />
 
 ### Marketplace de Contenido Digital + IA Generativa 3D
 
@@ -14,7 +12,7 @@
 
 **Plataforma integral para creadores: compra, vende y genera contenido digital con IA.**
 
-[🚀 Demo en Vivo](https://takopi-nine.vercel.app) · [📖 Documentación](#-arquitectura) · [🐛 Reportar Bug](https://github.com/Sketles/Takopi/issues)
+[🚀 Demo en Vivo](https://takopi-nine.vercel.app) · [🐛 Reportar Bug](https://github.com/Sketles/Takopi/issues)
 
 </div>
 
@@ -26,10 +24,7 @@
 - [Features Principales](#-features-principales)
 - [Stack Tecnológico](#️-stack-tecnológico)
 - [Instalación](#-instalación)
-- [Variables de Entorno](#-variables-de-entorno)
-- [Arquitectura](#-arquitectura)
-- [Roadmap](#️-roadmap)
-- [Contribuir](#-contribuir)
+- [Testing](#-testing)
 
 ---
 
@@ -198,138 +193,6 @@ Abre [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## 🔐 Variables de Entorno
-
-```bash
-# ═══════════════════════════════════════════════════════════════
-# DATABASE (PostgreSQL - Neon)
-# ═══════════════════════════════════════════════════════════════
-POSTGRES_PRISMA_URL="postgresql://..."      # URL con connection pooling
-POSTGRES_URL_NON_POOLING="postgresql://..." # URL directa (migraciones)
-
-# ═══════════════════════════════════════════════════════════════
-# AUTENTICACIÓN
-# ═══════════════════════════════════════════════════════════════
-JWT_SECRET="tu-secret-super-seguro-min-32-chars"
-NEXTAUTH_SECRET="otro-secret-para-nextauth"
-NEXTAUTH_URL="http://localhost:3000"
-
-# ═══════════════════════════════════════════════════════════════
-# STORAGE (Vercel Blob)
-# ═══════════════════════════════════════════════════════════════
-BLOB_READ_WRITE_TOKEN="vercel_blob_..."
-
-# ═══════════════════════════════════════════════════════════════
-# PAGOS (Transbank - Chile)
-# ═══════════════════════════════════════════════════════════════
-TRANSBANK_COMMERCE_CODE="597055555532"       # Código de integración
-TRANSBANK_API_KEY="579B532A..."              # API Key de integración
-NEXT_PUBLIC_BASE_URL="http://localhost:3000"
-
-# ═══════════════════════════════════════════════════════════════
-# IA GENERATIVA (Meshy)
-# ═══════════════════════════════════════════════════════════════
-MESHY_API_KEY="msy_..."
-```
-
----
-
-## 🏗️ Arquitectura
-
-```
-takopi/
-├── prisma/
-│   └── schema.prisma          # Modelos de base de datos
-├── src/
-│   ├── app/                   # Next.js App Router
-│   │   ├── api/               # API Routes
-│   │   │   ├── auth/          # Autenticación
-│   │   │   ├── content/       # CRUD de contenido
-│   │   │   ├── webpay/        # Pagos Transbank
-│   │   │   ├── ai/            # Generación IA
-│   │   │   └── user/          # Usuarios, compras, etc.
-│   │   ├── explore/           # Marketplace
-│   │   ├── profile/           # Dashboard usuario
-│   │   ├── impresion-3d/      # Servicio de impresión
-│   │   ├── takopi-ia/         # Generador IA
-│   │   └── ...
-│   ├── components/            # Componentes React
-│   │   ├── shared/            # Layout, Navbar, Toast, etc.
-│   │   ├── product/           # Cards, Modal, Panel
-│   │   ├── profile/           # Secciones de perfil
-│   │   └── ui/                # Componentes base
-│   ├── contexts/              # Estado global (Auth, Cart)
-│   ├── features/              # Clean Architecture
-│   │   ├── auth/              # Domain + Data
-│   │   ├── content/
-│   │   ├── purchase/
-│   │   └── ...
-│   ├── hooks/                 # Custom hooks
-│   ├── lib/                   # Utilidades (prisma, auth, blob)
-│   └── types/                 # TypeScript types
-└── testing/                   # E2E tests (Playwright)
-```
-
-### Clean Architecture
-
-```
-┌─────────────────────────────────────────────┐
-│              API Routes                      │
-│         (src/app/api/...)                   │
-└──────────────────┬──────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────────┐
-│              Use Cases                       │
-│    (src/features/*/application/)            │
-└──────────────────┬──────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────────┐
-│             Repositories                     │
-│       (src/features/*/data/)                │
-└──────────────────┬──────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────────┐
-│           Prisma / External                  │
-│              (src/lib/)                     │
-└─────────────────────────────────────────────┘
-```
-
----
-
-## 🗺️ Roadmap
-
-### ✅ Completado
-
-- [x] Marketplace con previsualizadores (3D, audio, texturas)
-- [x] Sistema de autenticación JWT
-- [x] Pagos con Transbank Webpay Plus
-- [x] Carrito de compras persistente
-- [x] Upload y gestión de contenido
-- [x] Sistema de likes, comentarios y colecciones
-- [x] Perfiles de usuario con roles
-- [x] Clean Architecture
-- [x] **Impresión 3D** con tracking de órdenes
-- [x] **Takopi-IA** (Text-to-3D, Image-to-3D)
-- [x] Deploy en Vercel con PostgreSQL (Neon)
-
-### 🔄 En Progreso
-
-- [ ] Notificaciones en tiempo real
-- [ ] Sistema de reviews y valoraciones
-- [ ] Estadísticas avanzadas para creadores
-- [ ] Mejoras de UX/UI responsive
-
-### 🔮 Próximamente
-
-- [ ] Sistema de comisiones personalizadas
-- [ ] Chat entre usuarios
-- [ ] API pública para desarrolladores
-- [ ] App móvil (React Native)
-- [ ] Suscripciones premium
-- [ ] Internacionalización (EN, PT)
-
----
-
 ## 🧪 Testing
 
 ```bash
@@ -345,16 +208,6 @@ npm run test:e2e:headed
 
 ---
 
-## 🤝 Contribuir
-
-1. Fork el repositorio
-2. Crea tu rama (`git checkout -b feature/nueva-feature`)
-3. Commit tus cambios (`git commit -m 'feat: agregar nueva feature'`)
-4. Push a la rama (`git push origin feature/nueva-feature`)
-5. Abre un Pull Request
-
----
-
 ## 📄 Licencia
 
 Este proyecto es privado y propietario de Takopi.
@@ -363,10 +216,6 @@ Este proyecto es privado y propietario de Takopi.
 
 <div align="center">
 
-### 💜 Hecho con amor en Chile 🇨🇱
-
-**Takopi** - Donde los creadores brillan
-
-[Website](https://takopi-nine.vercel.app) · [GitHub](https://github.com/Sketles/Takopi)
+#663399
 
 </div>
