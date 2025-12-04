@@ -7,14 +7,23 @@ import {
   type PrintOrderEmailData,
 } from './email-templates';
 
-// Cliente de Resend para envío de emails
-export const resend = new Resend(process.env.RESEND_API_KEY);
+// Cliente de Resend para envío de emails (null si no hay API key)
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Dominio de envío (usar el de Resend para desarrollo)
 export const EMAIL_FROM = 'Takopi <onboarding@resend.dev>';
 
 // En producción con dominio verificado:
 // export const EMAIL_FROM = 'Takopi <noreply@takopi.com>';
+
+// Flag para verificar si el email está habilitado
+const isEmailEnabled = (): boolean => {
+  if (!resend) {
+    console.log('[Email] ⚠️ RESEND_API_KEY no configurada - emails desactivados');
+    return false;
+  }
+  return true;
+};
 
 // Re-exportar tipos para uso externo
 export type { PurchaseEmailData, PrintOrderEmailData };
@@ -25,6 +34,10 @@ export type { PurchaseEmailData, PrintOrderEmailData };
  * Envía email de confirmación de compra de contenido digital
  */
 export async function sendPurchaseConfirmationEmail(data: PurchaseEmailData): Promise<{ success: boolean; id?: string; error?: string }> {
+  if (!isEmailEnabled() || !resend) {
+    return { success: false, error: 'Email no configurado' };
+  }
+
   try {
     const result = await resend.emails.send({
       from: EMAIL_FROM,
@@ -50,6 +63,10 @@ export async function sendPurchaseConfirmationEmail(data: PurchaseEmailData): Pr
  * Envía email de confirmación de orden de impresión 3D
  */
 export async function sendPrintOrderConfirmationEmail(data: PrintOrderEmailData): Promise<{ success: boolean; id?: string; error?: string }> {
+  if (!isEmailEnabled() || !resend) {
+    return { success: false, error: 'Email no configurado' };
+  }
+
   try {
     const result = await resend.emails.send({
       from: EMAIL_FROM,
@@ -87,6 +104,10 @@ export async function sendPrintOrderStatusEmail(data: PrintOrderEmailData): Prom
   };
 
   const subject = statusSubjects[data.status] || `📋 Actualización de tu orden #${data.orderId.slice(-8).toUpperCase()}`;
+
+  if (!isEmailEnabled() || !resend) {
+    return { success: false, error: 'Email no configurado' };
+  }
 
   try {
     const result = await resend.emails.send({
