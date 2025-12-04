@@ -307,7 +307,7 @@ export default function ShippingPage() {
                             ...prev,
                             city: comuna,
                             region: region,
-                            postalCode: postalCode || prev.postalCode
+                            postalCode: postalCode // Siempre actualizar con el nuevo código postal
                           }));
                           // Limpiar errores
                           setErrors(prev => ({ ...prev, city: '', region: '', postalCode: '' }));
