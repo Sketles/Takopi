@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { webpayConfig } from '@/config/webpay';
 import prisma from '@/lib/prisma';
 import { PrintStatus } from '@prisma/client';
+import { sendPrintOrderConfirmationEmail } from '@/lib/email';
 
 // Importar WebpayPlus de manera condicional para mejor manejo de errores
 let WebpayPlus: unknown;
@@ -215,6 +216,7 @@ async function handleCommit(request: NextRequest) {
       console.log('✅ [commit-print] Purchase creado:', purchase.id);
 
       // 2. Crear PrintOrder para tracking de impresión física
+      let createdPrintOrderId: string | null = null;
       if (productId && metadata?.printConfig) {
         try {
           const printOrder = await prisma.printOrder.create({
@@ -258,7 +260,64 @@ async function handleCommit(request: NextRequest) {
               confirmedAt: new Date(),
             },
           });
+          createdPrintOrderId = printOrder.id;
           console.log('✅ [commit-print] PrintOrder creado:', printOrder.id);
+
+          // Enviar email de confirmación de impresión 3D
+          try {
+            const user = await prisma.user.findUnique({
+              where: { id: transaction.userId },
+              select: { username: true, email: true }
+            });
+
+            if (user && metadata.shippingData) {
+              const emailResult = await sendPrintOrderConfirmationEmail({
+                orderId: printOrder.id,
+                orderDate: new Date().toLocaleDateString('es-CL', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }),
+                customerName: user.username,
+                customerEmail: user.email,
+                modelName: contentData?.title || metadata.printConfig?.productTitle || 'Modelo 3D',
+                modelAuthor: contentData?.authorId ? 'Creador' : 'Takopi',
+                material: metadata.printConfig.material || 'PLA',
+                quality: metadata.printConfig.quality || 'standard',
+                color: metadata.printConfig.color || undefined,
+                scale: metadata.printConfig.scale || 1.0,
+                infill: metadata.printConfig.infill || 20,
+                notes: undefined,
+                printPrice: metadata.pricing?.printPrice || transbankResponse.amount,
+                modelPrice: contentData?.price || 0,
+                shippingPrice: metadata.pricing?.shippingPrice || 0,
+                totalPrice: metadata.pricing?.totalPrice || transbankResponse.amount,
+                currency: 'CLP',
+                shippingMethod: metadata.shippingData.shippingMethod || 'standard',
+                shippingAddress: {
+                  street: metadata.shippingData.address,
+                  city: metadata.shippingData.city,
+                  region: metadata.shippingData.region,
+                  postalCode: metadata.shippingData.postalCode,
+                  country: 'Chile'
+                },
+                estimatedDays: 7,
+                status: 'CONFIRMED'
+              });
+
+              if (emailResult.success) {
+                console.log('📧 [commit-print] Email de confirmación enviado:', emailResult.id);
+              } else {
+                console.error('❌ [commit-print] Error enviando email:', emailResult.error);
+              }
+            }
+          } catch (emailError) {
+            console.error('❌ [commit-print] Error enviando email de confirmación:', emailError);
+            // No fallar la orden si el email falla
+          }
+
         } catch (printOrderError) {
           console.error('⚠️ [commit-print] Error creando PrintOrder:', printOrderError);
           // Continuar aunque falle el PrintOrder - el Purchase ya está creado

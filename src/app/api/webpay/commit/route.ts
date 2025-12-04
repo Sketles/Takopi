@@ -4,6 +4,8 @@ import { createPaymentRepository } from '@/features/payment/data/repositories/pa
 import { CreatePurchaseUseCase } from '@/features/purchase/domain/usecases/create-purchase.usecase';
 import { createPurchaseRepository } from '@/features/purchase/data/repositories/purchase.repository';
 import { webpayConfig } from '@/config/webpay';
+import { sendPurchaseConfirmationEmail } from '@/lib/email';
+import prisma from '@/lib/prisma';
 
 // Importar WebpayPlus de manera condicional para mejor manejo de errores
 let WebpayPlus: any;
@@ -83,6 +85,58 @@ async function handleCommit(request: NextRequest) {
           paymentMethod: 'webpay'
         } as any);
 
+        // Enviar email de confirmación de compra
+        try {
+          // Obtener datos del usuario y contenido para el email
+          const [user, content] = await Promise.all([
+            prisma.user.findUnique({
+              where: { id: transaction.userId },
+              select: { username: true, email: true }
+            }),
+            prisma.content.findUnique({
+              where: { id: transaction.contentId },
+              select: { 
+                title: true, 
+                contentType: true,
+                author: { select: { username: true } }
+              }
+            })
+          ]);
+
+          if (user && content) {
+            const emailResult = await sendPurchaseConfirmationEmail({
+              orderId: purchase.id,
+              orderDate: new Date().toLocaleDateString('es-CL', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }),
+              customerName: user.username,
+              customerEmail: user.email,
+              items: [{
+                title: content.title,
+                author: content.author?.username || 'Desconocido',
+                type: content.contentType,
+                price: transaction.amount,
+              }],
+              subtotal: transaction.amount,
+              total: transaction.amount,
+              currency: transaction.currency,
+              downloadUrl: `${webpayConfig.baseUrl}/profile`
+            });
+
+            if (emailResult.success) {
+              console.log('📧 Email de confirmación enviado:', emailResult.id);
+            } else {
+              console.error('❌ Error enviando email:', emailResult.error);
+            }
+          }
+        } catch (emailError) {
+          console.error('❌ Error enviando email de confirmación:', emailError);
+          // No fallar la compra si el email falla
+        }
 
         // Redirigir a la página de resultado exitoso
         return NextResponse.redirect(`${webpayConfig.baseUrl}/payment/result?success=true&transactionId=${transaction.id}&purchaseId=${purchase.id}&amount=${transbankResponse.amount}&currency=CLP&buyOrder=${transbankResponse.buy_order}&authorizationCode=${transbankResponse.authorization_code}`, 302);
