@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
+import { verifyTokenLegacy } from '@/lib/auth';
 
 /**
  * API Route para Client-Side Upload a Vercel Blob
@@ -16,16 +15,12 @@ import { config } from '@/config/env';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-// Verificar token JWT
+// Verificar token JWT usando módulo centralizado
 function verifyToken(token: string | null | undefined): { userId: string; email: string } | null {
-  try {
-    if (!token) return null;
-    
-    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string; email: string };
-    return decoded;
-  } catch {
-    return null;
-  }
+  if (!token) return null;
+  const result = verifyTokenLegacy(token);
+  if (!result.success) return null;
+  return { userId: result.user.userId, email: result.user.email };
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {

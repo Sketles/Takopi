@@ -26,19 +26,33 @@ export async function GET(request: NextRequest) {
       let content = null;
       let seller = null;
       let contentData = null;
+      const snapshot = purchase.contentSnapshot as any;
+      const is3DPrint = snapshot?.type === '3d_print';
 
-      // Si contentId es null, es una impresión 3D - usar contentSnapshot directamente
-      if (!purchase.contentId) {
-        const snapshot = purchase.contentSnapshot as any;
-        if (snapshot && snapshot.type === '3d_print') {
-          // Es una impresión 3D - no hay contenido asociado
-          contentData = null;
-          seller = {
-            id: 'takopi',
-            username: 'Takopi',
-            email: 'soporte@takopi.com'
-          };
-        }
+      // Verificar si es una impresión 3D (por snapshot type)
+      if (is3DPrint) {
+        // Es una impresión 3D - usar datos del snapshot
+        contentData = {
+          id: purchase.contentId || 'print-order',
+          title: snapshot.title || 'Impresión 3D',
+          coverImage: snapshot.coverImage || '/placeholders/placeholder-3d.svg',
+          category: 'Impresión 3D', // Categoría especial para mostrar
+          contentType: snapshot.contentType || 'Modelos3d',
+          price: purchase.price,
+          files: snapshot.files || [],
+          isPrintOrder: true,
+          printStatus: purchase.status // 'in_progress', 'completed', etc.
+        };
+        seller = {
+          id: 'takopi',
+          username: 'Takopi',
+          email: 'soporte@takopi.com',
+          avatar: '/icons/takopi-logo.png'
+        };
+      } else if (!purchase.contentId) {
+        // No tiene contentId y no es impresión 3D - error de datos
+        contentData = null;
+        seller = null;
       } else {
         // Tiene contentId - intentar obtener el contenido
         try {
@@ -62,7 +76,6 @@ export async function GET(request: NextRequest) {
             };
           } else {
             // Contenido fue eliminado - usar snapshot
-            const snapshot = purchase.contentSnapshot as any;
             if (snapshot) {
               contentData = {
                 id: purchase.contentId,
@@ -88,8 +101,7 @@ export async function GET(request: NextRequest) {
           }
         } catch (error) {
           console.log('⚠️ Content not found for purchase:', purchase.contentId);
-          // Usar snapshot como fallback
-          const snapshot = purchase.contentSnapshot as any;
+          // Usar snapshot como fallback (ya definido arriba)
           if (snapshot) {
             contentData = {
               id: purchase.contentId,

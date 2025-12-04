@@ -1,24 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ToggleCommentLikeUseCase } from '@/features/comments/domain/usecases/toggle-comment-like.usecase';
 import { createCommentRepository } from '@/features/comments/data/repositories/comment.repository';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
-
-// Función para verificar el token JWT
-async function verifyToken(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  try {
-    const decoded = jwt.verify(token, config.jwt.secret) as any;
-    return decoded;
-  } catch (error) {
-    return null;
-  }
-}
+import { requireAuth } from '@/lib/auth';
 
 // POST - Toggle like en comentario
 export async function POST(
@@ -26,11 +9,9 @@ export async function POST(
   { params }: { params: Promise<{ commentId: string }> }
 ) {
   try {
-    // Verificar autenticación
-    const decoded = await verifyToken(request);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
+    // Verificar autenticación con módulo centralizado
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
 
     const { commentId } = await params;
 
@@ -47,7 +28,7 @@ export async function POST(
     const usecase = new ToggleCommentLikeUseCase(repository);
 
     // Ejecutar caso de uso
-    const updatedComment = await usecase.execute(commentId, decoded.userId);
+    const updatedComment = await usecase.execute(commentId, auth.userId);
 
     if (!updatedComment) {
       return NextResponse.json(

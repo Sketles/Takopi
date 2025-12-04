@@ -1,24 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ToggleFollowUseCase } from '@/features/social/domain/usecases/toggle-follow.usecase';
 import { createFollowRepository } from '@/features/social/data/repositories/follow.repository';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
-
-// Función para verificar el token JWT
-async function verifyToken(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  try {
-    const decoded = jwt.verify(token, config.jwt.secret) as any;
-    return decoded;
-  } catch (error) {
-    return null;
-  }
-}
+import { requireAuth } from '@/lib/auth';
 
 // POST - Seguir/dejar de seguir usuario
 export async function POST(request: NextRequest) {
@@ -26,10 +9,10 @@ export async function POST(request: NextRequest) {
     console.log('🔍 Toggle Follow API (Clean Architecture)');
 
     // Verificar autenticación
-    const decoded = await verifyToken(request);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    
+    const decoded = auth;
 
     const requestBody = await request.json();
     const { followingId } = requestBody;
@@ -73,11 +56,11 @@ export async function GET(request: NextRequest) {
   try {
     console.log('🔍 Check Follow Status API (Clean Architecture)');
 
-    // Verificar autenticación
-    const decoded = await verifyToken(request);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
+    // Verificar autenticación con módulo centralizado
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    
+    const decoded = auth;
 
     const { searchParams } = new URL(request.url);
     const followingId = searchParams.get('followingId');

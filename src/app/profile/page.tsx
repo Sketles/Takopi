@@ -12,6 +12,8 @@ import ContentCard, { useContentCard } from '@/components/shared/ContentCard';
 import ProductModal from '@/components/product/ProductModal';
 import ProductEditModal from '@/components/product/ProductEditModal';
 import PurchasesSection from '@/components/profile/PurchasesSection';
+import PrintOrdersSection from '@/components/profile/PrintOrdersSection';
+import GenerationsSection from '@/components/profile/GenerationsSection';
 import CollectionsModal from '@/components/profile/CollectionsModal';
 import FollowersModal from '@/components/profile/FollowersModal';
 
@@ -51,7 +53,7 @@ function ProfileContent() {
   const [productToEdit, setProductToEdit] = useState<any>(null);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<'creations' | 'purchases'>('creations');
+  const [activeSection, setActiveSection] = useState<'creations' | 'purchases' | 'prints' | 'generations'>('creations');
   const [isCollectionsModalOpen, setIsCollectionsModalOpen] = useState(false);
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
   const [followersModalTab, setFollowersModalTab] = useState<'followers' | 'following'>('followers');
@@ -67,6 +69,10 @@ function ProfileContent() {
     const tab = searchParams.get('tab');
     if (tab === 'purchases') {
       setActiveSection('purchases');
+    } else if (tab === 'prints') {
+      setActiveSection('prints');
+    } else if (tab === 'generations' || tab === 'takopi-ia') {
+      setActiveSection('generations');
     } else {
       setActiveSection('creations');
     }
@@ -723,24 +729,42 @@ function ProfileContent() {
             <div className="space-y-6 sm:space-y-8">
               {/* Tabs */}
               <div className="flex justify-center">
-                <div className="bg-[#0f0f0f] border border-white/5 rounded-full p-1 inline-flex w-full sm:w-auto max-w-sm">
+                <div className="bg-[#0f0f0f] border border-white/5 rounded-full p-1 inline-flex w-full sm:w-auto max-w-xl overflow-x-auto">
                   <button
                     onClick={() => setActiveSection('creations')}
-                    className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${activeSection === 'creations'
+                    className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 whitespace-nowrap ${activeSection === 'creations'
                       ? 'bg-white text-black shadow-lg'
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                       }`}
                   >
-                    Mis Creaciones
+                    Creaciones
                   </button>
                   <button
                     onClick={() => setActiveSection('purchases')}
-                    className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${activeSection === 'purchases'
+                    className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 whitespace-nowrap ${activeSection === 'purchases'
                       ? 'bg-white text-black shadow-lg'
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                       }`}
                   >
-                    Mis Compras
+                    Compras
+                  </button>
+                  <button
+                    onClick={() => setActiveSection('prints')}
+                    className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 whitespace-nowrap ${activeSection === 'prints'
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg'
+                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                      }`}
+                  >
+                    Impresiones
+                  </button>
+                  <button
+                    onClick={() => setActiveSection('generations')}
+                    className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 whitespace-nowrap ${activeSection === 'generations'
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                      }`}
+                  >
+                    Takopi-IA
                   </button>
                 </div>
               </div>
@@ -831,8 +855,12 @@ function ProfileContent() {
                       </div>
                     );
                   })()
-                ) : (
+                ) : activeSection === 'purchases' ? (
                   <PurchasesSection />
+                ) : activeSection === 'prints' ? (
+                  <PrintOrdersSection />
+                ) : (
+                  <GenerationsSection />
                 )}
               </div>
             </div>

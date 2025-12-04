@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
+import { authenticateRequest } from '@/lib/auth';
 
 // GET - Obtener lista de seguidores o seguidos
 export async function GET(request: NextRequest) {
@@ -26,15 +25,9 @@ export async function GET(request: NextRequest) {
 
     // Obtener token para saber si el usuario actual sigue a cada persona
     let currentUserId: string | null = null;
-    const authHeader = request.headers.get('authorization');
-    if (authHeader?.startsWith('Bearer ')) {
-      try {
-        const token = authHeader.substring(7);
-        const decoded = jwt.verify(token, config.jwt.secret) as any;
-        currentUserId = decoded.userId;
-      } catch {
-        // Token inválido, continuar sin currentUserId
-      }
+    const auth = authenticateRequest(request);
+    if (auth.success) {
+      currentUserId = auth.user.userId;
     }
 
     let users: any[] = [];

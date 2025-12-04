@@ -50,13 +50,11 @@ export async function PUT(request: NextRequest) {
     console.log('🔍 Update Profile API (Clean Architecture)');
   }
   try {
-    const decoded = await verifyToken(request);
-    if (!decoded) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('❌ Token inválido');
-      }
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
+    // Verificar autenticación con módulo centralizado
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    
+    const decoded = auth;
 
     const requestBody = await request.json();
     if (process.env.NODE_ENV !== 'production') {

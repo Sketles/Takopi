@@ -3,43 +3,25 @@ import { CreatePurchaseUseCase } from "@/features/purchase/domain/usecases/creat
 import { createPurchaseRepository } from "@/features/purchase/data/repositories/purchase.repository";
 import { GetContentByIdUseCase } from "@/features/content/domain/usecases/get-content-by-id.usecase";
 import { createContentRepository } from "@/features/content/data/repositories/content.repository";
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
+import { requireAuth } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
     console.log('🎁 Free purchase API (Clean Architecture)');
     
-    // Verificar autorización
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('❌ No authorization header');
-      return NextResponse.json(
-        { error: 'Token de autorización requerido' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.split(' ')[1];
-    let decodedToken: any;
-    try {
-      decodedToken = jwt.verify(token, config.jwt.secret);
-      console.log('✅ Token válido:', { userId: decodedToken.userId });
-    } catch (error) {
-      console.log('❌ Token inválido:', error);
-      return NextResponse.json(
-        { error: 'Token inválido o expirado' },
-        { status: 401 }
-      );
-    }
+    // Verificar autorización con módulo centralizado
+    const auth = requireAuth(req);
+    if (auth instanceof NextResponse) return auth;
+    
+    console.log('✅ Token válido:', { userId: auth.userId });
     
     const { contentId, userId } = await req.json();
     
     console.log('🎁 Free purchase request data:', { contentId, userId });
     
     // Verificar que el userId del token coincida con el del request
-    if (userId !== decodedToken.userId) {
-      console.log('❌ UserId mismatch:', { requestUserId: userId, tokenUserId: decodedToken.userId });
+    if (userId !== auth.userId) {
+      console.log('❌ UserId mismatch:', { requestUserId: userId, tokenUserId: auth.userId });
       return NextResponse.json(
         { error: 'No autorizado para realizar esta transacción' },
         { status: 403 }

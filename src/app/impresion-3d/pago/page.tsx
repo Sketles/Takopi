@@ -20,6 +20,7 @@ interface PrintConfig {
   modelUrl: string;
   productId?: string;
   productTitle?: string;
+  productImage?: string;
   fileName?: string;
 }
 

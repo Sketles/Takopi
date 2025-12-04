@@ -63,6 +63,7 @@ model User {
   transactions Transaction[]
   collections  Collection[]
   generations  Generation[]
+  printOrders  PrintOrder[]
 
   @@map("users")
 }
@@ -98,6 +99,7 @@ model Content {
   pins             Pin[]
   purchases        Purchase[]
   collectionItems  CollectionItem[]
+  printOrders      PrintOrder[]
 
   @@index([authorId])
   @@index([contentType])
@@ -190,6 +192,7 @@ model Purchase {
   content         Content?     @relation(fields: [contentId], references: [id])
   transaction     Transaction? @relation(fields: [transactionId], references: [id])
   user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  printOrder      PrintOrder?
 
   @@index([userId])
   @@index([contentId])
@@ -212,12 +215,14 @@ model Transaction {
   transactionDate   DateTime?
   url               String?
   returnUrl         String?
+  metadata          Json?     // Datos adicionales (printConfig, shippingData, etc.)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   userId            String
   contentIds        String[]
   purchase          Purchase?
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  printOrder        PrintOrder?
 
   @@index([userId])
   @@index([token])
@@ -254,6 +259,74 @@ model CollectionItem {
   @@index([collectionId])
   @@index([contentId])
   @@map("collection_items")
+}
+
+// ============ 3D PRINT ORDERS ============
+enum PrintStatus {
+  PENDING      // Esperando confirmación de pago
+  CONFIRMED    // Pago confirmado, en cola
+  PROCESSING   // Preparando impresión
+  PRINTING     // Imprimiendo
+  QUALITY_CHECK // Control de calidad
+  SHIPPED      // Enviado
+  DELIVERED    // Entregado
+  CANCELLED    // Cancelado
+  FAILED       // Falló impresión
+}
+
+model PrintOrder {
+  id              String       @id @default(cuid())
+  userId          String
+  contentId       String       // Modelo 3D que se imprime
+  purchaseId      String?      @unique // Compra asociada del modelo digital
+  transactionId   String?      @unique // Transacción de Webpay
+  
+  // Configuración de impresión
+  material        String       // PLA, ABS, PETG, Resina
+  quality         String       // draft, standard, high
+  scale           Float        @default(1.0)
+  color           String?
+  infill          Int          @default(20) // % de relleno
+  notes           String?      // Instrucciones especiales
+  
+  // Precios
+  printPrice      Int          // Precio del servicio de impresión
+  modelPrice      Int          @default(0) // Precio del modelo (si aplica)
+  shippingPrice   Int          @default(0)
+  totalPrice      Int
+  currency        String       @default("CLP")
+  
+  // Estado y tracking
+  status          PrintStatus  @default(PENDING)
+  statusHistory   Json         @default("[]") // [{status, timestamp, note}]
+  estimatedDays   Int?         // Días estimados de entrega
+  
+  // Datos de envío
+  shippingAddress Json?        // {street, city, region, postalCode, country}
+  shippingMethod  String?      // pickup, standard, express
+  trackingNumber  String?
+  trackingUrl     String?
+  carrier         String?      // Correos Chile, Starken, etc.
+  
+  // Timestamps
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  confirmedAt     DateTime?    // Cuando se confirmó el pago
+  startedAt       DateTime?    // Cuando empezó la impresión
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  
+  // Relaciones
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content         Content      @relation(fields: [contentId], references: [id])
+  purchase        Purchase?    @relation(fields: [purchaseId], references: [id])
+  transaction     Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([userId])
+  @@index([contentId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("print_orders")
 }
 
 // ============ AI GENERATION ============

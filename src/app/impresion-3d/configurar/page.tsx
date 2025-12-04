@@ -50,6 +50,7 @@ export default function PrintingConfigPage() {
   const [modelViewerLoaded, setModelViewerLoaded] = useState(false);
   const [productId, setProductId] = useState<string | null>(null);
   const [productTitle, setProductTitle] = useState<string | null>(null);
+  const [productImage, setProductImage] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
 
   // Cargar modelo desde URL params si viene de un producto
@@ -58,6 +59,7 @@ export default function PrintingConfigPage() {
     const modelUrl = params.get('modelUrl');
     const prodId = params.get('productId');
     const prodTitle = params.get('productTitle');
+    const prodImage = params.get('productImage');
     const fName = params.get('fileName');
 
     if (modelUrl) {
@@ -67,12 +69,14 @@ export default function PrintingConfigPage() {
         url: modelUrl,
         productId: prodId,
         title: prodTitle,
+        image: prodImage,
         fileName: fName
       });
     }
 
     if (prodId) setProductId(prodId);
     if (prodTitle) setProductTitle(prodTitle);
+    if (prodImage) setProductImage(prodImage);
     if (fName) setFileName(fName);
   }, []);
 
@@ -190,6 +194,7 @@ export default function PrintingConfigPage() {
       modelUrl: config.modelUrl,
       productId,
       productTitle,
+      productImage, // Imagen del producto para el snapshot
       fileName
     };
     

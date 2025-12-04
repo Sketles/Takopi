@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPurchaseRepository } from '@/features/purchase/data/repositories/purchase.repository';
 import { createContentRepository } from '@/features/content/data/repositories/content.repository';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
 import path from 'path';
-import fs from 'fs';
+import { requireAuth } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
@@ -15,22 +13,11 @@ export async function POST(
 
     console.log('🔍 Download Purchase API (Clean Architecture):', purchaseId);
 
-    // Obtener token de autorización
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Token de autorización requerido' }, { status: 401 });
-    }
-
-    const token = authHeader.split(' ')[1];
-
-    // Verificar token
-    let userId;
-    try {
-      const decoded = jwt.verify(token, config.jwt.secret) as any;
-      userId = decoded.userId;
-    } catch (error) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
+    // Verificar autenticación con módulo centralizado
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    
+    const userId = auth.userId;
 
     // Verificar que la compra existe y pertenece al usuario (usando Clean Architecture)
     const purchaseRepository = createPurchaseRepository();

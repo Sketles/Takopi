@@ -3,25 +3,8 @@ import { GetContentByIdUseCase } from '@/features/content/domain/usecases/get-co
 import { UpdateContentUseCase } from '@/features/content/domain/usecases/update-content.usecase';
 import { DeleteContentUseCase } from '@/features/content/domain/usecases/delete-content.usecase';
 import { createContentRepository } from '@/features/content/data/repositories/content.repository';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
 import { logger } from '@/lib/logger';
-
-// Función para verificar el token JWT
-async function verifyToken(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  try {
-    const decoded = jwt.verify(token, config.jwt.secret) as any;
-    return decoded;
-  } catch (error) {
-    return null;
-  }
-}
+import { requireAuth } from '@/lib/auth';
 
 // GET - Obtener contenido específico
 export async function GET(
@@ -100,11 +83,9 @@ export async function PUT(
 
     console.log('🔍 Update Content API (Clean Architecture):', id);
 
-    // Verificar autenticación
-    const decoded = await verifyToken(request);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
+    // Verificar autenticación con módulo centralizado
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
 
     const requestBody = await request.json();
     console.log('🔍 Datos de actualización:', requestBody);
@@ -119,7 +100,7 @@ export async function PUT(
     const usecase = new UpdateContentUseCase(repository);
 
     // Ejecutar caso de uso
-    const updatedContent = await usecase.execute(id, decoded.userId, requestBody);
+    const updatedContent = await usecase.execute(id, auth.userId, requestBody);
 
     console.log('✅ Contenido actualizado:', updatedContent.id);
 
@@ -166,18 +147,16 @@ export async function DELETE(
 
     console.log('🔍 Delete Content API (Clean Architecture):', id);
 
-    // Verificar autenticación
-    const decoded = await verifyToken(request);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
+    // Verificar autenticación con módulo centralizado
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
 
     // Crear repository y usecase (Clean Architecture)
     const repository = createContentRepository();
     const usecase = new DeleteContentUseCase(repository);
 
     // Ejecutar caso de uso
-    const success = await usecase.execute(id, decoded.userId);
+    const success = await usecase.execute(id, auth.userId);
 
     if (!success) {
       return NextResponse.json(

@@ -3,30 +3,15 @@
  * GET /api/ai/generate - Listar generaciones del usuario
  */
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
 import prisma from '@/lib/prisma';
-import { config } from '@/config/env';
+import { requireAuth } from '@/lib/auth';
 import { meshy, MeshyError } from '@/lib/meshy';
-
-// Verificar JWT
-function verifyAuth(request: NextRequest): { userId: string } | null {
-  const auth = request.headers.get('authorization');
-  if (!auth?.startsWith('Bearer ')) return null;
-  
-  try {
-    return jwt.verify(auth.slice(7), config.jwt.secret) as { userId: string };
-  } catch {
-    return null;
-  }
-}
 
 // POST - Crear generación
 export async function POST(request: NextRequest) {
   try {
-    const user = verifyAuth(request);
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
 
     const body = await request.json();
     const { 
@@ -91,7 +76,7 @@ export async function POST(request: NextRequest) {
     // Guardar en DB
     const generation = await prisma.generation.create({
       data: {
-        userId: user.userId,
+        userId: auth.userId,
         taskId,
         taskType: type,
         prompt: prompt || null,
@@ -126,16 +111,14 @@ export async function POST(request: NextRequest) {
 // GET - Listar generaciones del usuario
 export async function GET(request: NextRequest) {
   try {
-    const user = verifyAuth(request);
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
 
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 50);
 
     const generations = await prisma.generation.findMany({
-      where: { userId: user.userId },
+      where: { userId: auth.userId },
       orderBy: { createdAt: 'desc' },
       take: limit,
     }) as any[];

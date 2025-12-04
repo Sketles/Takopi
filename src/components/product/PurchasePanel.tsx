@@ -178,6 +178,10 @@ export default function PurchasePanel({
     const params = new URLSearchParams();
     params.set('productId', product.id);
     params.set('productTitle', product.title);
+    // Agregar imagen del producto para el snapshot de compra
+    if (product.coverImage) {
+      params.set('productImage', product.coverImage);
+    }
     if (modelFile?.url) {
       params.set('modelUrl', modelFile.url);
       params.set('fileName', modelFile.name);

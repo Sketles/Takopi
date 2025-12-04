@@ -23,6 +23,10 @@ export async function POST(request: NextRequest) {
     const requestBody = await request.json();
     const { amount, printConfig, shippingData, userId } = requestBody;
 
+    // Extraer productId del printConfig (si viene de un producto del marketplace)
+    const productId = printConfig?.productId || null;
+    const productTitle = printConfig?.productTitle || 'Impresión 3D';
+
     // Validaciones
     if (!amount || amount <= 0) {
       return NextResponse.json({ error: 'Monto inválido' }, { status: 400 });
@@ -79,12 +83,44 @@ export async function POST(request: NextRequest) {
           currency: 'CLP',
           status: 'pending',
           userId,
-          contentIds: [], // No hay contenido específico
+          contentIds: productId ? [productId] : [],
           url: response.url,
           returnUrl,
+          // Guardar datos de impresión para usarlos en commit-print
+          metadata: {
+            type: '3d_print',
+            printConfig: {
+              material: printConfig.material,
+              quality: printConfig.quality,
+              scale: printConfig.scale || 1.0,
+              color: printConfig.color,
+              infill: printConfig.infill || 20,
+              copies: printConfig.copies || 1,
+              supports: printConfig.supports || false,
+              estimatedTime: printConfig.estimatedTime,
+              modelUrl: printConfig.modelUrl,
+              productTitle: printConfig.productTitle,
+              productImage: printConfig.productImage,
+            },
+            shippingData: {
+              fullName: shippingData.fullName,
+              phone: shippingData.phone,
+              address: shippingData.address,
+              city: shippingData.city,
+              region: shippingData.region,
+              postalCode: shippingData.postalCode,
+              additionalInfo: shippingData.additionalInfo,
+              shippingMethod: shippingData.shippingMethod,
+            },
+            pricing: {
+              printPrice: printConfig.price || amount,
+              shippingPrice: shippingData.shippingMethod === 'chilexpress' ? 3990 : 2490,
+              totalPrice: amount,
+            }
+          }
         },
       });
-      console.log('✅ Initial transaction saved to database');
+      console.log('✅ Initial transaction saved to database with metadata', { productId, productTitle });
     } catch (dbError) {
       console.error('⚠️ Error saving initial transaction:', dbError);
       // Continuar aunque falle el guardado inicial

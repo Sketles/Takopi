@@ -3,22 +3,10 @@
  * DELETE /api/ai/tasks/[id] - Eliminar generación
  */
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
 import prisma from '@/lib/prisma';
-import { config } from '@/config/env';
 import { meshy, MeshyError, TaskType } from '@/lib/meshy';
 import { put, del } from '@vercel/blob';
-
-function verifyAuth(request: NextRequest): { userId: string } | null {
-  const auth = request.headers.get('authorization');
-  if (!auth?.startsWith('Bearer ')) return null;
-  
-  try {
-    return jwt.verify(auth.slice(7), config.jwt.secret) as { userId: string };
-  } catch {
-    return null;
-  }
-}
+import { requireAuth } from '@/lib/auth';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -73,10 +61,8 @@ async function persistToBlob(
 // GET - Obtener estado (sincroniza con Meshy si está en progreso)
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const user = verifyAuth(request);
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
 
     const { id } = await context.params;
 
@@ -89,7 +75,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
     }
 
-    if (generation.userId !== user.userId) {
+    if (generation.userId !== auth.userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -349,10 +335,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
 // DELETE - Eliminar generación
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const user = verifyAuth(request);
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
 
     const { id } = await context.params;
 
@@ -364,7 +348,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
     }
 
-    if (generation.userId !== user.userId) {
+    if (generation.userId !== auth.userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ToggleLikeUseCase } from '@/features/social/domain/usecases/toggle-like.usecase';
 import { createLikeRepository } from '@/features/social/data/repositories/like.repository';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
+import { authenticateRequest } from '@/lib/auth';
 import { handleApiError } from '@/lib/error-handler';
 import { AuthenticationError, ValidationError } from '@/lib/errors';
 import { logger } from '@/lib/logger';
@@ -13,18 +12,11 @@ export async function POST(request: NextRequest) {
     logger.info('Like API POST: procesando');
 
     // Verificar autenticación
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) {
-      throw new AuthenticationError('Token requerido');
+    const auth = authenticateRequest(request);
+    if (!auth.success) {
+      throw new AuthenticationError(auth.error);
     }
-
-    let userId: string;
-    try {
-      const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
-      userId = decoded.userId;
-    } catch (error) {
-      throw new AuthenticationError('Token inválido');
-    }
+    const userId = auth.user.userId;
 
     const body = await request.json();
     const { contentId } = body;
@@ -75,15 +67,9 @@ export async function GET(request: NextRequest) {
       const repository = createLikeRepository();
 
       let userId: string | null = null;
-      const token = request.headers.get('authorization')?.split(' ')[1];
-
-      if (token) {
-        try {
-          const decoded: any = jwt.verify(token, config.jwt.secret);
-          userId = decoded.userId;
-        } catch (error) {
-          // Token invalid, continue without userId
-        }
+      const auth = authenticateRequest(request);
+      if (auth.success) {
+        userId = auth.user.userId;
       }
 
       // Get likes for all content items in parallel
@@ -123,21 +109,12 @@ export async function GET(request: NextRequest) {
     const likesCount = await repository.countByContent(contentId);
 
     let isLiked = false;
-    const token = request.headers.get('authorization')?.split(' ')[1];
+    const auth = authenticateRequest(request);
 
-    if (token) {
-      try {
-        const decoded: any = jwt.verify(token, config.jwt.secret);
-        const userId = decoded.userId;
-        if (userId) {
-          const like = await repository.findByUserAndContent(userId, contentId);
-          isLiked = like !== null;
-        }
-      } catch (error) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.warn('Invalid token for like status check:', error);
-        }
-      }
+    if (auth.success) {
+      const userId = auth.user.userId;
+      const like = await repository.findByUserAndContent(userId, contentId);
+      isLiked = like !== null;
     }
 
     if (process.env.NODE_ENV !== 'production') {

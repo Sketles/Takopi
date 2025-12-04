@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TogglePinUseCase } from '@/features/social/domain/usecases/toggle-pin.usecase';
 import { createPinRepository } from '@/features/social/data/repositories/pin.repository';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
+import { authenticateRequest } from '@/lib/auth';
 import { handleApiError } from '@/lib/error-handler';
 import { AuthenticationError, ValidationError } from '@/lib/errors';
 import { logger } from '@/lib/logger';
@@ -13,18 +12,11 @@ export async function POST(request: NextRequest) {
     logger.info('Pin API POST: procesando');
 
     // Verificar autenticación
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) {
-      throw new AuthenticationError('Token requerido');
+    const auth = authenticateRequest(request);
+    if (!auth.success) {
+      throw new AuthenticationError(auth.error);
     }
-
-    let userId: string;
-    try {
-      const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
-      userId = decoded.userId;
-    } catch (error) {
-      throw new AuthenticationError('Token inválido');
-    }
+    const userId = auth.user.userId;
 
     const body = await request.json();
     const { contentId, isPublic } = body;
@@ -73,15 +65,9 @@ export async function GET(request: NextRequest) {
       const repository = createPinRepository();
 
       let userId: string | null = null;
-      const token = request.headers.get('authorization')?.split(' ')[1];
-
-      if (token) {
-        try {
-          const decoded: any = jwt.verify(token, config.jwt.secret);
-          userId = decoded.userId;
-        } catch (error) {
-          // Token invalid, continue without userId
-        }
+      const auth = authenticateRequest(request);
+      if (auth.success) {
+        userId = auth.user.userId;
       }
 
       // Get pins for all content items in parallel
@@ -121,19 +107,12 @@ export async function GET(request: NextRequest) {
     const pinsCount = await repository.countByContent(contentId);
 
     let isPinned = false;
-    const token = request.headers.get('authorization')?.split(' ')[1];
+    const auth = authenticateRequest(request);
 
-    if (token) {
-      try {
-        const decoded: any = jwt.verify(token, config.jwt.secret);
-        const userId = decoded.userId;
-        if (userId) {
-          const pin = await repository.findByUserAndContent(userId, contentId);
-          isPinned = pin !== null;
-        }
-      } catch (error) {
-        console.warn('Invalid token for pin status check:', error);
-      }
+    if (auth.success) {
+      const userId = auth.user.userId;
+      const pin = await repository.findByUserAndContent(userId, contentId);
+      isPinned = pin !== null;
     }
 
     console.log('✅ Pin status:', { contentId, pinsCount, isPinned });

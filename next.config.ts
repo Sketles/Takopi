@@ -7,6 +7,18 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'gxy4jvwvb9jmk81j.public.blob.vercel-storage.com',
+      },
+    ],
+  },
   experimental: {
     optimizePackageImports: ['@google/model-viewer'],
     turbo: {

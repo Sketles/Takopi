@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
+import { requireAuth } from '@/lib/auth';
 import { uploadFile } from '@/lib/blob';
 
 /**
@@ -8,30 +7,13 @@ import { uploadFile } from '@/lib/blob';
  * Acepta FormData con un archivo de imagen
  */
 
-// Función para verificar token JWT
-async function verifyToken(request: NextRequest) {
-  try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) return null;
-
-    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string; email: string };
-    return decoded;
-  } catch (error) {
-    console.error('Error verificando token:', error);
-    return null;
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     // Verificar autenticación
-    const decoded = await verifyToken(request);
-    if (!decoded) {
-      return NextResponse.json(
-        { success: false, error: 'Token inválido o expirado' },
-        { status: 401 }
-      );
-    }
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    
+    const decoded = auth;
 
     // Parsear FormData
     const formData = await request.formData();

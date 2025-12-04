@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { webpayConfig } from '@/config/webpay';
 import prisma from '@/lib/prisma';
+import { PrintStatus } from '@prisma/client';
 
 // Importar WebpayPlus de manera condicional para mejor manejo de errores
-let WebpayPlus: any;
+let WebpayPlus: unknown;
 try {
   WebpayPlus = require("transbank-sdk").WebpayPlus;
   console.log('✅ Transbank SDK loaded successfully for commit-print');
@@ -117,10 +118,79 @@ async function handleCommit(request: NextRequest) {
 
       console.log('✅ [commit-print] Transacción actualizada:', transaction.id);
 
-      // Recuperar datos del pedido de impresión
+      // Obtener productId desde contentIds de la transacción
+      const productId = transaction.contentIds?.length > 0 ? transaction.contentIds[0] : null;
+      
+      // Obtener metadata con datos de impresión
+      const metadata = transaction.metadata as {
+        type?: string;
+        printConfig?: {
+          material: string;
+          quality: string;
+          scale: number;
+          color: string;
+          infill: number;
+          copies: number;
+          supports: boolean;
+          estimatedTime: string;
+          modelUrl: string;
+          productTitle: string;
+          productImage: string;
+        };
+        shippingData?: {
+          fullName: string;
+          phone: string;
+          address: string;
+          city: string;
+          region: string;
+          postalCode: string;
+          additionalInfo: string;
+          shippingMethod: string;
+        };
+        pricing?: {
+          printPrice: number;
+          shippingPrice: number;
+          totalPrice: number;
+        };
+      } | null;
+      
+      // Si hay productId, obtener datos del contenido original
+      let contentData = null;
+      if (productId) {
+        try {
+          const content = await prisma.content.findUnique({
+            where: { id: productId },
+            select: {
+              id: true,
+              title: true,
+              coverImage: true,
+              contentType: true,
+              files: true,
+              authorId: true,
+              price: true,
+            }
+          });
+          if (content) {
+            contentData = content;
+            console.log('✅ [commit-print] Datos del producto obtenidos:', content.title);
+          }
+        } catch (e) {
+          console.log('⚠️ [commit-print] No se pudo obtener contenido:', e);
+        }
+      }
+
+      // Crear snapshot completo con datos del producto
       const printOrderData = {
         type: '3d_print',
         buyOrder: buyOrder,
+        // Datos del producto original (o defaults si no hay)
+        title: contentData?.title || metadata?.printConfig?.productTitle || 'Impresión 3D',
+        coverImage: contentData?.coverImage || metadata?.printConfig?.productImage || '/placeholders/placeholder-3d.svg',
+        contentType: 'Modelos3d',
+        category: 'Modelos3d',
+        authorId: contentData?.authorId || null,
+        files: contentData?.files || [],
+        // Datos de Transbank
         transbankData: {
           authorizationCode: transbankResponse.authorization_code,
           cardNumber: transbankResponse.card_detail?.card_number,
@@ -129,21 +199,73 @@ async function handleCommit(request: NextRequest) {
         }
       };
 
-      // Crear compra (Purchase) asociada a la transacción
+      // 1. Crear compra (Purchase) del modelo digital
       const purchase = await prisma.purchase.create({
         data: {
           userId: transaction.userId,
-          contentId: null, // No es contenido específico, es servicio de impresión
+          contentId: productId,
           price: transbankResponse.amount,
           currency: 'CLP',
           status: 'completed',
           transactionId: transaction.id,
           completedAt: new Date(),
-          contentSnapshot: printOrderData, // Guardar detalles del pedido de impresión
+          contentSnapshot: printOrderData,
         },
       });
+      console.log('✅ [commit-print] Purchase creado:', purchase.id);
 
-      console.log('✅ [commit-print] Compra guardada:', purchase.id);
+      // 2. Crear PrintOrder para tracking de impresión física
+      if (productId && metadata?.printConfig) {
+        try {
+          const printOrder = await prisma.printOrder.create({
+            data: {
+              userId: transaction.userId,
+              contentId: productId,
+              purchaseId: purchase.id,
+              transactionId: transaction.id,
+              // Configuración de impresión
+              material: metadata.printConfig.material || 'PLA',
+              quality: metadata.printConfig.quality || 'standard',
+              scale: metadata.printConfig.scale || 1.0,
+              color: metadata.printConfig.color || null,
+              infill: metadata.printConfig.infill || 20,
+              notes: null,
+              // Precios
+              printPrice: metadata.pricing?.printPrice || transbankResponse.amount,
+              modelPrice: contentData?.price || 0,
+              shippingPrice: metadata.pricing?.shippingPrice || 0,
+              totalPrice: metadata.pricing?.totalPrice || transbankResponse.amount,
+              currency: 'CLP',
+              // Estado
+              status: PrintStatus.CONFIRMED,
+              statusHistory: [
+                { status: 'PENDING', timestamp: transaction.createdAt, note: 'Orden creada' },
+                { status: 'CONFIRMED', timestamp: new Date(), note: 'Pago confirmado por Transbank' },
+              ],
+              estimatedDays: 7, // Estimación por defecto
+              // Datos de envío
+              shippingAddress: metadata.shippingData ? {
+                fullName: metadata.shippingData.fullName,
+                phone: metadata.shippingData.phone,
+                street: metadata.shippingData.address,
+                city: metadata.shippingData.city,
+                region: metadata.shippingData.region,
+                postalCode: metadata.shippingData.postalCode,
+                additionalInfo: metadata.shippingData.additionalInfo,
+              } : null,
+              shippingMethod: metadata.shippingData?.shippingMethod || 'standard',
+              // Timestamps
+              confirmedAt: new Date(),
+            },
+          });
+          console.log('✅ [commit-print] PrintOrder creado:', printOrder.id);
+        } catch (printOrderError) {
+          console.error('⚠️ [commit-print] Error creando PrintOrder:', printOrderError);
+          // Continuar aunque falle el PrintOrder - el Purchase ya está creado
+        }
+      }
+
+      console.log('✅ [commit-print] Compra y orden guardadas correctamente');
 
     } catch (dbError) {
       console.error('❌ [commit-print] Error guardando en base de datos:', dbError);

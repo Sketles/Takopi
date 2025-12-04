@@ -245,17 +245,24 @@ export default function PurchasesSection() {
         <>
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {purchases.map((purchase) => {
-              // Determinar si es una impresión 3D o contenido digital
-              const is3DPrint = !purchase.contentId && purchase.contentSnapshot;
+              // Determinar si es una impresión 3D
+              const snapshot = purchase.contentSnapshot as any;
+              const is3DPrint = snapshot?.type === '3d_print';
+              
+              // Obtener título - usar snapshot si es impresión 3D, sino usar content
               const title = is3DPrint 
-                ? 'Impresión 3D' 
-                : (purchase.content?.title || 'Contenido no disponible');
+                ? (snapshot?.title || 'Impresión 3D')
+                : (purchase.content?.title || snapshot?.title || 'Contenido no disponible');
+              
+              // Obtener imagen - usar snapshot si es impresión 3D, sino usar content  
               const coverImage = is3DPrint 
-                ? '/placeholder-3d-print.jpg' 
-                : (purchase.content?.coverImage || '/placeholder-content.jpg');
+                ? (snapshot?.coverImage || '/placeholders/placeholder-3d.svg')
+                : (purchase.content?.coverImage || snapshot?.coverImage || '/placeholders/placeholder-3d.svg');
+              
+              // Obtener tipo de contenido - impresiones 3D son modelos 3D
               const contentType = is3DPrint 
-                ? '3d-print' 
-                : (purchase.content?.contentType || '');
+                ? 'Modelos3d'
+                : (purchase.content?.contentType || snapshot?.contentType || '');
               
               return (
                 <div
@@ -277,8 +284,8 @@ export default function PurchasesSection() {
                     {/* Badges superiores */}
                     <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
                       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-white bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-                        {getContentTypeIcon(contentType)}
-                        <span className="capitalize">{is3DPrint ? 'Impresión 3D' : contentType}</span>
+                        {getContentTypeIcon(is3DPrint ? 'modelos3d' : contentType)}
+                        <span className="capitalize">{contentType || 'Contenido'}</span>
                       </span>
                       <span className="text-xs font-bold text-green-400 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
                         {formatPrice(purchase.amount, purchase.currency)}

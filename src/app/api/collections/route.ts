@@ -1,34 +1,19 @@
 // Collections API - GET and POST
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
 import { createCollectionRepository } from '@/features/collections/data/repositories/collection.repository';
 import { CreateCollectionUseCase } from '@/features/collections/domain/usecases/create-collection.usecase';
+import { requireAuth } from '@/lib/auth';
 
 // GET - Obtener colecciones del usuario
 export async function GET(request: NextRequest) {
   try {
     console.log('🗂️ Collections API GET');
 
-    const token = request.headers.get('authorization')?.split(' ')[1];
-
-    if (!token) {
-      return NextResponse.json({
-        success: false,
-        error: 'No autorizado'
-      }, { status: 401 });
-    }
-
-    let userId: string;
-    try {
-      const decoded: any = jwt.verify(token, config.jwt.secret);
-      userId = decoded.userId;
-    } catch (error) {
-      return NextResponse.json({
-        success: false,
-        error: 'Token inválido'
-      }, { status: 401 });
-    }
+    // Verificar autenticación con módulo centralizado
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    
+    const userId = auth.userId;
 
     const repository = createCollectionRepository();
     const collections = await repository.findByUser(userId);
@@ -64,25 +49,11 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🗂️ Collections API POST');
 
-    const token = request.headers.get('authorization')?.split(' ')[1];
-
-    if (!token) {
-      return NextResponse.json({
-        success: false,
-        error: 'No autorizado'
-      }, { status: 401 });
-    }
-
-    let userId: string;
-    try {
-      const decoded: any = jwt.verify(token, config.jwt.secret);
-      userId = decoded.userId;
-    } catch (error) {
-      return NextResponse.json({
-        success: false,
-        error: 'Token inválido'
-      }, { status: 401 });
-    }
+    // Verificar autenticación con módulo centralizado
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    
+    const userId = auth.userId;
 
     const body = await request.json();
     const { title, description, isPublic } = body;

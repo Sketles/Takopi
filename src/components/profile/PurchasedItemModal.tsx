@@ -57,6 +57,10 @@ export default function PurchasedItemModal({
     const params = new URLSearchParams();
     params.set('productId', content?.id || purchase.contentId || purchase.id);
     params.set('productTitle', content?.title || 'Modelo 3D');
+    // Agregar imagen del producto para el snapshot de compra
+    if (content?.coverImage) {
+      params.set('productImage', content.coverImage);
+    }
     if (modelFile?.url) {
       params.set('modelUrl', modelFile.url);
       params.set('fileName', modelFile.name);
@@ -76,15 +80,55 @@ export default function PurchasedItemModal({
 
   // Renderizar visor integrado según tipo de contenido
   const renderContentViewer = () => {
+    // Para impresiones 3D, intentar mostrar el modelo si tiene archivos
+    // Si no tiene archivos, mostrar la imagen del producto
     if (is3DPrint) {
+      const printImage = purchase.contentSnapshot?.coverImage || content?.coverImage;
+      const printTitle = purchase.contentSnapshot?.title || content?.title || 'Modelo 3D';
+      const files = content?.files || purchase.contentSnapshot?.files;
+      
+      // Si tiene archivos 3D, mostrar el visor
+      if (files && files.length > 0) {
+        const modelFile = files.find((file: any) =>
+          file.name?.endsWith('.glb') || file.name?.endsWith('.gltf')
+        );
+        
+        if (modelFile?.url) {
+          return (
+            <div className="w-full h-full bg-[#0a0a0a] rounded-2xl overflow-hidden">
+              <ModelViewerModal
+                src={modelFile.url}
+                alt={printTitle}
+                width="100%"
+                height="100%"
+                autoRotate={true}
+                cameraControls={true}
+              />
+            </div>
+          );
+        }
+      }
+      
+      // Si tiene imagen de portada, mostrarla grande
+      if (printImage && !printImage.includes('placeholder')) {
+        return (
+          <div className="w-full h-full bg-[#0a0a0a] rounded-2xl overflow-hidden">
+            <img 
+              src={printImage} 
+              alt={printTitle}
+              className="w-full h-full object-contain"
+            />
+          </div>
+        );
+      }
+      
+      // Fallback: placeholder
       return (
         <div className="w-full h-full bg-[#0a0a0a] rounded-2xl flex items-center justify-center border border-white/10">
           <div className="text-center p-8">
-            <div className="text-6xl mb-4">🖨️</div>
-            <h3 className="text-xl font-bold text-white mb-2">Orden de Impresión 3D</h3>
-            <p className="text-gray-400 text-sm">
-              Tu pedido de impresión está en proceso
-            </p>
+            <div className="text-6xl mb-4">🎲</div>
+            <h3 className="text-xl font-bold text-white mb-2">{printTitle}</h3>
+            <p className="text-gray-400 text-sm">Vista previa no disponible</p>
           </div>
         </div>
       );
@@ -210,13 +254,11 @@ export default function PurchasedItemModal({
               </div>
               
               <h1 className="text-3xl font-bold text-white mb-2">
-                {is3DPrint ? 'Impresión 3D' : content?.title || 'Contenido'}
+                {content?.title || purchase.contentSnapshot?.title || 'Modelo 3D'}
               </h1>
               
               <p className="text-gray-400 text-sm mb-4">
-                {is3DPrint 
-                  ? 'Servicio de impresión 3D personalizado'
-                  : content?.shortDescription || content?.description || ''}
+                {content?.shortDescription || content?.description || (is3DPrint ? 'Modelo 3D con servicio de impresión' : '')}
               </p>
             </div>
 
@@ -400,16 +442,30 @@ export default function PurchasedItemModal({
             )}
 
             {is3DPrint && (
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-                <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    <h4 className="text-blue-400 font-bold text-sm mb-1">Estado del Pedido</h4>
-                    <p className="text-white/60 text-xs">
-                      Te notificaremos por correo cuando tu impresión esté lista y en camino.
-                    </p>
+              <div className="space-y-4">
+                {/* Botón para ver estado de impresión */}
+                <button
+                  onClick={() => {
+                    onClose();
+                    router.push('/profile?tab=prints');
+                  }}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl font-semibold text-sm hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                >
+                  <span>🖨️</span>
+                  <span>Ver Estado de Impresión</span>
+                </button>
+
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <h4 className="text-blue-400 font-bold text-sm mb-1">Impresión 3D Solicitada</h4>
+                      <p className="text-white/60 text-xs">
+                        Este modelo tiene una orden de impresión activa. Ve a "Mis Impresiones" para ver el tracking completo.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

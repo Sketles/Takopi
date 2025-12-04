@@ -2,24 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GetCommentsUseCase } from '@/features/comments/domain/usecases/get-comments.usecase';
 import { CreateCommentUseCase } from '@/features/comments/domain/usecases/create-comment.usecase';
 import { createCommentRepository } from '@/features/comments/data/repositories/comment.repository';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
-
-// Función para verificar el token JWT
-async function verifyToken(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  try {
-    const decoded = jwt.verify(token, config.jwt.secret) as any;
-    return decoded;
-  } catch (error) {
-    return null;
-  }
-}
+import { authenticateRequest } from '@/lib/auth';
 
 // GET - Obtener comentarios de un contenido
 export async function GET(request: NextRequest) {
@@ -35,8 +18,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Verificar autenticación (opcional para leer comentarios)
-    const decoded = await verifyToken(request);
-    const userId = decoded?.userId;
+    const authResult = authenticateRequest(request);
+    const userId = authResult.success ? authResult.user.userId : undefined;
 
     // Crear repository y usecase
     const repository = createCommentRepository();
@@ -78,10 +61,10 @@ export async function GET(request: NextRequest) {
 // POST - Crear nuevo comentario
 export async function POST(request: NextRequest) {
   try {
-    // Verificar autenticación
-    const decoded = await verifyToken(request);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+    // Verificar autenticación con módulo centralizado
+    const authResult = authenticateRequest(request);
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error || 'Token inválido' }, { status: 401 });
     }
 
     const requestBody = await request.json();
@@ -109,9 +92,9 @@ export async function POST(request: NextRequest) {
     // Ejecutar caso de uso
     const comment = await usecase.execute({
       contentId,
-      userId: decoded.userId,
-      username: decoded.username || 'Usuario',
-      userAvatar: decoded.avatar,
+      userId: authResult.user.userId,
+      username: authResult.user.email?.split('@')[0] || 'Usuario',
+      userAvatar: undefined,
       text: text.trim(),
       parentId: parentId || null
     });

@@ -1,11 +1,10 @@
 // Collection Items API - GET, POST, DELETE
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
-import { config } from '@/config/env';
 import { createCollectionRepository } from '@/features/collections/data/repositories/collection.repository';
 import { AddItemToCollectionUseCase } from '@/features/collections/domain/usecases/add-item-to-collection.usecase';
 import { RemoveItemFromCollectionUseCase } from '@/features/collections/domain/usecases/remove-item-from-collection.usecase';
 import prisma from '@/lib/prisma';
+import { requireAuth } from '@/lib/auth';
 
 // GET - Obtener items de una colección con detalles de contenido
 export async function GET(
@@ -96,25 +95,11 @@ export async function POST(
   try {
     console.log('🗂️ Collection Items API POST', id);
 
-    const token = request.headers.get('authorization')?.split(' ')[1];
-
-    if (!token) {
-      return NextResponse.json({
-        success: false,
-        error: 'No autorizado'
-      }, { status: 401 });
-    }
-
-    let userId: string;
-    try {
-      const decoded: any = jwt.verify(token, config.jwt.secret);
-      userId = decoded.userId;
-    } catch (error) {
-      return NextResponse.json({
-        success: false,
-        error: 'Token inválido'
-      }, { status: 401 });
-    }
+    // Verificar autenticación con módulo centralizado
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    
+    const userId = auth.userId;
 
     const body = await request.json();
     const { contentId } = body;
@@ -163,25 +148,11 @@ export async function DELETE(
   try {
     console.log('🗂️ Collection Items API DELETE', id);
 
-    const token = request.headers.get('authorization')?.split(' ')[1];
-
-    if (!token) {
-      return NextResponse.json({
-        success: false,
-        error: 'No autorizado'
-      }, { status: 401 });
-    }
-
-    let userId: string;
-    try {
-      const decoded: any = jwt.verify(token, config.jwt.secret);
-      userId = decoded.userId;
-    } catch (error) {
-      return NextResponse.json({
-        success: false,
-        error: 'Token inválido'
-      }, { status: 401 });
-    }
+    // Verificar autenticación con módulo centralizado
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    
+    const userId = auth.userId;
 
     const { searchParams } = new URL(request.url);
     const contentId = searchParams.get('contentId');
