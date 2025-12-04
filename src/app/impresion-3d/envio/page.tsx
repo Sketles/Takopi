@@ -1,6 +1,7 @@
 'use client';
 
 import Layout from '@/components/shared/Layout';
+import ComunaAutocomplete from '@/components/shared/ComunaAutocomplete';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -62,25 +63,6 @@ export default function ShippingPage() {
       });
     }
   }, []);
-
-  const regiones = [
-    'Región Metropolitana',
-    'Región de Valparaíso',
-    'Región del Biobío',
-    'Región de La Araucanía',
-    'Región de Los Lagos',
-    "Región del Libertador Gral. Bernardo O'Higgins",
-    'Región del Maule',
-    'Región de Antofagasta',
-    'Región de Coquimbo',
-    'Región de Tarapacá',
-    'Región de Atacama',
-    'Región de Aysén',
-    'Región de Magallanes',
-    'Región de Arica y Parinacota',
-    'Región de Los Ríos',
-    'Región de Ñuble'
-  ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -316,55 +298,84 @@ export default function ShippingPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="city" className="block text-sm font-medium text-gray-300 mb-2">
-                        Ciudad/Comuna <span className="text-red-400">*</span>
+                        Comuna <span className="text-red-400">*</span>
                       </label>
-                      <input
-                        type="text"
-                        id="city"
-                        name="city"
+                      <ComunaAutocomplete
                         value={shippingData.city}
-                        onChange={handleInputChange}
-                        placeholder="Santiago"
-                        className={`w-full bg-black/30 border ${errors.city ? 'border-red-500' : 'border-white/10'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors`}
+                        onChange={(comuna, region, postalCode) => {
+                          setShippingData(prev => ({
+                            ...prev,
+                            city: comuna,
+                            region: region,
+                            postalCode: postalCode || prev.postalCode
+                          }));
+                          // Limpiar errores
+                          setErrors(prev => ({ ...prev, city: '', region: '', postalCode: '' }));
+                        }}
+                        error={errors.city}
+                        placeholder="Ej: Quilicura, Las Condes..."
                       />
-                      {errors.city && <p className="text-red-400 text-sm mt-1">{errors.city}</p>}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Escribe y selecciona tu comuna
+                      </p>
                     </div>
 
                     <div>
                       <label htmlFor="postalCode" className="block text-sm font-medium text-gray-300 mb-2">
                         Código Postal <span className="text-red-400">*</span>
                       </label>
-                      <input
-                        type="text"
-                        id="postalCode"
-                        name="postalCode"
-                        value={shippingData.postalCode}
-                        onChange={handleInputChange}
-                        placeholder="8320000"
-                        className={`w-full bg-black/30 border ${errors.postalCode ? 'border-red-500' : 'border-white/10'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors`}
-                      />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          id="postalCode"
+                          name="postalCode"
+                          value={shippingData.postalCode}
+                          onChange={handleInputChange}
+                          placeholder="Se autocompleta"
+                          className={`w-full bg-black/30 border ${errors.postalCode ? 'border-red-500' : 'border-white/10'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors`}
+                        />
+                        {shippingData.postalCode && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
                       {errors.postalCode && <p className="text-red-400 text-sm mt-1">{errors.postalCode}</p>}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {shippingData.postalCode ? 'Autocompletado ✓' : 'Se completará automáticamente'}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Region */}
+                  {/* Region - Now auto-filled */}
                   <div>
                     <label htmlFor="region" className="block text-sm font-medium text-gray-300 mb-2">
                       Región <span className="text-red-400">*</span>
                     </label>
-                    <select
-                      id="region"
-                      name="region"
-                      value={shippingData.region}
-                      onChange={handleInputChange}
-                      className={`w-full bg-black/30 border ${errors.region ? 'border-red-500' : 'border-white/10'} rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors appearance-none cursor-pointer`}
-                    >
-                      <option value="" className="bg-[#0f0f0f]">Selecciona una región</option>
-                      {regiones.map(region => (
-                        <option key={region} value={region} className="bg-[#0f0f0f]">{region}</option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        id="region"
+                        name="region"
+                        value={shippingData.region}
+                        readOnly
+                        placeholder="Se autocompleta al seleccionar comuna"
+                        className={`w-full bg-black/50 border ${errors.region ? 'border-red-500' : 'border-white/10'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none cursor-not-allowed`}
+                      />
+                      {shippingData.region && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
                     {errors.region && <p className="text-red-400 text-sm mt-1">{errors.region}</p>}
+                    <p className="text-xs text-gray-500 mt-1">
+                      {shippingData.region ? 'Autocompletado ✓' : 'Se completará automáticamente'}
+                    </p>
                   </div>
 
                   {/* Additional Info */}
