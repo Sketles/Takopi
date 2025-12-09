@@ -362,3 +362,32 @@ model Generation {
   @@index([status])
   @@map("generations")
 }
+
+// ============ COIN TRANSACTIONS ============
+model CoinTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  buyOrder    String   @unique
+  sessionId   String
+  packageId   String   // starter, creator, pro, ultimate
+  coins       Int
+  amount      Int      // Precio en CLP
+  status      String   @default("PENDING") // PENDING, COMPLETED, FAILED
+  token       String?  // Token de Webpay
+  
+  // Datos de respuesta de Webpay
+  authorizationCode String?
+  paymentTypeCode   String?
+  responseCode      Int?
+  cardNumber        String?
+  transactionDate   DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([buyOrder])
+  @@index([status])
+  @@map("coin_transactions")
+}
+

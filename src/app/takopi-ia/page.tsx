@@ -299,10 +299,120 @@ export default function TakopiIAPage() {
   const [image, setImage] = useState<File | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(true);
+  const [showCoinModal, setShowCoinModal] = useState(false);
+  const [purchasingPackage, setPurchasingPackage] = useState<string | null>(null);
 
   // Formatos soportados por Meshy API
   const MESHY_SUPPORTED_FORMATS = ['image/jpeg', 'image/jpg', 'image/png'];
   const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+
+  // Paquetes de monedas
+  const COIN_PACKAGES = [
+    { 
+      id: 'starter', 
+      coins: 1000, 
+      price: 2990, 
+      popular: false,
+      badge: '🌟 Inicio',
+      desc: 'Perfecto para probar'
+    },
+    { 
+      id: 'creator', 
+      coins: 3500, 
+      price: 9990, 
+      popular: true,
+      badge: '🔥 Popular',
+      desc: 'Para creadores activos',
+      bonus: '+500 monedas extra'
+    },
+    { 
+      id: 'pro', 
+      coins: 8000, 
+      price: 19990, 
+      popular: false,
+      badge: '💎 Pro',
+      desc: 'Máximo rendimiento',
+      bonus: '+1500 monedas extra'
+    },
+    { 
+      id: 'ultimate', 
+      coins: 15000, 
+      price: 25000, 
+      popular: false,
+      badge: '👑 Ultimate',
+      desc: 'El mejor valor',
+      bonus: '+5000 monedas extra'
+    }
+  ];
+
+  // Función para comprar monedas
+  const handlePurchaseCoins = async (packageId: string) => {
+    const pkg = COIN_PACKAGES.find(p => p.id === packageId);
+    
+    if (!pkg) {
+      alert('Paquete no encontrado');
+      return;
+    }
+
+    if (!user || !user._id) {
+      alert('Debes iniciar sesión para comprar monedas');
+      router.push('/auth/login');
+      return;
+    }
+
+    setPurchasingPackage(packageId);
+    try {
+      console.log('💰 Iniciando compra:', {
+        userId: user._id,
+        packageId: pkg.id,
+        coins: pkg.coins,
+        price: pkg.price
+      });
+
+      // Llamar a la API para crear la transacción de Webpay
+      const response = await fetch('/api/webpay/create-coins', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user._id,
+          packageId: pkg.id,
+          coins: pkg.coins,
+          price: pkg.price,
+        }),
+      });
+
+      const data = await response.json();
+
+      console.log('📦 Respuesta del servidor:', data);
+
+      if (!data.success) {
+        throw new Error(data.error || 'Error al crear la transacción');
+      }
+
+      console.log('✅ Redirecting to Webpay:', data.url);
+
+      // Redirigir a Webpay
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = data.url;
+
+      const tokenInput = document.createElement('input');
+      tokenInput.type = 'hidden';
+      tokenInput.name = 'token_ws';
+      tokenInput.value = data.token;
+
+      form.appendChild(tokenInput);
+      document.body.appendChild(form);
+      form.submit();
+      
+    } catch (error: any) {
+      console.error('Error al comprar monedas:', error);
+      alert(`Error: ${error.message}`);
+      setPurchasingPackage(null);
+    }
+  };
 
   // Validar imagen para Meshy
   const validateImageForMeshy = (file: File): string | null => {
@@ -344,9 +454,26 @@ export default function TakopiIAPage() {
   const [deleteTarget, setDeleteTarget] = useState<GenerationTask | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [purchaseSuccess, setPurchaseSuccess] = useState<{coins: number, packageId: string} | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { authDelete, getToken } = useAuthenticatedFetch();
+
+  // Detectar si venimos de un pago exitoso
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const purchase = searchParams.get('purchase');
+    const coins = searchParams.get('coins');
+    const packageId = searchParams.get('package');
+
+    if (purchase === 'success' && coins && packageId) {
+      setPurchaseSuccess({ coins: parseInt(coins), packageId });
+      // Limpiar URL
+      window.history.replaceState({}, '', '/takopi-ia');
+      // Auto-ocultar después de 5 segundos
+      setTimeout(() => setPurchaseSuccess(null), 5000);
+    }
+  }, []);
 
   // Ref para trackear si debe auto-refinar cuando termine el preview
   const shouldAutoRefineRef = useRef(false);
@@ -609,6 +736,16 @@ export default function TakopiIAPage() {
                     <span className="text-green-400 font-bold text-xs flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-ping" />
                       ¡Listo!
+                    </span>
+                  </div>
+                )}
+
+                {/* Purchase Success Badge */}
+                {purchaseSuccess && (
+                  <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 backdrop-blur-xl border border-amber-500/30 rounded-full shadow-lg">
+                    <span className="text-amber-400 font-bold text-xs flex items-center gap-2">
+                      <Image src="/icons/takopi-coin.png" alt="coin" width={16} height={16} />
+                      ¡Compra exitosa! +{purchaseSuccess.coins.toLocaleString()} monedas
                     </span>
                   </div>
                 )}
@@ -998,7 +1135,10 @@ export default function TakopiIAPage() {
           {/* Right: History Sidebar */}
           <div className="w-48 h-full py-10 flex flex-col gap-3">
             {/* Coin Balance - Modern with hover buy button */}
-            <div className="group relative flex items-center gap-4 px-5 py-3.5 bg-gradient-to-br from-amber-950/40 via-yellow-950/30 to-amber-950/40 border border-amber-500/30 rounded-2xl hover:border-amber-400/50 transition-all duration-300 cursor-pointer overflow-hidden">
+            <div 
+              onClick={() => setShowCoinModal(true)}
+              className="group relative flex items-center gap-4 px-5 py-3.5 bg-gradient-to-br from-amber-950/40 via-yellow-950/30 to-amber-950/40 border border-amber-500/30 rounded-2xl hover:border-amber-400/50 transition-all duration-300 cursor-pointer overflow-hidden"
+            >
               {/* Glow effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/5 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="absolute -top-10 -left-10 w-20 h-20 bg-amber-500/20 rounded-full blur-2xl opacity-50" />
@@ -1140,6 +1280,132 @@ export default function TakopiIAPage() {
             </div>
           )
         }
+
+        {/* Modal de compra de monedas */}
+        {showCoinModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              onClick={() => !purchasingPackage && setShowCoinModal(false)}
+            />
+
+            {/* Modal */}
+            <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl sm:rounded-3xl p-6 sm:p-8 max-w-4xl w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+              {/* Close Button */}
+              <button
+                onClick={() => !purchasingPackage && setShowCoinModal(false)}
+                disabled={!!purchasingPackage}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-colors disabled:opacity-50"
+              >
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border border-amber-500/30 mb-4">
+                  <Image src="/icons/takopi-coin.png" alt="Coins" width={48} height={48} className="drop-shadow-[0_0_15px_rgba(251,191,36,0.6)]" />
+                </div>
+                <h2 className="text-3xl sm:text-4xl font-black text-white mb-2">
+                  <span className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
+                    Comprar Monedas
+                  </span>
+                </h2>
+                <p className="text-gray-400 text-sm sm:text-base">
+                  Monedas de Meshy compartidas por todos los usuarios
+                </p>
+              </div>
+
+              {/* Packages Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+                {COIN_PACKAGES.map((pkg) => (
+                  <div
+                    key={pkg.id}
+                    className={`relative group bg-gradient-to-b from-white/5 to-white/[0.02] border rounded-2xl p-5 sm:p-6 hover:border-amber-500/50 transition-all duration-300 ${
+                      pkg.popular ? 'border-amber-500/50 shadow-[0_0_30px_rgba(251,191,36,0.15)] sm:scale-105' : 'border-white/10'
+                    }`}
+                  >
+                    {/* Popular Badge */}
+                    {pkg.popular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full text-xs font-bold text-black shadow-lg">
+                        MÁS POPULAR
+                      </div>
+                    )}
+
+                    {/* Glow Effect */}
+                    <div className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+                      pkg.popular ? 'bg-gradient-to-b from-amber-500/10 to-transparent' : ''
+                    }`} />
+
+                    {/* Content */}
+                    <div className="relative flex flex-col h-full">
+                      {/* Badge Icon and Title */}
+                      <div className="text-center mb-3 sm:mb-4">
+                        <div className="text-3xl sm:text-4xl mb-2">{pkg.badge.split(' ')[0]}</div>
+                        <h3 className="text-sm sm:text-base font-bold text-white uppercase tracking-wider mb-1">
+                          {pkg.badge.split(' ')[1]}
+                        </h3>
+                        <p className="text-xs text-gray-500">{pkg.desc}</p>
+                      </div>
+
+                      {/* Coins Amount */}
+                      <div className="flex-1 flex flex-col justify-center py-3 sm:py-4">
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          <Image src="/icons/takopi-coin.png" alt="coin" width={28} height={28} className="sm:w-8 sm:h-8" />
+                          <span className="text-3xl sm:text-4xl font-black text-white">
+                            {pkg.coins.toLocaleString()}
+                          </span>
+                        </div>
+                        {pkg.bonus && (
+                          <p className="text-xs text-amber-400 text-center font-medium mt-1">
+                            {pkg.bonus}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Price */}
+                      <div className="text-center mb-4">
+                        <div className="inline-flex items-baseline gap-1">
+                          <span className="text-2xl sm:text-3xl font-black text-white">
+                            ${pkg.price.toLocaleString()}
+                          </span>
+                          <span className="text-sm text-gray-400">CLP</span>
+                        </div>
+                      </div>
+
+                      {/* Buy Button */}
+                      <button
+                        onClick={() => handlePurchaseCoins(pkg.id)}
+                        disabled={!!purchasingPackage}
+                        className={`w-full py-3 sm:py-3.5 rounded-xl font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+                          pkg.popular
+                            ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black hover:shadow-[0_0_20px_rgba(251,191,36,0.4)] hover:scale-[1.02]'
+                            : 'bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        {purchasingPackage === pkg.id ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            <span>Procesando...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            <span>Comprar Ahora</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
