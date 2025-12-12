@@ -16,8 +16,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Takopi - Aplicación Web Moderna",
-  description: "Una aplicación moderna construida con Next.js 15, React 19 y TailwindCSS v4",
+  title: "Takopi - Marketplace Digital Chileno",
+  description: "Marketplace digital chileno con impresión 3D, modelos generados por IA y contenido digital exclusivo",
+  openGraph: {
+    title: "Takopi",
+    description: "Marketplace digital chileno con impresión 3D, modelos generados por IA y contenido digital exclusivo",
+    siteName: "Takopi",
+    locale: "es_CL",
+    type: "website",
+    url: "https://takopi-nine.vercel.app",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Takopi",
+    description: "Marketplace digital chileno con impresión 3D y contenido digital",
+  },
 };
 
 export default function RootLayout({
